@@ -1,4 +1,12 @@
-import threading, sys, os, traceback, subprocess
+import sys, os
+import threading
+import traceback
+import subprocess
+import warnings
+
+class l:
+    logger = None
+
 def install_thread_excepthook():
     """
     Workaround for sys.excepthook thread bug
@@ -16,15 +24,27 @@ def install_thread_excepthook():
     threading.Thread.run = run
     
 def gtkhandler(exceptclass,exception,exec_info):
+    message = ''.join(traceback.format_exception(exceptclass,exception,exec_info))
+    if l.logger:
+        l.logger.error('Got an exception:\n%s'%message)
     if exceptclass in [KeyboardInterrupt, SystemExit]:
         sys.__excepthook__(exceptclass,exception,exec_info)
     else:
-        message = ''.join(traceback.format_exception(exceptclass,exception,exec_info))
         subprocess.Popen(['python','-m''excepthook.gtk_exception',
                           os.path.basename(sys.argv[0]), 
                           '%s: %s' % (exceptclass.__name__, exception),
                           message])
         sys.__excepthook__(exceptclass,exception,exec_info)
+
+def logwarning(message, category, filename, lineno, file=None, line=None):
+    logmessage = warnings.formatwarning(message, category, filename, lineno, line)
+    l.logger.warn(logmessage)
+    warnings._showwarning(message, category, filename, lineno, file, line)
+
+def set_logger(logger):   
+    l.logger = logger 
+    warnings._showwarning = warnings.showwarning
+    warnings.showwarning = logwarning
     
 sys.excepthook = gtkhandler
 install_thread_excepthook()
