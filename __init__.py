@@ -18,8 +18,8 @@ def get_prefix_win(share):
     network = win32com.client.Dispatch('WScript.Network')            
     drives = network.EnumNetworkDrives()
     result = dict(grouper(2, drives))
-    for drive_letter,network_path in result.items():
-        if share in network_path:
+    for drive_letter,network_path in result.items():        
+        if drive_letter and share in network_path:
             return drive_letter
     raise RuntimeError('Share isn\'t mounted')
     
