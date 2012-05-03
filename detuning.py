@@ -19,26 +19,25 @@ class detuning(UnitConversion):
     def MHz_from_base(self,aom_frequency):
         return 1e-6*aom_frequency
         
-    def d_MHz_to_base(self,detuning):
+    def d_MHz_to_base(self,detuning_MHz):
         if not self.parameters['aom_f0']:
-            aom_frequency_MHz = (detuning - self.parameters['detuning_0']) / self.parameters['pass']
+            aom_frequency_MHz = (detuning_MHz - self.parameters['detuning_0']) / self.parameters['pass']
         else:
-            aom_frequency_MHz = detuning / self.parameters['pass'] + self.parameters['aom_f0']
+            aom_frequency_MHz = detuning_MHz / self.parameters['pass'] + self.parameters['aom_f0']
         return self.MHz_to_base(aom_frequency_MHz)
         
     def d_MHz_from_base(self,aom_frequency):
         aom_frequency_MHz = self.MHz_from_base(aom_frequency)
         if not self.parameters['aom_f0']:
-            detuning = self.parameters['pass'] * aom_frequency_MHz + self.parameters['detuning_0']
+            detuning_MHz = self.parameters['pass'] * aom_frequency_MHz + self.parameters['detuning_0']
         else:
-            detuning = self.parameters['pass'] * (aom_frequency_MHz - self.parameters['aom_f0']) 
-        return detuning
+            detuning_MHz = self.parameters['pass'] * (aom_frequency_MHz - self.parameters['aom_f0']) 
+        return detuning_MHz
         
     def linewidths_to_base(self,linewidths):
-        aom_frequency_MHz = self.d_MHz_to_base(self.parameters['gamma'] * linewidths)
-        return self.MHz_to_base(aom_frequency_MHz)
+        aom_frequency = self.d_MHz_to_base(self.parameters['gamma'] * linewidths)
+        return aom_frequency
         
     def linewidths_from_base(self,aom_frequency):
-        aom_frequency_MHz = self.MHz_from_base(aom_frequency)
-        linewidths = self.d_MHz_from_base(aom_frequency_MHz) / self.parameters['gamma']
+        linewidths = self.d_MHz_from_base(aom_frequency) / self.parameters['gamma']
         return linewidths
