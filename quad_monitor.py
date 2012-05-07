@@ -19,9 +19,9 @@ class quad_monitor(UnitConversion):
         amps = volts * self.parameters['A_per_V'] + self.parameters['A_offset']
         return amps
     def Gcm_to_base(self,gauss_per_cm):
-        volts = gauss_per_cm/(self.parameters['Gcm_per_A'] * self.parameters['A_per_V'])
+        volts = self.A_to_base(gauss_per_cm/self.parameters['Gcm_per_A'])
         return volts
     def Gcm_from_base(self,volts):
-        gauss_per_cm = self.parameters['Gcm_per_A'] * self.parameters['A_per_V'] * volts
+        gauss_per_cm = self.parameters['Gcm_per_A'] * self.A_from_base(volts)
         return gauss_per_cm
         
