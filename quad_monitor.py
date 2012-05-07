@@ -3,12 +3,12 @@ class quad_monitor(UnitConversion):
     base_unit = 'V'
     derived_units = ['A', 'Gcm']
     
-    def __init__(self,calibration_parameters = {'A_per_V':20.032, 'Gcm_per_A':1.88679, 'A_offset':0.0968}):            
+    def __init__(self,calibration_parameters = {'A_per_V':20.032, 'Gcm_per_A':1.88679, 'A_offset':0.0968-0.14}):            
         self.parameters = calibration_parameters
      
         self.parameters.setdefault('A_per_V',20.032)
         self.parameters.setdefault('Gcm_per_A',1.88679)
-        self.parameters.setdefault('A_offset',0.0968)
+        self.parameters.setdefault('A_offset',0.0968-0.14)
         
         UnitConversion.__init__(self,self.parameters)
 
