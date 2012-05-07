@@ -3,12 +3,12 @@ class quad_driver(UnitConversion):
     base_unit = 'V'
     derived_units = ['A', 'Gcm']
     
-    def __init__(self,calibration_parameters = {'A_per_V':19.9757, 'Gcm_per_A':1.88679, 'A_offset':-0.642724+0.14, 'A_min':-0.09}):            
+    def __init__(self,calibration_parameters = {'A_per_V':19.9757, 'Gcm_per_A':1.88679, 'A_offset':-0.642724, 'A_min':-0.09}):            
         self.parameters = calibration_parameters
      
         self.parameters.setdefault('A_per_V',19.9757)
         self.parameters.setdefault('Gcm_per_A',1.88679)
-        self.parameters.setdefault('A_offset',-0.642724+0.14)
+        self.parameters.setdefault('A_offset',-0.642724)
         self.parameters.setdefault('A_min',-0.09)
         
         UnitConversion.__init__(self,self.parameters)
