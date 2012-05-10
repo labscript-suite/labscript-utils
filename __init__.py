@@ -6,8 +6,7 @@ def get_prefix_linux(share):
     # check if gvfs has been used to mount the filesystem
     if os.path.exists(gvfs):
         for mount in os.listdir(gvfs):
-            thisshare, on, thisserver = mount.split()
-            if thisshare == share:
+            if share in mount:
                 return os.path.join(gvfs, mount)
     # otherwise check conventional locations
     with open('/proc/mounts') as f:
@@ -32,14 +31,24 @@ def get_prefix_win(share):
         if drive_letter and share in network_path:
             return drive_letter + os.sep
     raise RuntimeError('Share isn\'t mounted')
-    
+
+def get_prefix_macos(share):
+    volumes = os.path.join('/Volumes')
+    # check if gvfs has been used to mount the filesystem
+    for mount in os.listdir(volumes):
+        if share in mount:
+            return os.path.join(volumes, mount)
+    raise RuntimeError('Share isn\'t mounted')
+        
 def get_prefix(share):
     if os.name == 'nt':
         return get_prefix_win(share)
     elif 'linux' in sys.platform:
         return get_prefix_linux(share)
+    elif 'darwin' in sys.platform:
+        return get_prefix_macos(share)
     else:
         raise OSError('Can\'t get shareed drive prefix on this platform')
-        
+    
 if __name__ == '__main__':
     print 'monashbec prefix is:', get_prefix('monashbec')
