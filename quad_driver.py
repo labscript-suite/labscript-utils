@@ -1,4 +1,5 @@
 from UnitConversionBase import *
+
 class quad_driver(UnitConversion):
     base_unit = 'V'
     derived_units = ['A', 'Gcm']
@@ -13,6 +14,7 @@ class quad_driver(UnitConversion):
         
         UnitConversion.__init__(self,self.parameters)
 
+    @vectorise
     def A_to_base(self,amps):
         V_min = (self.parameters['A_min'] - self.parameters['A_offset'])/self.parameters['A_per_V']
         if amps <= self.parameters['A_min']:
