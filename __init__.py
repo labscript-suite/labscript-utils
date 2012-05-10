@@ -34,7 +34,6 @@ def get_prefix_win(share):
 
 def get_prefix_macos(share):
     volumes = os.path.join('/Volumes')
-    # check if gvfs has been used to mount the filesystem
     for mount in os.listdir(volumes):
         if share in mount:
             return os.path.join(volumes, mount)
