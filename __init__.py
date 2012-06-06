@@ -16,7 +16,7 @@ def turn_locks_on(redis_server='localhost'):
         if mode != 'r':
             self.redislock = redis.lock(name)
             self.redislock.acquire()
-        _orig_init(self, name, mode=None, driver=None, libver=None, **kwds)
+        _orig_init(self, name, mode, driver, libver, **kwds)
 
     def close(self):
         if self.redislock is not None:
