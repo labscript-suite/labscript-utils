@@ -23,7 +23,7 @@ class FileWatcher(object):
         self.main.daemon = True
         self.running = True
         self.lock = threading.Lock()
-        self.update_files()
+        self.update_files(trigger_callback=False)
         self.main.start()
         
     def mainloop(self):
@@ -33,7 +33,8 @@ class FileWatcher(object):
                 self.update_files()
                 self.check()
     
-    def update_files(self,folders=None):
+    
+    def update_files(self,folders=None,trigger_callback=True):
         if folders is None:
             folders = self.folders
         for folder in folders:
@@ -41,28 +42,17 @@ class FileWatcher(object):
                 for name in os.listdir(folder):
                     path = os.path.join(folder,name)
                     if os.path.isdir(path):
-                        self.update_files([path])
+                        self.update_files([path],trigger_callback)
                     else:
                         if not path in self.files:
                             self.files.add(path)
-                            if self.running:
+                            if trigger_callback:
                                 self.callback(path,os.path.getmtime(path))
             except OSError:
                 # Folder has been deleted. File deletion will still be
                 # detected, so we can ignore this.
                 continue
-                    
-    def stop(self):
-        self.running = False
     
-    def add_files(self,files):
-        with self.lock:
-            self.files += files
-            
-    def add_folders(self,folders):
-        with self.lock:
-            self.folders += folders
-                
     def check(self):
         for name in self.files:
             try:
@@ -76,7 +66,31 @@ class FileWatcher(object):
                 if name in self.modified_times:
                     del self.modified_times[name]
                     self.callback(name,modified_time)
-
+                                    
+    def stop(self):
+        self.running = False
+    
+    def add_file(self, path):
+        self.add_files(path)
+        
+    def add_folder(self, folder):
+        self.add_folders(folder)
+        
+    def add_files(self,files):
+        with self.lock:
+            if isinstance(files,str):
+                self.files.add(files)
+            else:
+               self.files.union(set(files))
+    
+    def add_folders(self,folders):
+        with self.lock:
+            if isinstance(folders,str):
+                self.folders.add(folders)
+            else:
+               self.files.union(set(folders))
+            self.update_files(trigger_callback=False)
+            
    
 if __name__ == '__main__':
     # Example usage
