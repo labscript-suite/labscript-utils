@@ -3,23 +3,66 @@ import os
 import time
 
 class FileWatcher(object):
-    def __init__(self,callback, files):
+    def __init__(self,callback, files=None, folders=None):
         self.callback = callback
-        self.files = files
+        if files is None:
+            self.files = set()
+        elif isinstance(files,str):
+            self.files = set([files])
+        else:
+            self.files = set(files)
+        if folders is None:
+            self.folders = set()
+        elif isinstance(folders,str):
+            self.folders = set([folders])
+        else:
+            self.folders = set(folders)
+            
         self.modified_times = {}
         self.main = threading.Thread(target = self.mainloop)
         self.main.daemon = True
         self.running = True
+        self.lock = threading.Lock()
+        self.update_files()
         self.main.start()
         
     def mainloop(self):
         while self.running:
             time.sleep(1)
-            self.check()
+            with self.lock:
+                self.update_files()
+                self.check()
     
+    def update_files(self,folders=None):
+        if folders is None:
+            folders = self.folders
+        for folder in folders:
+            try:
+                for name in os.listdir(folder):
+                    path = os.path.join(folder,name)
+                    if os.path.isdir(path):
+                        self.update_files([path])
+                    else:
+                        if not path in self.files:
+                            self.files.add(path)
+                            if self.running:
+                                self.callback(path,os.path.getmtime(path))
+            except OSError:
+                # Folder has been deleted. File deletion will still be
+                # detected, so we can ignore this.
+                continue
+                    
     def stop(self):
         self.running = False
-        
+    
+    def add_files(self,files):
+        with self.lock:
+            self.files += files
+            
+    def add_folders(self,folders):
+        with self.lock:
+            self.folders += folders
+                
     def check(self):
         for name in self.files:
             try:
@@ -44,6 +87,6 @@ if __name__ == '__main__':
         else:
             print name, 'was modified at',modified
         
-    f = FileWatcher(callback, ['test.txt'])  
+    f = FileWatcher(callback, files='test.txt',folders='foobar')  
     time.sleep(60)
     
