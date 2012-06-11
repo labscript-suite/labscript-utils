@@ -23,7 +23,7 @@ def install_thread_excepthook():
             sys.excepthook(*sys.exc_info())
     threading.Thread.run = run
     
-def gtkhandler(exceptclass,exception,exec_info):
+def gtkhandler(exceptclass,exception,exec_info,reraise=True):
     message = ''.join(traceback.format_exception(exceptclass,exception,exec_info))
     if l.logger:
         l.logger.error('Got an exception:\n%s'%message)
@@ -34,7 +34,8 @@ def gtkhandler(exceptclass,exception,exec_info):
                           os.path.basename(sys.argv[0]), 
                           '%s: %s' % (exceptclass.__name__, exception),
                           message])
-        sys.__excepthook__(exceptclass,exception,exec_info)
+        if reraise:
+            sys.__excepthook__(exceptclass,exception,exec_info)
 
 def logwarning(message, category, filename, lineno, file=None, line=None):
     logmessage = warnings.formatwarning(message, category, filename, lineno, line)
