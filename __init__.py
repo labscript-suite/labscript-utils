@@ -33,7 +33,6 @@ class FileWatcher(object):
                 self.update_files()
                 self.check()
     
-    
     def update_files(self,folders=None,trigger_callback=True):
         if folders is None:
             folders = self.folders
