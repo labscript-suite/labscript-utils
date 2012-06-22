@@ -3,7 +3,7 @@ import os
 
 
 class LabConfig(ConfigParser.SafeConfigParser):    
-    def __init__(self,config_path):
+    def __init__(self,config_path,required_params={}):
         self.config_path = config_path
         
         # If the file doesn't exist, create it
@@ -14,6 +14,20 @@ class LabConfig(ConfigParser.SafeConfigParser):
         # Load the config file
         ConfigParser.SafeConfigParser.__init__(self)
         self.read(config_path)
+        
+        try:
+            for section, options in required_params.items():
+                for option in options:
+                    self.get(section,option)
+                
+        except ConfigParser.NoOptionError as e:
+            file_format = ""
+            for section, options in required_params.items():
+                file_format += "[%s]\n"%section
+                for option in options:
+                    file_format += "%s = <value>\n"%option                  
+            
+            raise Exception('The experiment configuration file located at %s does not have the required keys. Make sure the config file containes the following structure:\n%s'%(config_path,file_format))
         
 
     # Overwrite the add_section method to only attempt to add a section if it doesn't
