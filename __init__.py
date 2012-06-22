@@ -1,18 +1,15 @@
 import ConfigParser
 import os
-from filewatcher import FileWatcher
+
 
 class LabConfig(ConfigParser.SafeConfigParser):    
-    def __init__(self,config_path = r'C:\lab_config.ini'):
+    def __init__(self,config_path):
         self.config_path = config_path
         
         # If the file doesn't exist, create it
         if not os.path.exists(config_path):
             with open(config_path,'a+') as f:
                 pass
-        
-        # Watch the File for changes
-        self.filewatcher = FileWatcher(self.reload,self.config_path)
         
         # Load the config file
         ConfigParser.SafeConfigParser.__init__(self)
@@ -48,9 +45,3 @@ class LabConfig(ConfigParser.SafeConfigParser):
     def save(self):
         with open(self.config_path, 'w+') as f:
             self.write(f)
-    
-    def reload(self,*args,**kwargs):
-        self.filewatcher.stop()
-        self.__init__(self.config_path)
-        
-    
