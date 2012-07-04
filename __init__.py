@@ -1,7 +1,11 @@
 import ConfigParser
 import os
 
-
+if os.name == 'nt':
+    config_prefix = r'C:\labconfig\\'
+else:
+    config_prefix = os.path.join(os.getenv('HOME'),'labconfig')
+    
 class LabConfig(ConfigParser.SafeConfigParser):    
     def __init__(self,config_path,required_params={}):
         self.config_path = config_path
