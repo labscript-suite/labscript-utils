@@ -17,7 +17,9 @@ class quad_driver(UnitConversion):
     @vectorise
     def A_to_base(self,amps):
         V_min = (self.parameters['A_min'] - self.parameters['A_offset'])/self.parameters['A_per_V']
-        if amps <= self.parameters['A_min']:
+        if amps < 0.001:
+            volts = 0
+        elif amps <= self.parameters['A_min']:
             volts = V_min
         else:
             volts = (amps - self.parameters['A_offset'])/self.parameters['A_per_V']
