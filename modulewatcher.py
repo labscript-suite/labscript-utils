@@ -1,6 +1,7 @@
 import sys
 import threading
 import time
+import os
 
 class ModuleWatcher(object):
      def __init__(self,stderr):
