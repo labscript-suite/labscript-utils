@@ -10,10 +10,20 @@ class LabConfig(ConfigParser.SafeConfigParser):
     def __init__(self,config_path,required_params={}):
         self.config_path = config_path
         
+        self.file_format = ""
+        for section, options in required_params.items():
+            self.file_format += "[%s]\n"%section
+            for option in options:
+                self.file_format += "%s = <value>\n"%option
+        
+        # If the folder doesn't exist, create it
+        if not os.path.exists(os.path.dirname(config_path)):
+            os.mkdir(os.path.dirname(config_path))
+        
         # If the file doesn't exist, create it
         if not os.path.exists(config_path):
             with open(config_path,'a+') as f:
-                pass
+                f.write(self.file_format)
         
         # Load the config file
         ConfigParser.SafeConfigParser.__init__(self)
@@ -24,14 +34,8 @@ class LabConfig(ConfigParser.SafeConfigParser):
                 for option in options:
                     self.get(section,option)
                 
-        except ConfigParser.NoOptionError as e:
-            file_format = ""
-            for section, options in required_params.items():
-                file_format += "[%s]\n"%section
-                for option in options:
-                    file_format += "%s = <value>\n"%option                  
-            
-            raise Exception('The experiment configuration file located at %s does not have the required keys. Make sure the config file containes the following structure:\n%s'%(config_path,file_format))
+        except ConfigParser.NoOptionError as e:               
+            raise Exception('The experiment configuration file located at %s does not have the required keys. Make sure the config file containes the following structure:\n%s'%(config_path, self.file_format))
         
 
     # Overwrite the add_section method to only attempt to add a section if it doesn't
