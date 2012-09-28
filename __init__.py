@@ -6,7 +6,16 @@ if os.name == 'nt':
     config_prefix = r'C:\labconfig\\'
 else:
     config_prefix = os.path.join(os.getenv('HOME'),'labconfig')
-
+    print config_prefix
+    if not os.path.exists(config_prefix):
+        config_prefix='/etc/labconfig/'
+        
+if not os.path.exists(config_prefix):
+    message = (r"Couldn't find labconfig folder. Please ensure it exists. " +
+               r"In Windows, this is C:\\labconfig\. Otherwise $HOME/labconfig/ is checked, " + 
+               r"and then, /etc/labconfig/.")
+    raise IOError(message)
+    
 default_config_path = os.path.join(config_prefix,'%s.ini'%socket.gethostname())
     
 class LabConfig(ConfigParser.SafeConfigParser):    
