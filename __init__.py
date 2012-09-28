@@ -6,7 +6,6 @@ if os.name == 'nt':
     config_prefix = r'C:\labconfig\\'
 else:
     config_prefix = os.path.join(os.getenv('HOME'),'labconfig')
-    print config_prefix
     if not os.path.exists(config_prefix):
         config_prefix='/etc/labconfig/'
         
