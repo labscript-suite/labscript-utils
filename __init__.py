@@ -1,13 +1,16 @@
 import ConfigParser
 import os
+import socket
 
 if os.name == 'nt':
     config_prefix = r'C:\labconfig\\'
 else:
     config_prefix = os.path.join(os.getenv('HOME'),'labconfig')
+
+default_config_path = os.path.join(config_prefix,'%s.ini'%socket.gethostname())
     
 class LabConfig(ConfigParser.SafeConfigParser):    
-    def __init__(self,config_path,required_params={}):
+    def __init__(self,config_path=default_config_path,required_params={}):
         self.config_path = config_path
         
         self.file_format = ""
