@@ -1,20 +1,27 @@
-import sys
+import os, sys
 import linecache
 import logging, logging.handlers
 import threading
+from datetime import datetime
 
 def log(log_path, module_names, sub = False, all=False):
-    def get_logger ():
-        logger = logging.getLogger('TRACER')
-        handler = logging.handlers.RotatingFileHandler(log_path, maxBytes=1024*1024*50)
-        formatter = logging.Formatter('%(asctime)s: %(threadName)s: %(message)s')
-        handler.setFormatter(formatter)
-        handler.setLevel(logging.DEBUG)
-        logger.addHandler(handler)
-        logger.setLevel(logging.DEBUG)
-        return logger
+
+    # Append if file is under 50MB, else replace it with a new file:
+    if os.path.exists(log_path) and os.path.getsize(log_path) < 50*1024*1024:
+        outfile = open(log_path, 'a',0)
+    else:
+        outfile = open(log_path, 'w',0)
     
+    # For well formed lines in multithreaded programs:
+    writelock = threading.Lock()
     
+    def write(module_name, lineno, line):
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] # chop microseconds to milliseconds
+        threadname = threading.current_thread().name
+        message = "[%s] %s: %s:%s: %s\n" % (timestamp, threadname, module_name, lineno, line)
+        with writelock:
+            outfile.write(message)
+        
     def traceit(frame, event, arg):
         if event == "line":
             lineno = frame.f_lineno
@@ -26,16 +33,16 @@ def log(log_path, module_names, sub = False, all=False):
                 filename.endswith(".pyo")):
                 filename = filename[:-1]
             try:
-                name = frame.f_globals["__name__"]
+                module_name = frame.f_globals["__name__"]
             except KeyError:
-                name = '<string>'
-            if name in module_names or all or (sub and sub in name):
+                module_name = '<string>'
+            if module_name in module_names or all or (sub and sub in module_name):
                 line = linecache.getline(filename, lineno)
-                logger.debug("%s:%s: %s" % (name, lineno, line.rstrip()))
+                write(module_name, lineno, line.rstrip())
         return traceit
-    
-    logger = get_logger()
-    logger.debug('\n*****STARTING*****\n')
+                    
+    write('tracelog','','\n\n***starting***\n')
     sys.settrace(traceit)
     threading.settrace(traceit)
+    
 
