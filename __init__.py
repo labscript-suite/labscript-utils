@@ -4,16 +4,20 @@ import logging, logging.handlers
 import threading
 from datetime import datetime
 
-def log(log_path, module_names, sub = False, all=False):
-
+def set_file(log_path):
     # Append if file is under 50MB, else replace it with a new file:
+    global outfile
     if os.path.exists(log_path) and os.path.getsize(log_path) < 50*1024*1024:
         outfile = open(log_path, 'a',0)
     else:
         outfile = open(log_path, 'w',0)
+        
+def log(log_path, module_names, sub = False, all=False):
     
     # For well formed lines in multithreaded programs:
     writelock = threading.Lock()
+    
+    set_file(log_path)
     
     def write(module_name, lineno, line):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] # chop microseconds to milliseconds
