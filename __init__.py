@@ -12,7 +12,7 @@ def set_file(log_path):
     else:
         outfile = open(log_path, 'w',0)
         
-def log(log_path, module_names, sub = False, all=False):
+def log(log_path, module_names=[], sub = False, all=False):
     
     # For well formed lines in multithreaded programs:
     writelock = threading.Lock()
