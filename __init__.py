@@ -8,6 +8,7 @@ import weakref
 import zmq
 
 import zlock
+
 import shared_drive
 from LabConfig import LabConfig
 
@@ -56,7 +57,6 @@ if socket.gethostbyname(host) == socket.gethostbyname('localhost'):
         zlock.connect(host,port,timeout=15)
 else:
     zlock.connect(host, port)
-        
 def set_default_timeout(t):
     zlock.set_default_timeout(t)
 
@@ -64,4 +64,5 @@ def set_default_timeout(t):
 # calling set_default_timeout themselves:
 set_default_timeout(30)
 
-    
+
+
