@@ -6,8 +6,8 @@ import subprocess
 import weakref
 
 import zmq
-
 import zlock
+from zlock import set_default_timeout, set_cache_time
 
 import shared_drive
 from LabConfig import LabConfig
@@ -16,6 +16,10 @@ if 'h5py' in sys.modules:
     raise ImportError('h5_lock must be imported prior to importing h5py')
         
 import h5py
+
+DEFAULT_TIMEOUT = 15
+MIN_CACHE_TIME = 0.1
+MAX_CACHE_TIME = 1
 
 def __init__(self, name, mode=None, driver=None, libver=None, **kwds):
     self.zlock = zlock.Lock(shared_drive.path_to_agnostic(name))
@@ -57,12 +61,11 @@ if socket.gethostbyname(host) == socket.gethostbyname('localhost'):
         zlock.connect(host,port,timeout=15)
 else:
     zlock.connect(host, port)
-def set_default_timeout(t):
-    zlock.set_default_timeout(t)
 
-# 30 seconds seems like a good lock timeout. The user can increase by
-# calling set_default_timeout themselves:
-set_default_timeout(30)
+# The user can call these functions to change the timeouts later if they
+# are not to their liking:
+set_default_timeout(DEFAULT_TIMEOUT)
+set_cache_time(MIN_CACHE_TIME, MAX_CACHE_TIME)
 
 
 
