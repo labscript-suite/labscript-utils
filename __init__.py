@@ -1,6 +1,6 @@
 import os
 import gtk
-import h5py
+import h5_lock, h5py
 
 # Create a generic interface for displaying pages of settings
 
