@@ -4,7 +4,7 @@ import time
 import os
 
 class ModuleWatcher(object):
-     def __init__(self,stderr):
+     def __init__(self,stderr=sys.stderr):
          # The whitelist is the list of names of currently loaded modules:
          self.whitelist = set(sys.modules)
          self.modified_times = {}
