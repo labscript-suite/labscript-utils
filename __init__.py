@@ -1,4 +1,5 @@
 import os, sys
+import inspect
 import linecache
 import logging, logging.handlers
 import threading
@@ -19,34 +20,27 @@ def log(log_path, module_names=[], sub = False, all=False):
     
     set_file(log_path)
     
-    def write(module_name, lineno, line):
+    def write(module_name, lineno, function, line):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3] # chop microseconds to milliseconds
         threadname = threading.current_thread().name
-        message = "[%s] %s: %s:%s: %s\n" % (timestamp, threadname, module_name, lineno, line)
+        message = "[%s] %s: %s:%s in %s: %s\n" % (timestamp, threadname, module_name, lineno, function, line)
         with writelock:
             outfile.write(message)
         
     def traceit(frame, event, arg):
         if event == "line":
-            lineno = frame.f_lineno
-            try:
-                filename = frame.f_globals["__file__"]
-            except KeyError:
-                filename = '<string>'
-            if (filename.endswith(".pyc") or
-                filename.endswith(".pyo")):
-                filename = filename[:-1]
+            filename, lineno, function, code_context, index = inspect.getframeinfo(frame, context=1)
             try:
                 module_name = frame.f_globals["__name__"]
             except KeyError:
                 module_name = '<string>'
             if module_name in module_names or all or (sub and sub in module_name):
-                line = linecache.getline(filename, lineno)
-                write(module_name, lineno, line.rstrip())
+                line = code_context[0].rstrip() if code_context else '<within exec() or eval()>'
+                write(module_name, lineno, function, line)
         return traceit
                     
-    write('tracelog','','\n\n***starting***\n')
-    sys.settrace(traceit)
+    write('tracelog','','','\n\n***starting***\n')
     threading.settrace(traceit)
+    sys.settrace(traceit)
     
 
