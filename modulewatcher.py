@@ -4,13 +4,12 @@ import time
 import os
 
 class ModuleWatcher(object):
-     def __init__(self,stderr=sys.stderr):
+     def __init__(self):
          # The whitelist is the list of names of currently loaded modules:
          self.whitelist = set(sys.modules)
          self.modified_times = {}
          self.main = threading.Thread(target=self.mainloop)
          self.main.daemon = True
-         self.stderr = stderr
          self.main.start()
          
      def mainloop(self):
@@ -34,7 +33,7 @@ class ModuleWatcher(object):
                 if modified_time != previous_modified_time:
                     # A module has been modified! Unload all modules
                     # not in the whitelist:
-                    self.stderr.write('%s modified: all modules will be reloaded next run.\n'%module_file)
+                    sys.stderr.write('%s modified: all modules will be reloaded next run.\n'%module_file)
                     for name in sys.modules.copy():
                         if name not in self.whitelist:
                             # This unloads a module. This is slightly
