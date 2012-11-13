@@ -70,8 +70,8 @@ def connect_to_zlock_server():
     set_cache_time(MIN_CACHE_TIME, MAX_CACHE_TIME)
 
 
-#connect_to_zlock_server()
-#hack_locks_onto_h5py()
+connect_to_zlock_server()
+hack_locks_onto_h5py()
 
 
 # begin hack that makes strings fixed-length by default:
