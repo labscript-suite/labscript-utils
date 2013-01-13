@@ -31,7 +31,7 @@ class LabConfig(ConfigParser.SafeConfigParser):
         if not os.path.exists(os.path.dirname(config_path)):
             os.mkdir(os.path.dirname(config_path))
         
-        # If the file doesn't exist, create it
+        # If the file doesn't exist, create it 
         if not os.path.exists(config_path):
             with open(config_path,'a+') as f:
                 f.write(self.file_format)
