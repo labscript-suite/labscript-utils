@@ -46,7 +46,10 @@ def set_logger(logger):
     l.logger = logger 
     warnings._showwarning = warnings.showwarning
     warnings.showwarning = logwarning
-    
-sys.excepthook = gtkhandler
-install_thread_excepthook()
-
+ 
+try:
+    import gtk
+    sys.excepthook = gtkhandler
+    install_thread_excepthook()
+except:
+    pass
