@@ -18,9 +18,12 @@ if not os.path.exists(config_prefix):
 default_config_path = os.path.join(config_prefix,'%s.ini'%socket.gethostname())
     
 class LabConfig(ConfigParser.SafeConfigParser):    
+    NoOptionError = ConfigParser.NoOptionError
+    NoSectionError = ConfigParser.NoSectionError
+
     def __init__(self,config_path=default_config_path,required_params={}):
         self.config_path = config_path
-        
+
         self.file_format = ""
         for section, options in required_params.items():
             self.file_format += "[%s]\n"%section
