@@ -12,8 +12,8 @@ def path_to_agnostic(path):
     path = os.path.abspath(path)
     if path.startswith(prefix):
         path = path.split(prefix, 1)[1]
-        path = os.path.join('Z:', path)
-        path = path.replace(os.path.sep,'\\')
+        path = os.path.join('Z:\\', path)
+        path = path.replace(os.path.sep, '\\')
     return path
     
 def path_to_local(path):
