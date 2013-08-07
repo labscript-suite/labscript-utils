@@ -24,8 +24,8 @@ def path_to_local(path):
     return path
 
 if __name__ == '__main__':
-    # test:    
-    path = os.path.join(prefix, 'foo/bar/baz/qux')
+    # test: 
+    path = os.path.join(prefix, 'foo','bar','baz')
     agnostic_path = path_to_agnostic(path)
     local_path = path_to_local(agnostic_path)
     assert local_path == path
