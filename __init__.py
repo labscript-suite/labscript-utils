@@ -59,6 +59,12 @@ class FileWatcher(object):
             except OSError:
                 if not os.path.exists(name):
                     modified_time = None
+                else:
+                    # If we couldn't get the modified time but the path does exist,
+                    # there was probablly some race condition with the path becoming unavailable briefly
+                    # we'll skip the rest of the check for now, and leave it up to the next call of check()
+                    # to catch any file modification
+                    continue
             previous_modified_time = self.modified_times.setdefault(name, modified_time)
             self.modified_times[name] = modified_time
             if modified_time != previous_modified_time:
