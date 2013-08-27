@@ -18,7 +18,7 @@ if 'h5py' in sys.modules:
 import h5py
 
 DEFAULT_TIMEOUT = 15
-MIN_CACHE_TIME = 0.1
+MIN_CACHE_TIME = 0
 MAX_CACHE_TIME = 1
 
 def hack_locks_onto_h5py():
