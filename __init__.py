@@ -21,8 +21,11 @@ class LabConfig(ConfigParser.SafeConfigParser):
     NoOptionError = ConfigParser.NoOptionError
     NoSectionError = ConfigParser.NoSectionError
 
-    def __init__(self,config_path=default_config_path,required_params={}):
-        self.config_path = config_path
+    def __init__(self,config_path=default_config_path,required_params={},defaults={}):
+        if isinstance(config_path,list):
+            self.config_path = config_path[0]
+        else:
+            self.config_path = config_path
 
         self.file_format = ""
         for section, options in required_params.items():
@@ -31,17 +34,17 @@ class LabConfig(ConfigParser.SafeConfigParser):
                 self.file_format += "%s = <value>\n"%option
         
         # If the folder doesn't exist, create it
-        if not os.path.exists(os.path.dirname(config_path)):
-            os.mkdir(os.path.dirname(config_path))
+        if not os.path.exists(os.path.dirname(self.config_path)):
+            os.mkdir(os.path.dirname(self.config_path))
         
         # If the file doesn't exist, create it
-        if not os.path.exists(config_path):
-            with open(config_path,'a+') as f:
+        if not os.path.exists(self.config_path):
+            with open(self.config_path,'a+') as f:
                 f.write(self.file_format)
         
         # Load the config file
-        ConfigParser.SafeConfigParser.__init__(self)
-        self.read(config_path)
+        ConfigParser.SafeConfigParser.__init__(self,defaults)
+        self.read(config_path) #read all files in the config path if it is a list (self.config_path only contains one string)
         
         try:
             for section, options in required_params.items():
