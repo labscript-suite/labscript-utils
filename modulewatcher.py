@@ -4,22 +4,22 @@ import time
 import os
 
 class ModuleWatcher(object):
-     def __init__(self):
-         # The whitelist is the list of names of currently loaded modules:
-         self.whitelist = set(sys.modules)
-         self.modified_times = {}
-         self.main = threading.Thread(target=self.mainloop)
-         self.main.daemon = True
-         self.main.start()
+    def __init__(self):
+        # The whitelist is the list of names of currently loaded modules:
+        self.whitelist = set(sys.modules)
+        self.modified_times = {}
+        self.main = threading.Thread(target=self.mainloop)
+        self.main.daemon = True
+        self.main.start()
          
-     def mainloop(self):
-         while True:
-             time.sleep(1)
-             self.check_and_unload()
+    def mainloop(self):
+        while True:
+            time.sleep(1)
+            self.check_and_unload()
              
-     def check_and_unload(self):
-         # Look through currently loaded modules:
-         for name, module in sys.modules.items():
+    def check_and_unload(self):
+        # Look through currently loaded modules:
+        for name, module in sys.modules.items():
             # Look only at the modules not in the the whitelist:
             if name not in self.whitelist and hasattr(module,'__file__'):
                 # Only consider modules which are .py files, no C extensions:
