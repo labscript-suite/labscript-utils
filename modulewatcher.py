@@ -2,9 +2,15 @@ import sys
 import threading
 import time
 import os
+import gc
 
 class ModuleWatcher(object):
     def __init__(self):
+        # Disable garbage collection, due to a bug that causes a crash
+        # if our check_and_unload function runs at the same time as a
+        # garbage collection cycle. We will manually trigger garbage collection.
+        gc.disable()
+                
         # The whitelist is the list of names of currently loaded modules:
         self.whitelist = set(sys.modules)
         self.modified_times = {}
@@ -16,7 +22,8 @@ class ModuleWatcher(object):
         while True:
             time.sleep(1)
             self.check_and_unload()
-             
+            self.check_garbage_collection()
+            
     def check_and_unload(self):
         # Look through currently loaded modules:
         for name, module in sys.modules.items():
@@ -47,3 +54,13 @@ class ModuleWatcher(object):
                             del sys.modules[name]
                             if name in self.modified_times:
                                 del self.modified_times[name]
+                                
+    def check_garbage_collection(self):
+        counts, thresholds = gc.get_count(), gc.get_threshold()
+        for generation, (count, threshold) in enumerate(zip(counts, thresholds)): 
+            if count > threshold:
+                gc.collect(generation)
+                
+if __name__ == '__main__':
+    module_watcher = ModuleWatcher()
+    time.sleep(10)
