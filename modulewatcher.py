@@ -3,15 +3,9 @@ import threading
 import time
 import os
 import imp
-import gc
 
 class ModuleWatcher(object):
     def __init__(self):
-        # Disable garbage collection, due to a bug that causes a crash
-        # if our check_and_unload function runs at the same time as a
-        # garbage collection cycle. We will manually trigger garbage collection.
-        gc.disable()
-           
         # A lock to hold whenever you don't want modules unloaded:
         self.unloader_lock = threading.Lock()
             
@@ -27,7 +21,6 @@ class ModuleWatcher(object):
         while True:
             time.sleep(1)
             self.check_and_unload()
-            self.check_garbage_collection()
             
     def check_and_unload(self):
         # Look through currently loaded modules:
@@ -70,14 +63,5 @@ class ModuleWatcher(object):
                             # modules, normal imports in other threads
                             # may resume:
                             imp.release_lock()
-                        
-    def check_garbage_collection(self):
-        counts, thresholds = gc.get_count(), gc.get_threshold()
-        for generation, (count, threshold) in enumerate(zip(counts, thresholds)): 
-            if count > threshold:
-                gc.collect(generation)
-                
-if __name__ == '__main__':
-    module_watcher = ModuleWatcher()
-    import foo
-    time.sleep(10)
+                            
+                            
