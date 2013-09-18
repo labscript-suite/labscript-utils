@@ -7,7 +7,7 @@ import imp
 class ModuleWatcher(object):
     def __init__(self):
         # A lock to hold whenever you don't want modules unloaded:
-        self.unloader_lock = threading.Lock()
+        self.lock = threading.Lock()
             
         # The whitelist is the list of names of currently loaded modules:
         self.whitelist = set(sys.modules)
@@ -16,15 +16,15 @@ class ModuleWatcher(object):
         self.main.daemon = True
         self.main.start()
         
-         
     def mainloop(self):
         while True:
             time.sleep(1)
-            self.check_and_unload()
+            with self.lock:
+                self.check_and_unload()
             
     def check_and_unload(self):
         # Look through currently loaded modules:
-        for name, module in sys.modules.items():
+        for name, module in sys.modules.copy().items():
             # Look only at the modules not in the the whitelist:
             if name not in self.whitelist and hasattr(module,'__file__'):
                 # Only consider modules which are .py files, no C extensions:
@@ -40,28 +40,27 @@ class ModuleWatcher(object):
                     # not in the whitelist:
                     message = '%s modified: all modules will be reloaded next run.\n'%module_file
                     sys.stderr.write(message)
-                    with self.unloader_lock:
-                        # Acquire the import lock so that we don't unload
-                        # modules whilst an import is in progess:
-                        imp.acquire_lock()
-                        try:
-                            for name in sys.modules.copy():
-                                if name not in self.whitelist:
-                                    # This unloads a module. This is slightly
-                                    # more general than reload(module), but
-                                    # has the same caveats regarding existing
-                                    # references. This also means that any
-                                    # exception in the import will occur later,
-                                    # once the module is (re)imported, rather
-                                    # than now where catching the exception
-                                    # would have to be handled differently.
-                                    del sys.modules[name]
-                                    if name in self.modified_times:
-                                        del self.modified_times[name]
-                        finally:
-                            # We're done mucking around with the cached
-                            # modules, normal imports in other threads
-                            # may resume:
-                            imp.release_lock()
+                    # Acquire the import lock so that we don't unload
+                    # modules whilst an import is in progess:
+                    imp.acquire_lock()
+                    try:
+                        for name in sys.modules.copy():
+                            if name not in self.whitelist:
+                                # This unloads a module. This is slightly
+                                # more general than reload(module), but
+                                # has the same caveats regarding existing
+                                # references. This also means that any
+                                # exception in the import will occur later,
+                                # once the module is (re)imported, rather
+                                # than now where catching the exception
+                                # would have to be handled differently.
+                                del sys.modules[name]
+                                if name in self.modified_times:
+                                    del self.modified_times[name]
+                    finally:
+                        # We're done mucking around with the cached
+                        # modules, normal imports in other threads
+                        # may resume:
+                        imp.release_lock()
                             
                             
