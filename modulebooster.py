@@ -3,32 +3,52 @@ import sys
 import cPickle as pickle
 import inspect
 import imp
+import __main__
 
-if os.name == 'nt':
-    cachedir = os.path.dirname(os.path.abspath(__file__))
-else:
-    cachedir = os.path.join(os.environ['HOME'],'.cache','modulebooster')
-if not os.path.exists(cachedir):
-    os.makedirs(cachedir)
+def get_path_to_cache_file():
+    if os.name == 'nt':
+        cachedir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cache')
+    else:
+        cachedir = os.path.join(os.environ['HOME'],'.cache','modulebooster')
+    if not os.path.exists(cachedir):
+        os.makedirs(cachedir)
+    basename = os.path.abspath(getattr(__main__,'__file__','_interactive'))
+    basename = '-'.join(s for s in basename.split(os.path.sep) if s) + '.pickle'
+    basename = basename.replace(':','')
+    cache_filepath = os.path.join(cachedir, basename)
+    return cache_filepath
     
-cache_filepath = os.path.join(cachedir, 'import_cache.pickle')
-
 class _CachingImporter(object):
     def __init__(self):
         self.normal_import = __import__
+        self.depth = 0
+        self.attempted_module_searches = set()
+        self.cache_filepath = get_path_to_cache_file()
+        if not os.path.exists(self.cache_filepath):
+            with open(self.cache_filepath,'w') as f:
+                pickle.dump({},f)
+        try:
+            with open(self.cache_filepath) as f:
+                self.cache = pickle.load(f)
+        except Exception as e:
+            sys.stderr.write("Warning: modulebooster: failed to open cache file, making a new one. Error was: %s\n"%str(e))
+            self.cache = {}
+            self.save()
+        self.dirty = False
         try:
             self.builtins_dict = __builtins__.__dict__
         except AttributeError:
             self.builtins_dict = __builtins__
-        self.depth = 0
-        self.attempted_module_searches = set()
-        try:
-            with open(cache_filepath) as f:
-                self.cache = pickle.load(f)
-        except IOError:
-            self.cache = {}
+    
+    def save(self):
+        with open(self.cache_filepath,'w') as f:
+            pickle.dump((self.cache), f)
         self.dirty = False
         
+    def clear(self):
+        self.cache = {}
+        self.save()
+                
     def find_module(self, fullname, path=None):
         try:
             if self.cache[fullname] is not None:
@@ -87,15 +107,6 @@ class _CachingImporter(object):
         if self.dirty:
             self.save()
             
-    def save(self):
-        with open(cache_filepath,'w') as f:
-            pickle.dump((self.cache), f)
-        self.dirty = False
-        
-    def clear(self):
-        self.cache = {}
-        self.save()
-                                
     def enable(self):
         self.builtins_dict['__import__'] = self.__import__
         sys.meta_path.append(self)
