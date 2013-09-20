@@ -30,7 +30,6 @@ class _Cache(object):
         return name in self.module_details
                        
     def save(self):
-        print 'saving'
         with open(_cache_filepath,'w') as f:
             pickle.dump((self.module_details), f)
         self.dirty = False
@@ -140,3 +139,4 @@ _caching_importer = _CachingImporter()
 enable= _caching_importer.enable
 disable = _caching_importer.disable
 
+enable()
