@@ -72,7 +72,6 @@ class _CachingImporter(object):
                 raise ImportError
         else:
             self.print_('[normal import]')
-            print 'normal:', fullname
         
     def load_module(self, fullname):
         self.print_('loading', fullname)
@@ -103,7 +102,7 @@ class _CachingImporter(object):
         except Exception as e:
             self.print_(e,stderr=True)
             if self.depth == 1:
-                self.print_('Uncaught exception during import. Invalidating import cache...',stderr=True)
+                sys.sderr.write('modulebosster: Uncaught exception during import. Invalidating import cache...',stderr=True)
                 self.cache.clear()
             raise
         finally:
