@@ -7,7 +7,7 @@ import weakref
 
 import zmq
 import zlock
-from zlock import set_default_timeout, set_cache_time
+from zlock import set_default_timeout
 
 import shared_drive
 from LabConfig import LabConfig
@@ -18,9 +18,10 @@ if 'h5py' in sys.modules:
 import h5py
 
 DEFAULT_TIMEOUT = 15
-MIN_CACHE_TIME = 0
-MAX_CACHE_TIME = 1
 
+def NetworkOnlyLock(name):
+    return zlock.NetworkOnlyLock(shared_drive.path_to_agnostic(name))
+    
 def hack_locks_onto_h5py():
     def __init__(self, name, mode=None, driver=None, libver=None, **kwds):
         self.zlock = zlock.Lock(shared_drive.path_to_agnostic(name))
@@ -67,7 +68,6 @@ def connect_to_zlock_server():
     # The user can call these functions to change the timeouts later if they
     # are not to their liking:
     set_default_timeout(DEFAULT_TIMEOUT)
-    set_cache_time(MIN_CACHE_TIME, MAX_CACHE_TIME)
 
 
 connect_to_zlock_server()
