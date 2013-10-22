@@ -1,6 +1,6 @@
 from UnitConversionBase import *
 from scipy.special import lambertw
-from numpy import exp
+from numpy import exp, abs
 class OptotuneLens(UnitConversion):
     base_unit = 'V'
     derived_units = ['distance','I']
@@ -35,7 +35,7 @@ class OptotuneLens(UnitConversion):
         +self.parameters['b']*self.parameters['a'])
         
         volts = amps/ self.parameters['current_cal']
-        return max(volts,0)
+        return (volts > 0) * abs(volts)
         
     def distance_from_base(self,volts):
         amps = max(min(self.parameters['current_cal'] * volts,self.parameters['I_Max']),0)
