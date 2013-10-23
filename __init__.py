@@ -1,9 +1,13 @@
 import os
-import gtk
+
+import PySide # This is done so that we can eval() constants from the PySide module (eg column ASC/DESC sort order)
+from PySide.QtCore import *
+from PySide.QtGui import *
+
 import h5_lock, h5py
+from qtutils.widgets.fingertab import FingerTabWidget
 
 # Create a generic interface for displaying pages of settings
-
 class Settings(object):
     
     def __init__(self,storage='hdf5',file=None,parent = None,page_classes = []):
@@ -29,7 +33,7 @@ class Settings(object):
         if setting_class.name in self.pages:
             return False
                    
-        self.pages[setting_class.name] = setting_class(self.load(setting_class.__name__))   
+        self.pages[setting_class.name] = setting_class(self.load(setting_class.name))   
         return True
         
     def load(self,name):
@@ -57,12 +61,35 @@ class Settings(object):
         if not self.dialog_open:
             self.instantiated_pages = {}
             
-            builder = gtk.Builder()
-            builder.add_from_file(os.path.join(os.path.dirname(os.path.realpath(__file__)),'settings_interface.glade'))
-            builder.connect_signals(self)
+            # Create the dialog
+            dialog = QDialog(self.parent)
+            dialog.setModal(True)
+            dialog.accepted.connect(self.on_save)
+            dialog.rejected.connect(self.on_cancel)
+            dialog.setMinimumSize(800,600)
+            dialog.setWindowTitle("Preferences")
+            # Remove the help flag next to the [X] close button
+            dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
             
-            self.notebook = builder.get_object('notebook')
-            self.window = builder.get_object('window')
+            # Create the layout
+            layout = QVBoxLayout(dialog)
+            
+            #Create the Notebook
+            self.notebook = FingerTabWidget(dialog)            
+            self.notebook.setTabPosition(QTabWidget.West)
+            self.notebook.show() 
+            layout.addWidget(self.notebook)
+            
+            # Create the button box
+            widget = QWidget()
+            hlayout = QHBoxLayout(widget)
+            button_box = QDialogButtonBox()
+            button_box.setStandardButtons(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            button_box.accepted.connect(dialog.accept)
+            button_box.rejected.connect(dialog.reject)
+            hlayout.addItem(QSpacerItem(0,0,QSizePolicy.MinimumExpanding,QSizePolicy.Minimum))
+            hlayout.addWidget(button_box)
+            layout.addWidget(widget)
             
             #sorted(a.items(),key=lambda x: x[1])
             set_page = None
@@ -73,15 +100,14 @@ class Settings(object):
                 self.instantiated_pages[c.__class__] = page
                 
                 # Create label
-                if isinstance(icon,gtk.Image):
+                #if isinstance(icon,gtk.Image):
                     # use their icon
-                    pass
-                else:
+                #    pass
+                #else:
                     # use default icon
-                    pass
+                #    pass
                     
-                tab_label = gtk.Label(c.name)
-                self.notebook.append_page(page,tab_label)
+                self.notebook.addTab(page,c.name)
                 
                 if goto_page and isinstance(c,goto_page):
                     # this is the page we want to go to!
@@ -90,19 +116,15 @@ class Settings(object):
             # We do this here in case one of the settings pages specifically inserts itself in an out of order place (eg first)
             # We hope that everything will be in alphabetical order, but maybe not!
             if set_page:
-                self.notebook.set_current_page(self.notebook.page_num(set_page))
+                self.notebook.tabBar().setCurrentIndex(self.notebook.indexOf(set_page))
+                pass
             
-            if self.parent:
-                self.window.set_transient_for(self.parent)
-            
-            self.window.show()
+            dialog.show()
             self.dialog_open = True
         else:
             if goto_page and goto_page in self.instantiated_pages:
+                self.notebook.tabBar().setCurrentIndex(self.notebook.indexOf(self.instantiated_pages[goto_page]))
                 
-                self.notebook.set_current_page(self.notebook.page_num(self.instantiated_pages[goto_page]))
-                
-            self.window.present()
     
     def register_callback(self,callback):
         self.callback_list.append(callback)
@@ -110,13 +132,13 @@ class Settings(object):
     def remove_callback(self,callback):
         self.callback_list.remove(callback)
     
-    def on_save(self,widget):
+    def on_save(self,*args,**kwargs):
         # Save the settings
         if self.storage == 'hdf5':
             with h5py.File(self.file,'r+') as h5file:
                 group = h5file['/preferences']
                 for page in self.pages.values():
-                    group.attrs[page.__class__.__name__] = repr(page.save()) 
+                    group.attrs[page.__class__.name] = repr(page.save()) 
         else:
             # this should never happen as the exception will have been raised on load!
             pass
@@ -128,7 +150,7 @@ class Settings(object):
         
         self.close()
             
-    def on_cancel(self,widget):
+    def on_cancel(self,*args,**kwargs):
         self.close()
     
     def close(self,*args,**kwargs):
@@ -136,5 +158,4 @@ class Settings(object):
             # Close the setting classes
             for page in self.pages.values():
                 page.close()   
-            self.window.destroy()
             self.dialog_open = False
