@@ -18,11 +18,16 @@ class FileWatcher(object):
         if modified_times is None:
             modified_times = {}
         self.modified_times = modified_times.copy()
+        self.update_files(trigger_callback=False)
+        
+        # remove entries in self.modified times that are not in files
+        for name in self.modified_times:
+            if name not in self.files:
+                del self.modified_times[name]
         
         self.main = threading.Thread(target = self.mainloop)
         self.main.daemon = True
         self.running = True
-        self.update_files(trigger_callback=False)
         self.main.start()
         
     def mainloop(self):
