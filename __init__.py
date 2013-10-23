@@ -3,26 +3,25 @@ import os
 import time
 
 class FileWatcher(object):
-    def __init__(self,callback, files=None, folders=None):
+    def __init__(self, callback, files=None, folders=None, modified_times=None):
         self.callback = callback
-        if files is None:
-            self.files = set()
-        elif isinstance(files,str):
-            self.files = set([files])
-        else:
-            self.files = set(files)
-        if folders is None:
-            self.folders = set()
-        elif isinstance(folders,str):
-            self.folders = set([folders])
-        else:
-            self.folders = set(folders)
-            
-        self.modified_times = {}
+        self.lock = threading.Lock()
+        
+        self.files = set()
+        self.folders = set()
+        if files:
+            self.add_files(files)
+        if folders:
+            self.add_folders(folders)
+        
+        # restore modified times
+        if modified_times is None:
+            modified_times = {}
+        self.modified_times = modified_times.copy()
+        
         self.main = threading.Thread(target = self.mainloop)
         self.main.daemon = True
         self.running = True
-        self.lock = threading.Lock()
         self.update_files(trigger_callback=False)
         self.main.start()
         
@@ -78,6 +77,11 @@ class FileWatcher(object):
     def add_file(self, path):
         self.add_files(path)
         
+    def get_modified_times(self):
+        with self.lock:
+            times = self.modified_times.copy()
+        return times
+        
     def add_folder(self, folder):
         self.add_folders(folder)
         
@@ -86,14 +90,14 @@ class FileWatcher(object):
             if isinstance(files,str):
                 self.files.add(files)
             else:
-               self.files.union(set(files))
+               self.files = self.files.union(set(files)) 
     
     def add_folders(self,folders):
         with self.lock:
             if isinstance(folders,str):
                 self.folders.add(folders)
             else:
-               self.files.union(set(folders))
+               self.folders = self.folders.union(set(folders))
             self.update_files(trigger_callback=False)
             
    
