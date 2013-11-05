@@ -1,9 +1,10 @@
 import os
 import sys
 import cPickle as pickle
-import inspect
 import imp
 import __main__
+
+check_stale = False
 
 def get_path_to_cache_file():
     if os.name == 'nt':
@@ -48,16 +49,27 @@ class _CachingImporter(object):
     def clear(self):
         self.cache = {}
         self.save()
-                
+    
+    def bytecode_is_stale(self, fullname):
+        attrs, _ = self.cache[fullname]
+        if '__file__' in attrs:
+            filepath = attrs['__file__']
+            if filepath.endswith('.pyc'):
+                dot_py = filepath[:-1]
+                if os.path.exists(dot_py):
+                    if os.path.getmtime(filepath) != os.path.getmtime(dot_py):
+                        return True
+        return False
+        
     def find_module(self, fullname, path=None):
         try:
-            if self.cache[fullname] is not None:
-                return self
-            else:
+            if self.cache[fullname] is None:
                 raise ImportError
+            if check_stale and not self.bytecode_is_stale(fullname):
+                return self
         except KeyError:
             self.attempted_module_searches.add(fullname)
-        
+                    
     def load_module(self, fullname):
         if imp.is_builtin(fullname):
             return imp.init_builtin(fullname)
@@ -81,11 +93,12 @@ class _CachingImporter(object):
                 self.clear()
             raise
         finally:
-            self.depth -= 1
-            if not self.depth:
+            if self.depth == 1:
                 self.inspect_modules()
+            self.depth -= 1
      
     def inspect_modules(self):
+        import inspect
         for fullname in self.attempted_module_searches:
             # Some entries in sys.modules are None. Other import attempts
             # failed and are not in sys.modules. We treat these the same.
@@ -109,11 +122,13 @@ class _CachingImporter(object):
             
     def enable(self):
         self.builtins_dict['__import__'] = self.__import__
-        sys.meta_path.append(self)
+        if not self in sys.meta_path:
+            sys.meta_path.append(self)
 
     def disable(self):
         self.builtins_dict['__import__'] = self.normal_import
-        sys.meta_path.remove(self)
+        while self in sys.meta_path:
+            sys.meta_path.remove(self)
      
 _caching_importer = _CachingImporter()   
 enable= _caching_importer.enable
