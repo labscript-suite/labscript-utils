@@ -62,20 +62,19 @@ class Settings(object):
             self.instantiated_pages = {}
             
             # Create the dialog
-            dialog = QDialog(self.parent)
-            dialog.setModal(True)
-            dialog.accepted.connect(self.on_save)
-            dialog.rejected.connect(self.on_cancel)
-            dialog.setMinimumSize(800,600)
-            dialog.setWindowTitle("Preferences")
+            self.dialog = QDialog(self.parent)
+            self.dialog.setModal(True)
+            self.dialog.accepted.connect(self.on_save)
+            self.dialog.rejected.connect(self.on_cancel)
+            self.dialog.setMinimumSize(800,600)
+            self.dialog.setWindowTitle("Preferences")
             # Remove the help flag next to the [X] close button
-            dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+            self.dialog.setWindowFlags(self.dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
             
             # Create the layout
-            layout = QVBoxLayout(dialog)
-            
+            layout = QVBoxLayout(self.dialog)
             #Create the Notebook
-            self.notebook = FingerTabWidget(dialog)            
+            self.notebook = FingerTabWidget(self.dialog)            
             self.notebook.setTabPosition(QTabWidget.West)
             self.notebook.show() 
             layout.addWidget(self.notebook)
@@ -85,14 +84,15 @@ class Settings(object):
             hlayout = QHBoxLayout(widget)
             button_box = QDialogButtonBox()
             button_box.setStandardButtons(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-            button_box.accepted.connect(dialog.accept)
-            button_box.rejected.connect(dialog.reject)
+            button_box.accepted.connect(self.dialog.accept)
+            button_box.rejected.connect(self.dialog.reject)
             hlayout.addItem(QSpacerItem(0,0,QSizePolicy.MinimumExpanding,QSizePolicy.Minimum))
             hlayout.addWidget(button_box)
             layout.addWidget(widget)
             
             #sorted(a.items(),key=lambda x: x[1])
             set_page = None
+            #self.temp_pages = []
             for name, c in sorted(self.pages.items()):
                 page,icon = c.create_dialog(self.notebook)
                 
@@ -119,7 +119,7 @@ class Settings(object):
                 self.notebook.tabBar().setCurrentIndex(self.notebook.indexOf(set_page))
                 pass
             
-            dialog.show()
+            self.dialog.show()
             self.dialog_open = True
         else:
             if goto_page and goto_page in self.instantiated_pages:
@@ -159,3 +159,5 @@ class Settings(object):
             for page in self.pages.values():
                 page.close()   
             self.dialog_open = False
+            self.dialog.deleteLater()
+            self.dialog = None
