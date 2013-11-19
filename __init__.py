@@ -21,7 +21,7 @@ class FileWatcher(object):
         self.update_files(trigger_callback=False)
         
         # remove entries in self.modified times that are not in files
-        for name in self.modified_times:
+        for name in self.modified_times.copy():
             if name not in self.files:
                 del self.modified_times[name]
         
