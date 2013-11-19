@@ -34,7 +34,7 @@ def log(log_path, module_names=[], sub = False, all=False):
                 module_name = frame.f_globals["__name__"]
             except KeyError:
                 module_name = '<string>'
-            if module_name in module_names or all or (sub and sub in module_name):
+            if module_name in module_names or all or (sub and any([module_name.startswith(s) for s in module_names])):
                 line = code_context[0].rstrip() if code_context else '<within exec() or eval()>'
                 write(module_name, lineno, function, line)
         return traceit
