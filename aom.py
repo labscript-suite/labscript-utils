@@ -14,10 +14,10 @@ class SineAom(UnitConversionBase):
         
         # P(x) = A * cos(2*pi*f * x + phase) + c
         # Saturates at saturation Volts
-        self.parameters.setdefault('A', 0)
-        self.parameters.setdefault('f', 0)
-        self.parameters.setdefault('phase', 0)
-        self.parameters.setdefault('c', 0)
+        self.parameters.setdefault('A', 1.969)
+        self.parameters.setdefault('f', 0.527)
+        self.parameters.setdefault('phase', 3.262)
+        self.parameters.setdefault('c', 1.901)
         
         UnitConversion.__init__(self,self.parameters)
 
