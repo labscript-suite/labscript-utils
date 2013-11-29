@@ -49,4 +49,3 @@ class OptotuneLens(UnitConversion):
         
     def I_from_base(self,volts):
         return volts*self.parameters['current_cal']
-    
