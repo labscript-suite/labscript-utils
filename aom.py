@@ -26,11 +26,10 @@ class SineAom(UnitConversion):
         f = self.parameters["f"]
         phase = self.parameters["phase"]
         c = self.parameters["c"]
-        phi = arccos((power - c) / A) - phase
-        if phi <0:
-            phi += 2*pi
-        elif phi > 2*pi:
-            phi -= 2*pi
+        if ((phase / pi) % 2) == 0:
+            phi = (arccos((power - c) / A) - phase) % (2*pi)
+        else:
+            phi = (2*pi - arccos((power - c) / A) - phase) % (2*pi)
         return phi / (2*pi*f)
     
     def Power_from_base(self, amp):
@@ -46,7 +45,6 @@ class SineAom(UnitConversion):
         Pmin = max(self.parameters["c"] - self.parameters["A"], 0)
         P = (Pmax - Pmin) * fraction + Pmin
         Amp = self.Power_to_base(P)
-        print "AOM amplitude", Amp
         return Amp
     
     def fraction_from_base(self, amp):
