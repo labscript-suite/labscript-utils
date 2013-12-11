@@ -1,7 +1,8 @@
 from UnitConversionBase import *
+from NovaTechDDS9m import NovaTechDDS9mAmpConversion
 from numpy import *
 
-class SineAom(UnitConversion):
+class SineAom(NovaTechDDS9mAmpConversion):
     """
     AOM calibration P(A) is very close to a sine for dipole trap AOM!
     """
@@ -19,7 +20,7 @@ class SineAom(UnitConversion):
         self.parameters.setdefault('phase', 3.262)
         self.parameters.setdefault('c', 1.901)
         
-        UnitConversion.__init__(self,self.parameters)
+        NovaTechDDS9mAmpConversion.__init__(self,self.parameters)
 
     def Power_to_base(self, power):
         A = self.parameters["A"]
