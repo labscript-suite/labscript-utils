@@ -8,7 +8,9 @@ from datetime import datetime
 def set_file(log_path):
     # Append if file is under 50MB, else replace it with a new file:
     global outfile
-    if os.path.exists(log_path) and os.path.getsize(log_path) < 50*1024*1024:
+    if log_path is None:
+        outfile = sys.stdout
+    elif os.path.exists(log_path) and os.path.getsize(log_path) < 50*1024*1024:
         outfile = open(log_path, 'a',0)
     else:
         outfile = open(log_path, 'w',0)
