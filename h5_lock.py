@@ -19,11 +19,11 @@ import subprocess
 import weakref
 
 import zmq
-import zlock
-from zlock import set_default_timeout
+import zprocess.locking
+from zprocess.locking import set_default_timeout
 
 import shared_drive
-from LabConfig import LabConfig
+from labscript_utils.labconfig import LabConfig
 
 if 'h5py' in sys.modules:
     raise ImportError('h5_lock must be imported prior to importing h5py')
@@ -33,11 +33,11 @@ import h5py
 DEFAULT_TIMEOUT = 15
 
 def NetworkOnlyLock(name):
-    return zlock.NetworkOnlyLock(shared_drive.path_to_agnostic(name))
+    return zprocess.locking.NetworkOnlyLock(shared_drive.path_to_agnostic(name))
     
 def hack_locks_onto_h5py():
     def __init__(self, name, mode=None, driver=None, libver=None, **kwds):
-        self.zlock = zlock.Lock(shared_drive.path_to_agnostic(name))
+        self.zlock = zprocess.locking.Lock(shared_drive.path_to_agnostic(name))
         self.zlock.acquire()
         _orig_init(self, name, mode, driver, libver, **kwds)
 
@@ -56,7 +56,7 @@ def hack_locks_onto_h5py():
     h5py.File.close = close 
 
 def connect_to_zlock_server():
-    # setup connection with the zlock server, depending on labconfig settings: 
+    # setup connection with the zprocess.locking server, depending on labconfig settings: 
     config = LabConfig(required_params={'ports':['zlock'],'servers':['zlock']})
     host = config.get('servers','zlock')
     port = config.get('ports','zlock')
@@ -64,19 +64,19 @@ def connect_to_zlock_server():
         try:
             # short connection timeout if localhost, don't want to
             # waste time:
-            zlock.connect(host,port,timeout=0.05)
+            zprocess.locking.connect(host,port,timeout=0.05)
         except zmq.ZMQError:
-            # No zlock server running on localhost. Start one. It will run
+            # No zprocess.locking server running on localhost. Start one. It will run
             # forever, even after this program exits. This is important for
             # other programs which might be using it. I don't really consider
             # this bad practice since the server is typically supposed to
             # be running all the time:
             devnull = open(os.devnull,'w')
-            subprocess.Popen([sys.executable,'-m','zlock'], stdout=devnull, stderr=devnull)
+            subprocess.Popen([sys.executable,'-m','zprocess.locking'], stdout=devnull, stderr=devnull)
             # Try again. Longer timeout this time, give it time to start up:
-            zlock.connect(host,port,timeout=15)
+            zprocess.locking.connect(host,port,timeout=15)
     else:
-        zlock.connect(host, port)
+        zprocess.locking.connect(host, port)
 
     # The user can call these functions to change the timeouts later if they
     # are not to their liking:
