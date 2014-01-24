@@ -1,4 +1,3 @@
-# -*- coding: UTF-8 -*-
 import copy
 import new
 import math
@@ -25,7 +24,7 @@ class UnitConversion(object):
         temp_units = []
         for unit in magnitudes:
             try:
-                if unit == 'µ':
+                if unit == u'\u03bc': # a unicode 'mu' symbol
                     unit = 'u'
                 magnitude = math.log10(eval(self.unit_list[unit]))
                 if magnitude < 0:
