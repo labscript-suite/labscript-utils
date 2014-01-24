@@ -5,7 +5,7 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 
 import h5_lock, h5py
-from qtutils.widgets.fingertab import FingerTabWidget
+from labscript_utils.qtwidgets.fingertab import FingerTabWidget
 
 # Create a generic interface for displaying pages of settings
 class Settings(object):

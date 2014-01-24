@@ -2,8 +2,8 @@ import sys
 
 from PySide.QtCore import *
 from PySide.QtGui import *
-from qtutils.widgets.analogoutput import AnalogOutput
-from qtutils.widgets.digitaloutput import DigitalOutput
+from labscript_utils.qtwidgets.analogoutput import AnalogOutput
+from labscript_utils.qtwidgets.digitaloutput import DigitalOutput
 
 class DDSOutput(QWidget):
     def __init__(self, hardware_name, connection_name='-', parent=None):

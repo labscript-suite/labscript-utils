@@ -75,6 +75,6 @@ hack_locks_onto_h5py()
 
 
 # begin hack that makes strings fixed-length by default:
-from horrible_fixed_length_strings_hack import horribly_hack_fixed_length_strings
+from labscript_utils.horrible_fixed_length_strings_hack import horribly_hack_fixed_length_strings
 horribly_hack_fixed_length_strings()
 # end hack that makes strings fixed-length by default

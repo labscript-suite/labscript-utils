@@ -1,5 +1,5 @@
 import os
-from LabConfig import LabConfig
+from labscript_utils.labconfig import LabConfig
 
 _config = LabConfig(required_params={'paths':['shared_drive']})
 prefix = _config.get('paths','shared_drive')
