@@ -1,3 +1,16 @@
+#####################################################################
+#                                                                   #
+# linear_coil_driver.py                                             #
+#                                                                   #
+# Copyright 2013, Monash University                                 #
+#                                                                   #
+# This file is part of the labscript suite (see                     #
+# http://labscriptsuite.org) and is licensed under the Simplified   #
+# BSD License. See the license.txt file in the root of the project  #
+# for the full license.                                             #
+#                                                                   #
+#####################################################################
+
 from UnitConversionBase import *
 from numpy import int16
 class UnidirectionalCoilDriver(UnitConversion):

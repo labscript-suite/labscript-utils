@@ -1,3 +1,16 @@
+#####################################################################
+#                                                                   #
+# settings.py                                                       #
+#                                                                   #
+# Copyright 2013, Monash University                                 #
+#                                                                   #
+# This file is part of the labscript suite (see                     #
+# http://labscriptsuite.org) and is licensed under the Simplified   #
+# BSD License. See the license.txt file in the root of the project  #
+# for the full license.                                             #
+#                                                                   #
+#####################################################################
+
 import os
 
 import PySide # This is done so that we can eval() constants from the PySide module (eg column ASC/DESC sort order)
