@@ -43,7 +43,7 @@ def gtkhandler(exceptclass,exception,exec_info,reraise=True):
     if exceptclass in [KeyboardInterrupt, SystemExit]:
         sys.__excepthook__(exceptclass,exception,exec_info)
     else:
-        subprocess.Popen(['python','-m''excepthook.gtk_exception',
+        subprocess.Popen(['python','-m','labscript_utils.excepthook.gtk_exception',
                           os.path.basename(sys.argv[0]), 
                           '%s: %s' % (exceptclass.__name__, exception),
                           message])
