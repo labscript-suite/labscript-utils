@@ -50,6 +50,15 @@ class DigitalOutput(QPushButton):
             menu.triggered.connect(self._menu_triggered)
             menu.popup(self.mapToGlobal(event.pos()))
         
+        # pass scrollwheel events of disabled buttons through to the parent
+        # code adapted from: http://www.qtforum.org/article/28540/disabled-widgets-and-wheel-events.html
+        elif obj and not obj.isEnabled() and event.type() == QEvent.Wheel:
+            newEvent = QWheelEvent(obj.mapToParent(event.pos()), event.globalPos(),
+                                   event.delta(), event.buttons(),
+                                   event.modifiers(), event.orientation())
+            QApplication.instance().postEvent(obj.parent(), newEvent)
+            return True
+        
         return QPushButton.eventFilter(self, obj, event)
      
     # This method is called whenever an entry in the context menu is clicked
