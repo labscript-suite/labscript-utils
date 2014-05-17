@@ -33,17 +33,20 @@ def install_thread_excepthook():
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
-            sys.excepthook(*sys.exc_info())
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            # Cull the top frame so the user doesn't see this wrapping code in their traceback:
+            exc_traceback = exc_traceback.tb_next                    
+            sys.excepthook(exc_type, exc_value, exc_traceback)
     threading.Thread.run = run
     
-def gtkhandler(exceptclass,exception,exec_info,reraise=True):
+def tkhandler(exceptclass,exception,exec_info,reraise=True):
     message = ''.join(traceback.format_exception(exceptclass,exception,exec_info))
     if l.logger:
         l.logger.error('Got an exception:\n%s'%message)
     if exceptclass in [KeyboardInterrupt, SystemExit]:
         sys.__excepthook__(exceptclass,exception,exec_info)
     else:
-        subprocess.Popen(['python','-m','labscript_utils.excepthook.gtk_exception',
+        subprocess.Popen([sys.executable,'-m','labscript_utils.excepthook.tk_exception',
                           os.path.basename(sys.argv[0]), 
                           '%s: %s' % (exceptclass.__name__, exception),
                           message])
@@ -61,8 +64,7 @@ def set_logger(logger):
     warnings.showwarning = logwarning
  
 try:
-    import gtk
-    sys.excepthook = gtkhandler
+    sys.excepthook = tkhandler
     install_thread_excepthook()
 except:
     pass
