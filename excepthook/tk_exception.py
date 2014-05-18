@@ -39,7 +39,7 @@ class ErrorWindow(Text):
         self.vbar = Scrollbar(self.lowerframe)
         self.vbar.pack(side=RIGHT, fill=Y)
         
-        self.button = Button(self.frame, text='Ok', command=self.ok_clicked)
+        self.button = Button(self.frame, text='Ok', command=self.ok_clicked, padx=20, pady=5)
         self.button.pack(side=BOTTOM)
         
         kw.update({'yscrollcommand': self.vbar.set})
