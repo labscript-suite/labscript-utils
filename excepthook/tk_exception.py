@@ -16,7 +16,7 @@ import sys, os
 from Tkinter import Frame, Text, Scrollbar, Button, Pack, Grid, Place, Label, PhotoImage, Tk
 from Tkconstants import RIGHT, LEFT, X, Y, BOTH, TOP, BOTTOM, W, END, DISABLED
 
-error_im_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'error.png')
+error_im_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'error.gif')
 
 class ErrorWindow(Text):
     """Class to display the error in a textbox. Parts copied from Tkinter's ScrolledText widget""" 
