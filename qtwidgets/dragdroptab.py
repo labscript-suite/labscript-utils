@@ -295,13 +295,13 @@ class DragDropTabBar(QTabBar):
         tabgroup = self.tab_widget.get_tab_widget_group()
         # if we have id==-1 there is no point running this on other notebooks
         if tabgroup.id == -1:
-            event = QMouseEvent(QEvent.MouseButtonRelease, QPoint(0,0), Qt.MouseButton.LeftButton, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier)        
+            event = QMouseEvent(QEvent.MouseButtonRelease, QPoint(0,0), Qt.LeftButton, Qt.LeftButton, Qt.NoModifier)        
             #self.mouseReleaseEvent(event)
             QCoreApplication.postEvent(self,event)
         else:
             # Update all notebooks in the tab group, as they may all be poorly rendered
             for instance in tabgroup.widget_list:
-                event = QMouseEvent(QEvent.MouseButtonRelease, QPoint(0,0), Qt.MouseButton.LeftButton, Qt.MouseButton.LeftButton, Qt.KeyboardModifier.NoModifier)        
+                event = QMouseEvent(QEvent.MouseButtonRelease, QPoint(0,0), Qt.LeftButton, Qt.LeftButton, Qt.NoModifier)        
                 #instance.tab_bar.mouseReleaseEvent(event)
                 QCoreApplication.postEvent(instance.tab_bar,event)
 
