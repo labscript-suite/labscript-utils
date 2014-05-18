@@ -17,6 +17,8 @@ import traceback
 import subprocess
 import warnings
 
+subprocess_script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tk_exception.py')
+
 class l:
     logger = None
 
@@ -46,7 +48,7 @@ def tkhandler(exceptclass,exception,exec_info,reraise=True):
     if exceptclass in [KeyboardInterrupt, SystemExit]:
         sys.__excepthook__(exceptclass,exception,exec_info)
     else:
-        subprocess.Popen([sys.executable,'-m','labscript_utils.excepthook.tk_exception',
+        subprocess.Popen([sys.executable, subprocess_script_path,
                           os.path.basename(sys.argv[0]), 
                           '%s: %s' % (exceptclass.__name__, exception),
                           message])
