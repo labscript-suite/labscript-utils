@@ -13,8 +13,12 @@
 
 import sys
 
-from PySide.QtCore import *
-from PySide.QtGui import *
+if 'PySide' in sys.modules.copy():
+    from PySide.QtCore import *
+    from PySide.QtGui import *
+else:
+    from PyQt4.QtCore import *
+    from PyQt4.QtGui import *
 
 class ToolPaletteGroup(QVBoxLayout):
     
@@ -360,7 +364,14 @@ class ToolPalette(QScrollArea):
         #pass resize event on to qwidget
         # call layout()
         QWidget.resizeEvent(self,event)
-        self._layout_widgets()
+        
+        size = event.size()
+        QTimer.singleShot(300, lambda size=size: self._update_layout(size))
+        
+    def _update_layout(self, size):
+        if size.width() + 2 == self.size().width() and size.height()+2 == self.size().height():
+            print 'relaying out widgets'
+            self._layout_widgets()
 
 
 # A simple test!

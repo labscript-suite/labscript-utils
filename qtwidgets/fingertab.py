@@ -5,7 +5,13 @@
 # as Public Domain, but boy would it beswell if you could credit me, or tweet me 
 # [@LegoStormtoopr](http://www.twitter.com/legostormtroopr) to say thanks!
 
-from PySide import QtGui, QtCore
+import sys
+if 'PySide' in sys.modules.copy():
+    from PySide import QtCore
+    from PySide import QtGui
+else:
+    from PyQt4 import QtCore
+    from PyQt4 import QtGui
  
 class FingerTabBarWidget(QtGui.QTabBar):
     def __init__(self, parent=None, *args, **kwargs):

@@ -12,9 +12,12 @@
 #####################################################################
 
 import sys
-from PySide.QtCore import *
-from PySide.QtGui import *
-from PySide.QtUiTools import QUiLoader
+if 'PySide' in sys.modules.copy():
+    from PySide.QtCore import *
+    from PySide.QtGui import *
+else:
+    from PyQt4.QtCore import *
+    from PyQt4.QtGui import *
 
 from qtutils import *
 
@@ -385,7 +388,7 @@ class DragDropTabWidget(QTabWidget):
 if __name__ == '__main__':    
     class ViewPort(object):
         def __init__(self, id, container_layout,i):
-            #ui = QUiLoader().load('viewport.ui')
+            #ui = UiLoader().load('viewport.ui')
             self.tab_widget = DragDropTabWidget(id)
             container_layout.addWidget(self.tab_widget)
             self.tab_widget.addTab(QLabel("foo %d"%i), 'foo')

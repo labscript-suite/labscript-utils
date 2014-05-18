@@ -13,8 +13,12 @@
 
 import sys
 
-from PySide.QtCore import *
-from PySide.QtGui import *
+if 'PySide' in sys.modules.copy():
+    from PySide.QtCore import *
+    from PySide.QtGui import *
+else:
+    from PyQt4.QtCore import *
+    from PyQt4.QtGui import *
 
 class AnalogOutput(QWidget):
     def __init__(self, hardware_name, connection_name='-', display_name=None, horizontal_alignment=False, parent=None):

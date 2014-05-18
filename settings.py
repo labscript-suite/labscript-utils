@@ -12,10 +12,15 @@
 #####################################################################
 
 import os
-
-import PySide # This is done so that we can eval() constants from the PySide module (eg column ASC/DESC sort order)
-from PySide.QtCore import *
-from PySide.QtGui import *
+import sys
+if 'PySide' in sys.modules.copy():
+    import PySide # This is done so that we can eval() constants from the PySide module (eg column ASC/DESC sort order)
+    from PySide.QtCore import *
+    from PySide.QtGui import *
+else:
+    import PyQt4
+    from PyQt4.QtCore import *
+    from PyQt4.QtGui import *
 
 import h5_lock, h5py
 from labscript_utils.qtwidgets.fingertab import FingerTabWidget
