@@ -1,7 +1,7 @@
 Copyright (c) 2013, Monash University
 All rights reserved.
 
-The components (python code, *.ui files) in this project are individually licensed under the 2-clause BSD license. Use of individual components is thus governed by the terms of the 2-clause BSD license (see BSD-LICENSE.txt in the root of this project). However, the license of this project, qtutils, is governed by the license of the GUI toolkit you use it with, determined by the conditions below:
+The individual files in this project are individually licensed under the 2-clause BSD license. Use of individual components is thus governed by the terms of the 2-clause BSD license (see BSD-LICENSE.txt in the root of this project). However, the license of this project, labscript_utils, is governed by the license of the GUI toolkit you use it with, determined by the conditions below:
 
 1) If you own a commercial license of PyQt, this project is governed by the terms of the 2-clause BSD license.
 
