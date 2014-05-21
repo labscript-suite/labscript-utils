@@ -35,6 +35,10 @@ def install_thread_excepthook():
         except (KeyboardInterrupt, SystemExit):
             raise
         except:
+            if sys is None:
+                # Interpreter is shutting down. Don't display graphical error.
+                # Let the threading module's code handle this however it normally does.
+                raise
             exc_type, exc_value, exc_traceback = sys.exc_info()
             # Cull the top frame so the user doesn't see this wrapping code in their traceback:
             exc_traceback = exc_traceback.tb_next                    
@@ -65,8 +69,14 @@ def set_logger(logger):
     warnings._showwarning = warnings.showwarning
     warnings.showwarning = logwarning
  
-try:
-    sys.excepthook = tkhandler
-    install_thread_excepthook()
-except:
-    pass
+# Check for tkinter availability. Tkinter is frustratingly not available
+# by default for python 3.x on Debian systems, despite being considered
+# part of the Python standard library. I'll make it a dependency for
+# packaging, but this is an extra check at runtime so that if something
+# goes wrong with that we get an error at import rather than later:
+if sys.version < '3':
+    import Tkinter
+else:
+    import tkinter
+sys.excepthook = tkhandler
+install_thread_excepthook()
