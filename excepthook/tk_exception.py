@@ -13,45 +13,49 @@
 
 import sys, os
 
-from Tkinter import Frame, Text, Scrollbar, Button, Pack, Grid, Place, Label, PhotoImage, Tk
-from Tkconstants import RIGHT, LEFT, X, Y, BOTH, TOP, BOTTOM, W, END, DISABLED
+if sys.version < '3':
+    import Tkinter as tkinter
+    import Tkconstants as constants
+else:
+    import tkinter
+    import tkinter.constants as constants
 
 error_im_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'error.gif')
 
-class ErrorWindow(Text):
+class ErrorWindow(tkinter.Text):
     """Class to display the error in a textbox. Parts copied from Tkinter's ScrolledText widget""" 
     def __init__(self, master=None, **kw):
-        self.frame = Frame(master, padx=10, pady=10)
+        self.frame = tkinter.Frame(master, padx=10, pady=10)
         
-        self.upperframe = Frame(self.frame)
-        self.upperframe.pack(side=TOP, fill=X) 
+        self.upperframe = tkinter.Frame(self.frame)
+        self.upperframe.pack(side=constants.TOP, fill=constants.X) 
         
-        self.lowerframe = Frame(self.frame, pady=10)
-        self.lowerframe.pack(side=TOP, fill=BOTH, expand=True)  
+        self.lowerframe = tkinter.Frame(self.frame, pady=10)
+        self.lowerframe.pack(side=constants.TOP, fill=constants.BOTH, expand=True)  
         
-        self.error_im = PhotoImage(file=error_im_path)
-        self.imlabel = Label(self.upperframe, borderwidth = 10, image=self.error_im)
-        self.imlabel.pack(side=LEFT)
-        self.textlabel = Label(self.upperframe, text='It looks like an error has occured:\n%s'%sys.argv[2], 
-                           borderwidth = 10, wraplength=400, justify='left')
-        self.textlabel.pack(side=LEFT)
+        self.error_im = tkinter.PhotoImage(file=error_im_path)
+        self.imlabel = tkinter.Label(self.upperframe, borderwidth = 10, image=self.error_im)
+        self.imlabel.pack(side=constants.LEFT)
+        self.textlabel = tkinter.Label(self.upperframe, text='It looks like an error has occured:\n%s'%sys.argv[2], 
+                                       borderwidth = 10, wraplength=400, justify='left')
+        self.textlabel.pack(side=constants.LEFT)
 
-        self.vbar = Scrollbar(self.lowerframe)
-        self.vbar.pack(side=RIGHT, fill=Y)
+        self.vbar = tkinter.Scrollbar(self.lowerframe)
+        self.vbar.pack(side=constants.RIGHT, fill=constants.Y)
         
-        self.button = Button(self.frame, text='Ok', command=self.ok_clicked, padx=20, pady=5)
-        self.button.pack(side=BOTTOM)
+        self.button = tkinter.Button(self.frame, text='Ok', command=self.ok_clicked, padx=20, pady=5)
+        self.button.pack(side=constants.BOTTOM)
         
         kw.update({'yscrollcommand': self.vbar.set})
-        Text.__init__(self, self.lowerframe, **kw)
+        tkinter.Text.__init__(self, self.lowerframe, **kw)
         
-        self.pack(side=LEFT, fill=BOTH, expand=True)
+        self.pack(side=constants.LEFT, fill=constants.BOTH, expand=True)
         self.vbar['command'] = self.yview
 
         # Copy geometry methods of self.frame without overriding Text
         # methods -- hack!
-        text_meths = vars(Text).keys()
-        methods = vars(Pack).keys() + vars(Grid).keys() + vars(Place).keys()
+        text_meths = vars(tkinter.Text).keys()
+        methods = list(vars(tkinter.Pack).keys()) + list(vars(tkinter.Grid).keys()) + list(vars(tkinter.Place).keys())
         methods = set(methods).difference(text_meths)
 
         for m in methods:
@@ -63,12 +67,12 @@ class ErrorWindow(Text):
             
 
 if __name__ == "__main__":
-    win = Tk()
+    win = tkinter.Tk()
     win.title('Unhandled exception in %s'%sys.argv[1])
     win.geometry('500x500')
     stext = ErrorWindow(master=win, bg='black', height=10, fg='red', font=("monospace", 10, "bold"))
-    stext.insert(END, sys.argv[3])
-    stext.pack(fill=BOTH, side=LEFT, expand=True)
-    stext.config(state=DISABLED)
+    stext.insert(constants.END, sys.argv[3])
+    stext.pack(fill=constants.BOTH, side=constants.LEFT, expand=True)
+    stext.config(state=constants.DISABLED)
     stext.focus_set()
     stext.mainloop()
