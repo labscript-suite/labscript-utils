@@ -30,7 +30,7 @@ if 'h5py' in sys.modules:
         
 import h5py
 
-DEFAULT_TIMEOUT = 15
+DEFAULT_TIMEOUT = 45
 
 def NetworkOnlyLock(name):
     return zprocess.locking.NetworkOnlyLock(shared_drive.path_to_agnostic(name))
