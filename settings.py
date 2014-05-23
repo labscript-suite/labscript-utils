@@ -65,7 +65,12 @@ class Settings(object):
                 group = h5file['/preferences']
                 if name not in group.attrs:
                     group.attrs[name] = repr({})
-                data = eval(group.attrs[name])                    
+                try:
+                    data = eval(group.attrs[name])
+                except Exception:
+                    # TODO: log this properly
+                    print 'Could not load settings data for %s. It may contain data that could not be evaluated. All settings have now been lost'%name
+                    data = {}                
             return data    
         else:
             raise Exception("the Settings module cannot handle the storage type: %s"%str(self.storage))

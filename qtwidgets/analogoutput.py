@@ -161,8 +161,8 @@ class AnalogOutput(QWidget):
     
     @property
     def selected_unit(self):
-        return self._combobox.currentText()
-    
+        return str(self._combobox.currentText())
+
     def block_combobox_signals(self):
         return self._combobox.blockSignals(True)
         
