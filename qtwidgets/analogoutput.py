@@ -55,8 +55,15 @@ class AnalogOutput(QWidget):
         self._stepdown_action = QAction("Step down",self._spin_widget)
         self._stepdown_action.triggered.connect(lambda:self._spin_widget.stepBy(-1))
             
+        self.menu = None
+                
+        def deletemenu(menu):
+            menu.deleteLater()
+            if menu == self.menu:
+                self.menu = None
+                        
         def context_menu(pos):
-            menu = self._spin_widget.lineEdit().createStandardContextMenu()
+            self.menu = menu = self._spin_widget.lineEdit().createStandardContextMenu()
             # Add Divider
             menu.addSeparator()
             # Add step up/Stepdown actions (grey out if at min/max or locked)
@@ -76,6 +83,9 @@ class AnalogOutput(QWidget):
             # Add lock action
             menu.addAction(self._lock_action)
             menu.addAction(self._stepsize_action)
+            
+            # connect signal for when menu is destroyed
+            menu.aboutToHide.connect(lambda menu=menu: deletemenu(menu))
             
             # Show the menu
             menu.popup(self.mapToGlobal(pos))
@@ -202,7 +212,7 @@ class AnalogOutput(QWidget):
             menu.triggered.connect(self._menu_triggered)
             menu.popup(self.mapToGlobal(event.pos()))
         
-        return QPushButton.eventFilter(self, obj, event)
+        return QWidget.eventFilter(self, obj, event)
      
     # This method is called whenever an entry in the context menu is clicked
     def _menu_triggered(self,action):
