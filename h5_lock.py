@@ -37,7 +37,6 @@ def NetworkOnlyLock(name):
     
 def hack_locks_onto_h5py():
     def __init__(self, name, mode=None, driver=None, libver=None, **kwds):
-        print('__init__!')
         self.zlock = zprocess.locking.Lock(shared_drive.path_to_agnostic(name))
         self.zlock.acquire()
         _orig_init(self, name, mode, driver, libver, **kwds)
