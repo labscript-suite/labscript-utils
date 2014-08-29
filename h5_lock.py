@@ -37,6 +37,7 @@ def NetworkOnlyLock(name):
     
 def hack_locks_onto_h5py():
     def __init__(self, name, mode=None, driver=None, libver=None, **kwds):
+        print('__init__!')
         self.zlock = zprocess.locking.Lock(shared_drive.path_to_agnostic(name))
         self.zlock.acquire()
         _orig_init(self, name, mode, driver, libver, **kwds)
@@ -72,7 +73,13 @@ def connect_to_zlock_server():
             # this bad practice since the server is typically supposed to
             # be running all the time:
             devnull = open(os.devnull,'w')
-            subprocess.Popen([sys.executable,'-m','zprocess.locking'], stdout=devnull, stderr=devnull)
+            if os.name == 'nt':
+                creationflags=0x00000008 # DETACHED_PROCESS from the win32 API
+            else:
+                creationflags=None
+            subprocess.Popen([sys.executable,'-m','zprocess.locking'], 
+                              creationflags=creationflags,
+                              stdout=None, stderr=None, close_fds=True)
             # Try again. Longer timeout this time, give it time to start up:
             zprocess.locking.connect(host,port,timeout=15)
     else:
