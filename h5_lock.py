@@ -71,7 +71,6 @@ def connect_to_zlock_server():
             # other programs which might be using it. I don't really consider
             # this bad practice since the server is typically supposed to
             # be running all the time:
-            devnull = open(os.devnull,'w')
             if os.name == 'nt':
                 creationflags=0x00000008 # DETACHED_PROCESS from the win32 API
             else:
@@ -94,6 +93,6 @@ hack_locks_onto_h5py()
 
 
 # begin hack that makes strings fixed-length by default:
-from labscript_utils.horrible_fixed_length_strings_hack import horribly_hack_fixed_length_strings
-horribly_hack_fixed_length_strings()
+#from labscript_utils.horrible_fixed_length_strings_hack import horribly_hack_fixed_length_strings
+#horribly_hack_fixed_length_strings()
 # end hack that makes strings fixed-length by default
