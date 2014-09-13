@@ -62,11 +62,17 @@ class ErrorWindow(tkinter.Text):
         for m in methods:
             if m[0] != '_' and m != 'config' and m != 'configure':
                 setattr(self, m, getattr(self.frame, m))
-
+        
+        self.button.bind('<<Copy>>', self.copy)
+        
     def ok_clicked(self, *ignore):
         win.quit()
             
-
+    def copy(self, event=None):
+        self.clipboard_clear()
+        text = self.get("sel.first", "sel.last")
+        self.clipboard_append(text)
+        
 if __name__ == "__main__":
     win = tkinter.Tk()
     win.title('Unhandled exception in %s'%sys.argv[1])
