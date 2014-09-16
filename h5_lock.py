@@ -65,7 +65,9 @@ def connect_to_zlock_server():
             # short connection timeout if localhost, don't want to
             # waste time:
             zprocess.locking.connect(host,port,timeout=0.05)
+            print('yep')
         except zmq.ZMQError:
+            print('nope')
             # No zprocess.locking server running on localhost. Start one. It will run
             # forever, even after this program exits. This is important for
             # other programs which might be using it. I don't really consider
@@ -73,11 +75,15 @@ def connect_to_zlock_server():
             # be running all the time:
             if os.name == 'nt':
                 creationflags=0x00000008 # DETACHED_PROCESS from the win32 API
+                kwargs = dict(creationflags=creationflags, stdout=None, stderr=None, close_fds=True)
+                subprocess.Popen([sys.executable,'-m','zprocess.locking'], **kwargs)
             else:
-                creationflags=None
-            subprocess.Popen([sys.executable,'-m','zprocess.locking'], 
-                              creationflags=creationflags,
-                              stdout=None, stderr=None, close_fds=True)
+                devnull = open(os.devnull,'w')
+                kwargs = dict(stdin=devnull, stdout=devnull, stderr=devnull, close_fds=True)
+                if not os.fork():
+                    os.setsid()
+                    subprocess.Popen([sys.executable,'-m','zprocess.locking'], **kwargs)
+                    os._exit(0)
             # Try again. Longer timeout this time, give it time to start up:
             zprocess.locking.connect(host,port,timeout=15)
     else:
