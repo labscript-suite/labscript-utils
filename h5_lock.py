@@ -65,9 +65,7 @@ def connect_to_zlock_server():
             # short connection timeout if localhost, don't want to
             # waste time:
             zprocess.locking.connect(host,port,timeout=0.05)
-            print('yep')
         except zmq.ZMQError:
-            print('nope')
             # No zprocess.locking server running on localhost. Start one. It will run
             # forever, even after this program exits. This is important for
             # other programs which might be using it. I don't really consider
