@@ -6,6 +6,18 @@ import StringIO
 this_folder = os.path.realpath(os.path.dirname(__file__))
 Win7AppId = os.path.join(this_folder, 'Win7AppId1.1.exe')
 
+appids = {'runmanager': 'Monashbec.Labscript.Runmanager',
+         'runviewer': 'Monashbec.Labscript.Runviewer',
+         'blacs': 'Monashbec.Labscript.Blacs',
+         'lyse': 'Monashbec.Labscript.Lyse',
+         'mise': 'Monashbec.Labscript.Mise'}
+         
+app_descriptions = {'runmanager': 'runmanager - the labscript suite', 
+                   'runviewer': 'runviewer - the labscript suite', 
+                   'blacs': 'blacs - the labscript suite', 
+                   'lyse': 'lyse - the labscript suite', 
+                   'mise': 'mise - the labscript suite'}
+
 def make_shortcut(path, target, arguments, working_directory, icon_path, description, appid):
     import sys, os
     from win32com.client import Dispatch
@@ -41,7 +53,18 @@ def add_to_start_menu(shortcut):
     objShell = Dispatch("WScript.Shell")
     start_menu_programs = objShell.SpecialFolders("Programs")
     shutil.copy(shortcut, start_menu_programs)
-        
+
+def remove_from_start_menu(name):
+    """Removes given .lnk file from the start menu.
+    If entry not present, does nothing."""
+    from win32com.client import Dispatch
+    import shutil
+    name = os.path.basename(name)
+    objShell = Dispatch("WScript.Shell")
+    start_menu_programs = objShell.SpecialFolders("Programs")
+    if name in os.listdir(start_menu_programs):
+        os.unlink(os.path.join(start_menu_programs, name))
+    
 if __name__ == '__main__':
     # Test
     path = r'C:\pythonlib\runmanager\runmanager.lnk'
