@@ -20,6 +20,7 @@ import sys
 for path in sys.path:
     if os.path.exists(os.path.join(path, '.is_labscript_suite_install_dir')):
         config_prefix = os.path.join(path, 'labconfig')
+        break
 else:
     # No labscript install directory found? Revert to system defaults
     if os.name == 'nt':
