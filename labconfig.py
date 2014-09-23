@@ -15,17 +15,25 @@ import ConfigParser
 import os
 import socket
 
-if os.name == 'nt':
-    config_prefix = r'C:\labconfig\\'
+import sys
+# Look for a 'config' folder in the labscript install directory:
+for path in sys.path:
+    if os.path.exists(os.path.join(path, '.is_labscript_suite_install_dir')):
+        config_prefix = os.path.join(path, 'labconfig')
 else:
-    config_prefix = os.path.join(os.getenv('HOME'),'labconfig')
-    if not os.path.exists(config_prefix):
-        config_prefix='/etc/labconfig/'
+    # No labscript install directory found? Revert to system defaults
+    if os.name == 'nt':
+        config_prefix = os.path.abspath(r'C:\labconfig')
+    else:
+        config_prefix = os.path.join(os.getenv('HOME'),'labconfig')
+        if not os.path.exists(config_prefix):
+            config_prefix='/etc/labconfig/'
         
 if not os.path.exists(config_prefix):
     message = (r"Couldn't find labconfig folder. Please ensure it exists. " +
-               r"In Windows, this is C:\\labconfig\. Otherwise $HOME/labconfig/ is checked, " + 
-               r"and then, /etc/labconfig/.")
+               r"If the labscript suite is installed, labconfig must be <labscript_suite_install_dir>/labconfig/. " +
+               r"If the labscript suite is not installed, then C:\labconfig\ is checked on Windows, " +
+               r" and $HOME/labconfig/ then /etc/labconfig/ checked on unix.")
     raise IOError(message)
     
 default_config_path = os.path.join(config_prefix,'%s.ini'%socket.gethostname())

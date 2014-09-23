@@ -73,14 +73,19 @@ def connect_to_zlock_server():
             # be running all the time:
             if os.name == 'nt':
                 creationflags=0x00000008 # DETACHED_PROCESS from the win32 API
-                kwargs = dict(creationflags=creationflags, stdout=None, stderr=None, close_fds=True)
-                subprocess.Popen([sys.executable,'-m','zprocess.locking'], **kwargs)
+                # Note that we must not remain in same working directory, or we will hold a lock
+                # on it that prevents it from being deleted.
+                subprocess.Popen([sys.executable,'-m','zprocess.locking'],
+                                 creationflags=creationflags, stdout=None, stderr=None,
+                                 close_fds=True, cwd=os.getenv('temp'))
+                
+                subprocess.Popen([sys.executable,'-m','zprocess.locking'])
             else:
                 devnull = open(os.devnull,'w')
-                kwargs = dict(stdin=devnull, stdout=devnull, stderr=devnull, close_fds=True)
                 if not os.fork():
                     os.setsid()
-                    subprocess.Popen([sys.executable,'-m','zprocess.locking'], **kwargs)
+                    subprocess.Popen([sys.executable,'-m','zprocess.locking'],
+                                     stdin=devnull, stdout=devnull, stderr=devnull, close_fds=True)
                     os._exit(0)
             # Try again. Longer timeout this time, give it time to start up:
             zprocess.locking.connect(host,port,timeout=15)
