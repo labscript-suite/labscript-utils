@@ -6,11 +6,24 @@ import StringIO
 this_folder = os.path.realpath(os.path.dirname(__file__))
 Win7AppId = os.path.join(this_folder, 'Win7AppId1.1.exe')
 
-appids = {'runmanager': 'Monashbec.Labscript.Runmanager',
-         'runviewer': 'Monashbec.Labscript.Runviewer',
-         'blacs': 'Monashbec.Labscript.Blacs',
-         'lyse': 'Monashbec.Labscript.Lyse',
-         'mise': 'Monashbec.Labscript.Mise'}
+for path in sys.path:
+    if os.path.exists(os.path.join(path, '.is_labscript_suite_install_dir')):
+        labscript_dir = os.path.join(path, 'labconfig')
+        break
+else:
+    raise RuntimeError('Can\'t find labscript suite installation directory in sys.path')
+    
+# Including the install directory in the below AppId strings ensures they are unique
+# to the install. If they are not, then installing to one directory, uninstalling,
+# and reinstalling to another makes the Windows AppId API behave unpredictably.
+# Shortcuts don't work, and icons are broken.
+# This if of particular importance when developing on the same machine as you are
+# deploying to.
+appids = {'runmanager': 'Monashbec.Labscript.Runmanager.%s'%labscript_dir,
+         'runviewer': 'Monashbec.Labscript.Runviewer.%s'%labscript_dir,
+         'blacs': 'Monashbec.Labscript.Blacs.%s'%labscript_dir,
+         'lyse': 'Monashbec.Labscript.Lyse.%s'%labscript_dir,
+         'mise': 'Monashbec.Labscript.Mise.%s'%labscript_dir}
          
 app_descriptions = {'runmanager': 'runmanager - the labscript suite', 
                    'runviewer': 'runviewer - the labscript suite', 
@@ -64,16 +77,4 @@ def remove_from_start_menu(name):
     start_menu_programs = objShell.SpecialFolders("Programs")
     if name in os.listdir(start_menu_programs):
         os.unlink(os.path.join(start_menu_programs, name))
-    
-if __name__ == '__main__':
-    # Test
-    path = r'C:\pythonlib\runmanager\runmanager.lnk'
-    target = sys.executable.lower().replace('.exe', 'w.exe')
-    arguments = r'C:\pythonlib\runmanager\__main__.py'
-    working_directory = r'C\pythonlib\runmanager'
-    icon_path = r'C:\pythonlib\runmanager\runmanager.ico'
-    description = 'runmanager - the labscript suite'
-    appid = 'Monashbec.Labscript.Runmanager'
-    make_shortcut(path, target, arguments, working_directory, icon_path, description, appid)
-    add_to_start_menu(path)
     
