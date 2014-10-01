@@ -82,8 +82,8 @@ class LabConfig(ConfigParser.SafeConfigParser):
     # when we try and save an attribute into it.
     def add_section(self,section):
         # Create the group if it doesn't exist
-        if not self.has_section(section):
-            ConfigParser.SafeConfigParser.add_section(self,section)
+        if not section.lower() == 'default' and not self.has_section(section):
+            ConfigParser.SafeConfigParser.add_section(self, section)
 
     # Overwrite the set method so that it adds the section if it doesn't exist,
     # and immediately saves the data to the file (to avoid data loss on program crash)
