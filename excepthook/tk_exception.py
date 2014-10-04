@@ -44,6 +44,7 @@ class ErrorWindow(tkinter.Text):
         self.vbar.pack(side=constants.RIGHT, fill=constants.Y)
         
         self.button = tkinter.Button(self.frame, text='Ok', command=self.ok_clicked, padx=20, pady=5)
+        self.button.bind('<Return>', self.ok_clicked)
         self.button.pack(side=constants.BOTTOM)
         
         kw.update({'yscrollcommand': self.vbar.set})
@@ -61,11 +62,17 @@ class ErrorWindow(tkinter.Text):
         for m in methods:
             if m[0] != '_' and m != 'config' and m != 'configure':
                 setattr(self, m, getattr(self.frame, m))
-
-    def ok_clicked(self):
+        
+        self.button.bind('<<Copy>>', self.copy)
+        
+    def ok_clicked(self, *ignore):
         win.quit()
             
-
+    def copy(self, event=None):
+        self.clipboard_clear()
+        text = self.get("sel.first", "sel.last")
+        self.clipboard_append(text)
+        
 if __name__ == "__main__":
     win = tkinter.Tk()
     win.title('Unhandled exception in %s'%sys.argv[1])
@@ -74,5 +81,5 @@ if __name__ == "__main__":
     stext.insert(constants.END, sys.argv[3])
     stext.pack(fill=constants.BOTH, side=constants.LEFT, expand=True)
     stext.config(state=constants.DISABLED)
-    stext.focus_set()
+    stext.button.focus_set()
     stext.mainloop()

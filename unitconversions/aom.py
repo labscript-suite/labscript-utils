@@ -20,18 +20,19 @@ class SineAom(NovaTechDDS9mAmpConversion):
     AOM calibration P(A) is very close to a sine for dipole trap AOM!
     """
     base_unit = "Arb"
-    derived_units = ["Power", "fraction"]
 
     def __init__(self, calibration_parameters=None):
         # These parameters are loaded from a globals.h5 type file automatically
-        self.parameters = calibration_parameters
-        
+        self.parameters = calibration_parameters        
+        self.derived_units = ["Power", "fraction"]
         # P(x) = A * cos(2*pi*f * x + phase) + c
         # Saturates at saturation Volts
         self.parameters.setdefault('A', 1.969)
         self.parameters.setdefault('f', 0.527)
         self.parameters.setdefault('phase', 3.262)
         self.parameters.setdefault('c', 1.901)
+        
+        self.parameters['phase'] = self.parameters['phase']%(2*pi)
         
         NovaTechDDS9mAmpConversion.__init__(self,self.parameters)
 
@@ -62,6 +63,12 @@ class SineAom(NovaTechDDS9mAmpConversion):
         return Amp
     
     def fraction_from_base(self, amp):
+        f = self.parameters["f"]
+        phase = self.parameters["phase"]
+        
+        if 2*pi*f*amp + phase > 2*pi:
+            amp = (2*pi - phase) / (2*pi*f)
+        
         P = self.Power_from_base(amp)
         Pmax = self.parameters["A"] + self.parameters["c"]
         Pmin = max(self.parameters["c"] - self.parameters["A"], 0)

@@ -12,10 +12,15 @@
 #####################################################################
 
 import os
-
-import PySide # This is done so that we can eval() constants from the PySide module (eg column ASC/DESC sort order)
-from PySide.QtCore import *
-from PySide.QtGui import *
+import sys
+if 'PySide' in sys.modules.copy():
+    import PySide # This is done so that we can eval() constants from the PySide module (eg column ASC/DESC sort order)
+    from PySide.QtCore import *
+    from PySide.QtGui import *
+else:
+    import PyQt4
+    from PyQt4.QtCore import *
+    from PyQt4.QtGui import *
 
 import h5_lock, h5py
 from labscript_utils.qtwidgets.fingertab import FingerTabWidget
@@ -60,7 +65,12 @@ class Settings(object):
                 group = h5file['/preferences']
                 if name not in group.attrs:
                     group.attrs[name] = repr({})
-                data = eval(group.attrs[name])                    
+                try:
+                    data = eval(group.attrs[name])
+                except Exception:
+                    # TODO: log this properly
+                    print 'Could not load settings data for %s. It may contain data that could not be evaluated. All settings have now been lost'%name
+                    data = {}                
             return data    
         else:
             raise Exception("the Settings module cannot handle the storage type: %s"%str(self.storage))

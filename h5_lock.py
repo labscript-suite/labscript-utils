@@ -30,7 +30,7 @@ if 'h5py' in sys.modules:
         
 import h5py
 
-DEFAULT_TIMEOUT = 15
+DEFAULT_TIMEOUT = 45
 
 def NetworkOnlyLock(name):
     return zprocess.locking.NetworkOnlyLock(shared_drive.path_to_agnostic(name))
@@ -71,8 +71,22 @@ def connect_to_zlock_server():
             # other programs which might be using it. I don't really consider
             # this bad practice since the server is typically supposed to
             # be running all the time:
-            devnull = open(os.devnull,'w')
-            subprocess.Popen([sys.executable,'-m','zprocess.locking'], stdout=devnull, stderr=devnull)
+            if os.name == 'nt':
+                creationflags=0x00000008 # DETACHED_PROCESS from the win32 API
+                # Note that we must not remain in same working directory, or we will hold a lock
+                # on it that prevents it from being deleted.
+                subprocess.Popen([sys.executable,'-m','zprocess.locking'],
+                                 creationflags=creationflags, stdout=None, stderr=None,
+                                 close_fds=True, cwd=os.getenv('temp'))
+                
+                subprocess.Popen([sys.executable,'-m','zprocess.locking'])
+            else:
+                devnull = open(os.devnull,'w')
+                if not os.fork():
+                    os.setsid()
+                    subprocess.Popen([sys.executable,'-m','zprocess.locking'],
+                                     stdin=devnull, stdout=devnull, stderr=devnull, close_fds=True)
+                    os._exit(0)
             # Try again. Longer timeout this time, give it time to start up:
             zprocess.locking.connect(host,port,timeout=15)
     else:
@@ -88,6 +102,6 @@ hack_locks_onto_h5py()
 
 
 # begin hack that makes strings fixed-length by default:
-from labscript_utils.horrible_fixed_length_strings_hack import horribly_hack_fixed_length_strings
-horribly_hack_fixed_length_strings()
+#from labscript_utils.horrible_fixed_length_strings_hack import horribly_hack_fixed_length_strings
+#horribly_hack_fixed_length_strings()
 # end hack that makes strings fixed-length by default
