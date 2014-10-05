@@ -15,7 +15,8 @@ import time
 
 class _ProfilingImporter(object):
     def __init__(self):
-        self.normal_import = __import__
+        self.enabled = False
+        self.normal_import = None
         self.depth = 0
         self.threshold = 0
         try:
@@ -37,14 +38,22 @@ class _ProfilingImporter(object):
 
 
     def enable(self, threshold=0.1):
+        if self.enabled:
+            raise RuntimeError('Already enabled')
+        self.enabled = True
         self.threshold = threshold
+        self.normal_import = __import__
         self.builtins_dict['__import__'] = self.profiling_import
 
     def disable(self):
+        if not self.enabled:
+            raise RuntimeError('Not enabled')
+        self.enabled = False
         self.builtins_dict['__import__'] = self.normal_import
-    
+        self.normal_import = None
 
-_profiling_importer = _ProfilingImporter()                   
+
+_profiling_importer = _ProfilingImporter()
 enable = _profiling_importer.enable
 disable = _profiling_importer.disable
 

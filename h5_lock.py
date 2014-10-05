@@ -78,8 +78,6 @@ def connect_to_zlock_server():
                 subprocess.Popen([sys.executable,'-m','zprocess.locking'],
                                  creationflags=creationflags, stdout=None, stderr=None,
                                  close_fds=True, cwd=os.getenv('temp'))
-                
-                subprocess.Popen([sys.executable,'-m','zprocess.locking'])
             else:
                 devnull = open(os.devnull,'w')
                 if not os.fork():
