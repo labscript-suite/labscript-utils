@@ -11,7 +11,8 @@
 #                                                                   #
 #####################################################################
 
-import sys, os
+import sys
+import os
 import threading
 import traceback
 import subprocess
@@ -22,10 +23,12 @@ MAX_WINDOWS = 10
 
 subprocess_script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tk_exception.py')
 
+
 class l:
     logger = None
 
 child_processes = []
+
 
 def install_thread_excepthook():
     """
@@ -34,6 +37,7 @@ def install_thread_excepthook():
     Call once from __main__ before creating any threads.
     """
     run_old = threading.Thread.run
+
     def run(*args, **kwargs):
         try:
             run_old(*args, **kwargs)
@@ -46,23 +50,26 @@ def install_thread_excepthook():
                 raise
             exc_type, exc_value, exc_traceback = sys.exc_info()
             # Cull the top frame so the user doesn't see this wrapping code in their traceback:
-            exc_traceback = exc_traceback.tb_next                    
+            exc_traceback = exc_traceback.tb_next
             sys.excepthook(exc_type, exc_value, exc_traceback)
     threading.Thread.run = run
-    
-def tkhandler(exceptclass,exception,exec_info,reraise=True):
+
+
+def tkhandler(exceptclass, exception, exec_info, reraise=True):
     script = os.path.basename(sys.argv[0])
+    if not script:
+        script = 'python interactive shell'
     shortmessage = '%s: %s' % (exceptclass.__name__, exception)
-    longmessage = ''.join(traceback.format_exception(exceptclass,exception,exec_info))
+    longmessage = ''.join(traceback.format_exception(exceptclass, exception, exec_info))
     if l.logger:
-        l.logger.error('Got an exception:\n%s'%longmessage)
+        l.logger.error('Got an exception:\n%s' % longmessage)
     if exceptclass in [KeyboardInterrupt, SystemExit]:
-        sys.__excepthook__(exceptclass,exception,exec_info)
+        sys.__excepthook__(exceptclass, exception, exec_info)
     else:
         for previous_process in child_processes[:]:
             if previous_process.poll() is not None:
                 child_processes.remove(previous_process)
-        if len(child_processes) >= MAX_WINDOWS :
+        if len(child_processes) >= MAX_WINDOWS:
             shortmessage = "Too many errors"
             longmessage = ("Too many errors: Further errors will " +
                            "not be shown graphically until some error windows are closed")
@@ -70,18 +77,20 @@ def tkhandler(exceptclass,exception,exec_info,reraise=True):
             process = subprocess.Popen([sys.executable, subprocess_script_path, script, shortmessage, longmessage])
             child_processes.append(process)
         if reraise:
-            sys.__excepthook__(exceptclass,exception,exec_info)
+            sys.__excepthook__(exceptclass, exception, exec_info)
+
 
 def logwarning(message, category, filename, lineno, file=None, line=None):
     logmessage = warnings.formatwarning(message, category, filename, lineno, line)
     l.logger.warn(logmessage)
     warnings._showwarning(message, category, filename, lineno, file, line)
 
-def set_logger(logger):   
-    l.logger = logger 
+
+def set_logger(logger):
+    l.logger = logger
     warnings._showwarning = warnings.showwarning
     warnings.showwarning = logwarning
- 
+
 # Check for tkinter availability. Tkinter is frustratingly not available
 # by default for python 3.x on Debian systems, despite being considered
 # part of the Python standard library. I'll make it a dependency for
