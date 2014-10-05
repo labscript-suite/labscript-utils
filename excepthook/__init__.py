@@ -17,10 +17,15 @@ import traceback
 import subprocess
 import warnings
 
+# The maximum number of windows the excepthook will spawn:
+MAX_WINDOWS = 10
+
 subprocess_script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tk_exception.py')
 
 class l:
     logger = None
+
+child_processes = []
 
 def install_thread_excepthook():
     """
@@ -46,16 +51,24 @@ def install_thread_excepthook():
     threading.Thread.run = run
     
 def tkhandler(exceptclass,exception,exec_info,reraise=True):
-    message = ''.join(traceback.format_exception(exceptclass,exception,exec_info))
+    script = os.path.basename(sys.argv[0])
+    shortmessage = '%s: %s' % (exceptclass.__name__, exception)
+    longmessage = ''.join(traceback.format_exception(exceptclass,exception,exec_info))
     if l.logger:
-        l.logger.error('Got an exception:\n%s'%message)
+        l.logger.error('Got an exception:\n%s'%longmessage)
     if exceptclass in [KeyboardInterrupt, SystemExit]:
         sys.__excepthook__(exceptclass,exception,exec_info)
     else:
-        subprocess.Popen([sys.executable, subprocess_script_path,
-                          os.path.basename(sys.argv[0]), 
-                          '%s: %s' % (exceptclass.__name__, exception),
-                          message])
+        for previous_process in child_processes[:]:
+            if previous_process.poll() is not None:
+                child_processes.remove(previous_process)
+        if len(child_processes) >= MAX_WINDOWS :
+            shortmessage = "Too many errors"
+            longmessage = ("Too many errors: Further errors will " +
+                           "not be shown graphically until some error windows are closed")
+        if len(child_processes) < MAX_WINDOWS + 1:
+            process = subprocess.Popen([sys.executable, subprocess_script_path, script, shortmessage, longmessage])
+            child_processes.append(process)
         if reraise:
             sys.__excepthook__(exceptclass,exception,exec_info)
 
