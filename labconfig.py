@@ -37,6 +37,8 @@ if not os.path.exists(config_prefix):
                r" and $HOME/labconfig/ then /etc/labconfig/ checked on unix.")
     raise IOError(message)
 
+config_prefix = os.path.abspath(config_prefix)
+
 default_config_path = os.path.join(config_prefix,'%s.ini'%socket.gethostname())
 
 class LabConfig(ConfigParser.SafeConfigParser):
