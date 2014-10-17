@@ -1,14 +1,6 @@
 from __future__ import division
-
-import sip
-
-API_NAMES = ["QDate", "QDateTime", "QString", "QTextStream", "QTime", "QUrl", "QVariant"]
-API_VERSION = 2
-for name in API_NAMES:
-    sip.setapi(name, API_VERSION)
-    
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import pyqtSignal as Signal
+
 
 class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
     """A QHeaderView that supports inserting arbitrary
@@ -45,6 +37,24 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
         self.setMovable(True)
         self.vertical_padding = 0
         
+    def showSection(self, *args, **kwargs):
+        result = QtGui.QHeaderView.showSection(self, *args, **kwargs)
+        self.update_indents()
+        self.update_widget_positions()
+        return result
+        
+    def hideSection(self, *args, **kwargs):
+        result = QtGui.QHeaderView.hideSection(self, *args, **kwargs)
+        self.update_indents()
+        self.update_widget_positions()
+        return result
+        
+    def setSectionHidden(self, *args, **kwargs):
+        result = QtGui.QHeaderView.setSectionHidden(self, *args, **kwargs)
+        self.update_indents()
+        self.update_widget_positions()
+        return result
+    
     def viewportEvent(self, event):
         if event.type() == QtCore.QEvent.Paint:
             self.update_widget_positions()
@@ -58,10 +68,18 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
                 del self.widgets[logical_index]
                 widget.removeEventFilter(self)
                 del self.indents[widget]
+                label_text = self.model.headerData(logical_index, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
+                # Compatibility with both API types:
+                if isinstance(label_text, QtCore.QVariant):
+                    label_text = label_text.toString()
+                raw_label_text = label_text.replace(self.thinspace, '')
+                self.model.setHeaderData(logical_index, QtCore.Qt.Horizontal, raw_label_text, QtCore.Qt.DisplayRole)
         else:
             self.widgets[logical_index] = widget
             widget.setParent(self)
             widget.installEventFilter(self)
+            if not self.isSectionHidden(logical_index) and not widget.isVisible():
+                widget.show()
         self.update_indents()
         self.update_widget_positions()
         
@@ -69,8 +87,6 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
         QtGui.QHeaderView.showEvent(self, event)
         self.update_indents()
         self.update_widget_positions()
-        # for logical_index in range(self.count()):
-            # self.resizeSection(logical_index, self.sectionSizeFromContents(logical_index).width())
         
     def update_indents(self):
         max_widget_height = 0
@@ -78,7 +94,8 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
             logical_index = self.logicalIndex(visual_index)
             if logical_index in self.widgets:
                 widget = self.widgets[logical_index]
-                max_widget_height = max(max_widget_height, widget.size().height())
+                if not self.isSectionHidden(logical_index):
+                    max_widget_height = max(max_widget_height, widget.size().height())
                 desired_indent = widget.size().width()
                 item = self.model.horizontalHeaderItem(logical_index)
                 font = item.font()
@@ -107,7 +124,9 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
     def update_widget_positions(self):
         if not self.count():
             return
-        max_height = max(self.sectionSizeFromContents(i).height() for i in range(self.count()))
+        max_height = max(self.sectionSizeFromContents(i).height()
+                             for i in range(self.count())
+                             if not self.isSectionHidden(i))
         for visual_index in range(self.count()):
             logical_index = self.logicalIndex(visual_index)
             if logical_index in self.widgets:
@@ -130,6 +149,9 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
                 except KeyError:
                     return
                 label_text = self.model.headerData(logical_index, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
+                # Compatibility with both API types:
+                if isinstance(label_text, QtCore.QVariant):
+                    label_text = label_text.toString()
                 raw_label_text = label_text.replace(self.thinspace, '')
                 if label_text != indent + raw_label_text:
                     self.model.setHeaderData(logical_index, QtCore.Qt.Horizontal, indent + raw_label_text, QtCore.Qt.DisplayRole)
@@ -160,7 +182,6 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
                 widgets_with_offset[logical_index] = widget
             elif logical_index <= logical_last:
                 self.setWidget(logical_index, None)
-                del self.indents[widget]
             else:
                 widgets_with_offset[logical_index - n_removed] = widget
         self.widgets = widgets_with_offset
@@ -175,6 +196,7 @@ if __name__ == '__main__':
     class TestApp(object):
         def __init__(self):
             self.window = QtGui.QWidget()
+            self.window.resize(640,480)
             layout = QtGui.QVBoxLayout(self.window)
             self.model = QtGui.QStandardItemModel()
             self.treeview = QtGui.QTreeView(self.window)
@@ -199,10 +221,8 @@ if __name__ == '__main__':
             self.header.setWidget(1, self.button2)
             self.header.setWidget(2, self.button3)
             self.header.setWidget(4, self.button4)
-            #self.header.setWidget(0, None)
             self.treeview.setHeader(self.header)
             self.treeview.setModel(self.model)
-            #self.header.hideSection(2)
             layout.addWidget(self.treeview)
             self.model.insertColumn(2,[QtGui.QStandardItem('test')])
             self.window.show()
@@ -210,7 +230,10 @@ if __name__ == '__main__':
             for col in range(self.model.columnCount()):
                 self.treeview.resizeColumnToContents(col)
             
-            # QtCore.QTimer.singleShot(50, later)
+            QtCore.QTimer.singleShot(2000, lambda: self.header.hideSection(3))
+            QtCore.QTimer.singleShot(4000, lambda: self.header.showSection(3))
+            QtCore.QTimer.singleShot(6000, lambda: self.header.setWidget(0, None))
+            QtCore.QTimer.singleShot(8000, lambda: self.header.setWidget(0, self.button))
                 
     qapplication = QtGui.QApplication(sys.argv)
     qapplication.setAttribute(QtCore.Qt.AA_DontShowIconsInMenus, False)
