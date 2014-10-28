@@ -36,6 +36,7 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
         self.model.columnsRemoved.connect(self.on_columnsRemoved)
         self.setMovable(True)
         self.vertical_padding = 0
+        self.position_update_required = False
         
     def showSection(self, *args, **kwargs):
         result = QtGui.QHeaderView.showSection(self, *args, **kwargs)
@@ -122,6 +123,14 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
         return QtCore.QSize(width, height)
     
     def update_widget_positions(self):
+        # Do later and compress events, so as not to call
+        # self.do_update_widget_positions multiple times:
+        if not self.position_update_required:
+            timer = QtCore.QTimer.singleShot(0, self.do_update_widget_positions)
+            self.position_update_required = True
+        
+    def do_update_widget_positions(self):
+        self.position_update_required = False
         if not self.count():
             return
         max_height = max(self.sectionSizeFromContents(i).height()
