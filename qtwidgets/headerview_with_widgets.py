@@ -16,10 +16,13 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
                  QHeaderView::section {
                  /* Will be set dynamically: */
                  padding-top: %dpx;
+                 padding-bottom: %dpx;
                  /* Required, otherwise set to zero upon setting any stylesheet at all: */
                  padding-left: 4px;
                  /* Required for some reason, otherwise other settings ignored: */
                  color: black;
+                 /* Any other style goes here: */
+                 %s
                  }
                  """
     def __init__(self, model, parent=None):
@@ -37,6 +40,12 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
         self.setMovable(True)
         self.vertical_padding = 0
         self.position_update_required = False
+        self.custom_style = ''
+        
+    def set_custom_style(self, style_lines):
+        self.custom_style = style_lines
+        self.setStyleSheet(self.stylesheet%(2, 3, self.custom_style))
+        self.update_indents()
         
     def showSection(self, *args, **kwargs):
         result = QtGui.QHeaderView.showSection(self, *args, **kwargs)
@@ -72,9 +81,15 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
                 label_text = self.model.headerData(logical_index, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
                 # Compatibility with both API types:
                 if isinstance(label_text, QtCore.QVariant):
-                    label_text = label_text.toString()
-                raw_label_text = label_text.replace(self.thinspace, '')
-                self.model.setHeaderData(logical_index, QtCore.Qt.Horizontal, raw_label_text, QtCore.Qt.DisplayRole)
+                    if label_text.isNull():
+                        return
+                    else:
+                        label_text = label_text.toString()
+                if label_text is None:
+                    return
+                else:
+                    raw_label_text = label_text.replace(self.thinspace, '')
+                    self.model.setHeaderData(logical_index, QtCore.Qt.Horizontal, raw_label_text, QtCore.Qt.DisplayRole)
         else:
             self.widgets[logical_index] = widget
             widget.setParent(self)
@@ -110,7 +125,7 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
         height = fontmetrics.height()
         required_padding = (max_widget_height + 2 - height) // 2
         if required_padding > 0:
-            self.setStyleSheet(self.stylesheet%required_padding)
+            self.setStyleSheet(self.stylesheet%(required_padding, required_padding, self.custom_style))
                 
     def sectionSizeFromContents(self, logical_index):
         base_size = QtGui.QHeaderView.sectionSizeFromContents(self, logical_index)
@@ -160,7 +175,12 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
                 label_text = self.model.headerData(logical_index, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
                 # Compatibility with both API types:
                 if isinstance(label_text, QtCore.QVariant):
-                    label_text = label_text.toString()
+                    if not label_text.isNull():
+                        label_text = label_text.toString()
+                    else:
+                        label_text = ''
+                if label_text is None:
+                    label_text = ''
                 raw_label_text = label_text.replace(self.thinspace, '')
                 if label_text != indent + raw_label_text:
                     self.model.setHeaderData(logical_index, QtCore.Qt.Horizontal, indent + raw_label_text, QtCore.Qt.DisplayRole)
