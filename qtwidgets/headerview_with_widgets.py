@@ -22,9 +22,10 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
                  padding-left: 4px;
                  /* Required for some reason, otherwise other settings ignored: */
                  color: black;
+                 }
+
                  /* Any other style goes here: */
                  %s
-                 }
                  """
 
     def __init__(self, model, parent=None):
@@ -43,10 +44,10 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
         self.vertical_padding = 0
         self.position_update_required = False
         self.custom_style = ''
+        self.update_indents()
 
-    def set_custom_style(self, style_lines):
-        self.custom_style = style_lines
-        self.setStyleSheet(self.stylesheet % (2, 3, self.custom_style))
+    def setStyleSheet(self, custom_style):
+        self.custom_style = custom_style
         self.update_indents()
 
     def showSection(self, *args, **kwargs):
@@ -126,8 +127,8 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
         fontmetrics = QtGui.QFontMetrics(font, self)
         height = fontmetrics.height()
         required_padding = (max_widget_height + 2 - height) // 2
-        if required_padding > 0:
-            self.setStyleSheet(self.stylesheet % (required_padding, required_padding, self.custom_style))
+        required_padding = max(required_padding, 0)
+        QtGui.QHeaderView.setStyleSheet(self, self.stylesheet % (required_padding, required_padding, self.custom_style))
 
     def sectionSizeFromContents(self, logical_index):
         base_size = QtGui.QHeaderView.sectionSizeFromContents(self, logical_index)
