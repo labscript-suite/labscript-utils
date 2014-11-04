@@ -74,6 +74,9 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
         return QtGui.QHeaderView.viewportEvent(self, event)
 
     def setWidget(self, logical_index, widget=None):
+        header_item = self.model.horizontalHeaderItem(logical_index)
+        if header_item is None:
+            self.model.setHorizontalHeaderItem(logical_index, QtGui.QStandardItem())
         if widget is None:
             if logical_index in self.widgets:
                 widget = self.widgets[logical_index]
@@ -127,7 +130,7 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
         fontmetrics = QtGui.QFontMetrics(font, self)
         height = fontmetrics.height()
         required_padding = (max_widget_height + 2 - height) // 2
-        required_padding = max(required_padding, 0)
+        required_padding = max(required_padding, 3)
         QtGui.QHeaderView.setStyleSheet(self, self.stylesheet % (required_padding, required_padding, self.custom_style))
 
     def sectionSizeFromContents(self, logical_index):
