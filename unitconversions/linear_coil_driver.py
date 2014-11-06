@@ -10,10 +10,12 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+from __future__ import division
 
 from UnitConversionBase import *
 from numpy import int16
-class UnidirectionalCoilDriver(UnitConversion):
+        
+class BidirectionalCoilDriver(UnitConversion):
     base_unit = 'V'
     derived_units = ['A']
     
@@ -34,8 +36,18 @@ class UnidirectionalCoilDriver(UnitConversion):
     def A_to_base(self,amps):
         #here is the calibration code that may use self.parameters
         volts = (amps - self.parameters['shift']) / self.parameters['slope']
-        return volts * int16(amps>0)
+        return volts
+        
     def A_from_base(self,volts):
-        volts = min(volts, self.parameters['saturation'])
+        volts = min(volts, self.parameters['saturation']) # FIXME this doesn't work with ndarrays
         amps = self.parameters['slope'] * volts + self.parameters['shift']
-        return amps * int16(amps>0)
+        return amps 
+        
+        
+class UnidirectionalCoilDriver(BidirectionalCoilDriver):
+    
+    def A_to_base(self,amps):
+        return BidirectionalCoilDriver.A_to_base(self, amps)* int16(amps>0)
+        
+    def A_from_base(self,volts):
+        return BidirectionalCoilDriver.A_from_base(self, volts)* int16(volts>0)
