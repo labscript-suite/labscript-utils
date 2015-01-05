@@ -28,11 +28,14 @@ def deserialise(value):
     # return json.loads(value.split(JSON_IDENTIFIER, 1)[1])
 
 
-def set_device_properties(h5_file, device, properties):
-    gp = h5_file['devices/' + device]
+def set_device_properties(h5_file, device_name, properties):
+    gp = h5_file['devices/' + device_name]
     for key, val in properties.items():
         try:
-            gp.attrs.create(key, val)
+            # Workaround for h5py not supporting None but not raising a TypeError:
+            if val is None:
+                raise TypeError('has no native HDF5 equivalent')
+            gp.attrs[key] = val
         except TypeError as e:
             # If type not supported by HDF5, store as JSON
             if 'has no native HDF5 equivalent' in e.message:
@@ -42,8 +45,8 @@ def set_device_properties(h5_file, device, properties):
                 raise
 
 
-def _get_device_properties(h5_file, device):
-    gp = h5_file['devices/' + device]
+def _get_device_properties(h5_file, device_name):
+    gp = h5_file['devices/' + device_name]
     properties = {}
     for key, val in gp.attrs.items():
         # Deserialize values if stored as JSON
@@ -56,26 +59,26 @@ def _get_device_properties(h5_file, device):
             properties[key] = val
     return properties
 
-def _get_con_table_properties(h5_file, device):
+def _get_con_table_properties(h5_file, device_name):
     dataset = h5_file['connection table']
-    row = dataset[dataset['name'] == device][0]
+    row = dataset[dataset['name'] == device_name][0]
     json_string = row['properties']
     return deserialise(json_string)
 
 
-def _get_unit_conversion_parameters(h5_file, device):
+def _get_unit_conversion_parameters(h5_file, device_name):
     dataset = h5_file['connection table']
-    row = dataset[dataset['name'] == device][0]
+    row = dataset[dataset['name'] == device_name][0]
     json_string = row['unit conversion params']
     return deserialise(json_string)
 
 
-def get(h5_file, device, location):
+def get(h5_file, device_name, location):
     if location == 'device_properties':
-        return _get_device_properties(h5_file, device)
+        return _get_device_properties(h5_file, device_name)
     elif location == 'connection_table_properties':
-        return _get_con_table_properties(h5_file, device)
+        return _get_con_table_properties(h5_file, device_name)
     elif location == 'unit_conversion_parameters':
-        return _get_unit_conversion_parameters(h5_file, device)
+        return _get_unit_conversion_parameters(h5_file, device_name)
     else:
         raise ValueError('location must be one of %s'%str(VALID_PROPERTY_LOCATIONS))
