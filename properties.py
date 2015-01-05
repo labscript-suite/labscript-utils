@@ -2,7 +2,7 @@ import sys
 import json
 import numpy as np
 
-JSON_IDENTIFIER = 'Content-Type: application/json\n'
+JSON_IDENTIFIER = 'Content-Type: application/json '
 
 VALID_PROPERTY_LOCATIONS = {
     "connection_table_properties",
