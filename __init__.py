@@ -20,15 +20,11 @@ class VersionException(Exception):
     
 def check_version(module_name, at_least, less_than, version=None):
 
-    def get_version_tuple(version_string):
-        version_tuple = [int(v.replace('+', '-').split('-')[0]) for v in version_string.split('.')]
-        while len(version_tuple) < 3:
-            version_tuple += (0,)
-        return version_tuple
+    from distutils.version import StrictVersion
 
     if version is None:
         version = __import__(module_name).__version__
-    at_least_tuple, less_than_tuple, version_tuple = [get_version_tuple(v) for v in [at_least, less_than, version]]
-    if not at_least_tuple <= version_tuple < less_than_tuple:
+    at_least_version, less_than_version, installed_version = [StrictVersion(v) for v in [at_least, less_than, version]]
+    if not at_least_version <= installed_version < less_than_version:
         raise VersionException(
             '{module_name} {version} found. {at_least} <= {module_name} < {less_than} required.'.format(**locals()))
