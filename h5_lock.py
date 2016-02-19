@@ -37,13 +37,15 @@ def NetworkOnlyLock(name):
     
 def hack_locks_onto_h5py():
     def __init__(self, name, mode=None, driver=None, libver=None, **kwds):
-        self.zlock = zprocess.locking.Lock(shared_drive.path_to_agnostic(name))
-        self.zlock.acquire()
+        if not isinstance(name, h5py._objects.ObjectID):
+            self.zlock = zprocess.locking.Lock(shared_drive.path_to_agnostic(name))
+            self.zlock.acquire()
         _orig_init(self, name, mode, driver, libver, **kwds)
 
     def close(self):
         _orig_close(self)
-        self.zlock.release()
+        if hasattr(self, 'zlock'):
+            self.zlock.release()
 
     # Store the original open and close methods so they can still be called
     # by our replacements:
