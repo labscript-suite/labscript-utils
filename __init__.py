@@ -17,7 +17,7 @@ __version__ = '2.2.0'
 class VersionException(Exception):
     pass
 
-    
+
 def check_version(module_name, at_least, less_than, version=None):
 
     from distutils.version import LooseVersion
