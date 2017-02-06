@@ -15,11 +15,13 @@ import sys, os
 import logging, logging.handlers
 import __main__
 
-def setup_logging(program_name, log_level = logging.DEBUG, terminal_level = logging.INFO):
+
+def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.INFO, maxBytes=1024*1024*50, backupCount=1):
     logger = logging.getLogger(program_name)
-    
     main_path = __main__.__file__ if hasattr(__main__, '__file__') else __file__
-    handler = logging.handlers.RotatingFileHandler(os.path.join(os.path.dirname(os.path.realpath(main_path)),'%s.log'%program_name), maxBytes=1024*1024*50)
+    log_dir = os.path.dirname(os.path.realpath(main_path))
+    log_path = os.path.join(log_dir, '%s.log' % program_name)
+    handler = logging.handlers.RotatingFileHandler(log_path, maxBytes=maxBytes, backupCount=backupCount)
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s')
     handler.setFormatter(formatter)
     handler.setLevel(log_level)
@@ -32,6 +34,6 @@ def setup_logging(program_name, log_level = logging.DEBUG, terminal_level = logg
     else:
         # Prevent bug on windows where writing to stdout without a command
         # window causes a crash:
-        sys.stdout = sys.stderr = open(os.devnull,'w')
+        sys.stdout = sys.stderr = open(os.devnull, 'w')
     logger.setLevel(logging.DEBUG)
     return logger
