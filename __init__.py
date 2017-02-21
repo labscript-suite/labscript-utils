@@ -24,6 +24,8 @@ def check_version(module_name, at_least, less_than, version=None):
 
     if version is None:
         version = __import__(module_name).__version__
+    if version is None:
+        raise ValueError('Invalid version string from package {}: {}'.format(module_name, version))
     at_least_version, less_than_version, installed_version = [LooseVersion(v) for v in [at_least, less_than, version]]
     if not at_least_version <= installed_version < less_than_version:
         raise VersionException(
