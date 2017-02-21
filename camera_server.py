@@ -20,7 +20,7 @@ import labscript_utils.shared_drive
 import labscript_utils.h5_lock
 import h5py
 import numpy as np
-check_version('zprocess', '1.3.3', '2.0')
+check_version('zprocess', '1.3.3', '3.0')
 
 # This file implements the protocol for a camera server, that is, a program
 # that BLACS can interface with to control cameras. It contains a class that
