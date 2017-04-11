@@ -11,11 +11,17 @@
 #                                                                   #
 #####################################################################
 
-import ConfigParser
+import sys
 import os
 import socket
 
-import sys
+try:
+    import configparser
+except ImportError:
+    # Python 2
+    import ConfigParser as configparser
+
+
 # Look for a 'labconfig' folder in the labscript install directory:
 for path in sys.path:
     if os.path.exists(os.path.join(path, '.is_labscript_suite_install_dir')):
@@ -41,9 +47,9 @@ config_prefix = os.path.abspath(config_prefix)
 
 default_config_path = os.path.join(config_prefix,'%s.ini'%socket.gethostname())
 
-class LabConfig(ConfigParser.SafeConfigParser):
-    NoOptionError = ConfigParser.NoOptionError
-    NoSectionError = ConfigParser.NoSectionError
+class LabConfig(configparser.SafeConfigParser):
+    NoOptionError = configparser.NoOptionError
+    NoSectionError = configparser.NoSectionError
 
     def __init__(self,config_path=default_config_path,required_params={},defaults={}):
         if isinstance(config_path,list):
@@ -67,7 +73,7 @@ class LabConfig(ConfigParser.SafeConfigParser):
                 f.write(self.file_format)
 
         # Load the config file
-        ConfigParser.SafeConfigParser.__init__(self,defaults)
+        configparser.SafeConfigParser.__init__(self,defaults)
         self.read(config_path) #read all files in the config path if it is a list (self.config_path only contains one string)
 
         try:
@@ -75,7 +81,7 @@ class LabConfig(ConfigParser.SafeConfigParser):
                 for option in options:
                     self.get(section,option)
 
-        except ConfigParser.NoOptionError as e:
+        except configparser.NoOptionError as e:
             raise Exception('The experiment configuration file located at %s does not have the required keys. Make sure the config file containes the following structure:\n%s'%(config_path, self.file_format))
 
 
@@ -85,23 +91,23 @@ class LabConfig(ConfigParser.SafeConfigParser):
     def add_section(self,section):
         # Create the group if it doesn't exist
         if not section.lower() == 'default' and not self.has_section(section):
-            ConfigParser.SafeConfigParser.add_section(self, section)
+            configparser.SafeConfigParser.add_section(self, section)
 
     # Overwrite the set method so that it adds the section if it doesn't exist,
     # and immediately saves the data to the file (to avoid data loss on program crash)
     def set(self, section, option, value):
         self.add_section(section)
-        ConfigParser.SafeConfigParser.set(self,section,option,value)
+        configparser.SafeConfigParser.set(self,section,option,value)
         self.save()
 
     # Overwrite the remove section function so that it immediately saves the change to disk
     def remove_section(self,section):
-        ConfigParser.SafeConfigParser.remove_section(self,section)
+        configparser.SafeConfigParser.remove_section(self,section)
         self.save()
 
     # Overwrite the remove option function so that it immediately saves the change to disk
     def remove_option(self,section,option):
-        ConfigParser.SafeConfigParser.remove_option(self,section,option)
+        configparser.SafeConfigParser.remove_option(self,section,option)
         self.save()
 
     # Provide a convenience method to save the contents of the ConfigParser to disk

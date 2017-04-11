@@ -22,7 +22,7 @@ import zmq
 import zprocess.locking
 from zprocess.locking import set_default_timeout
 
-import shared_drive
+from labscript_utils.shared_drive import path_to_agnostic
 from labscript_utils.labconfig import LabConfig
 
 if 'h5py' in sys.modules:
@@ -33,12 +33,12 @@ import h5py
 DEFAULT_TIMEOUT = 45
 
 def NetworkOnlyLock(name):
-    return zprocess.locking.NetworkOnlyLock(shared_drive.path_to_agnostic(name))
+    return zprocess.locking.NetworkOnlyLock(path_to_agnostic(name))
     
 def hack_locks_onto_h5py():
     def __init__(self, name, mode=None, driver=None, libver=None, **kwds):
         if not isinstance(name, h5py._objects.ObjectID):
-            self.zlock = zprocess.locking.Lock(shared_drive.path_to_agnostic(name))
+            self.zlock = zprocess.locking.Lock(path_to_agnostic(name))
             self.zlock.acquire()
         _orig_init(self, name, mode, driver, libver, **kwds)
 
