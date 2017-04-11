@@ -40,7 +40,12 @@ def hack_locks_onto_h5py():
         if not isinstance(name, h5py._objects.ObjectID):
             self.zlock = zprocess.locking.Lock(path_to_agnostic(name))
             self.zlock.acquire()
-        _orig_init(self, name, mode, driver, libver, **kwds)
+        try:
+            _orig_init(self, name, mode, driver, libver, **kwds)
+        except:
+            if hasattr(self, 'zlock'):
+                self.zlock.release()
+            raise
 
     def close(self):
         _orig_close(self)
