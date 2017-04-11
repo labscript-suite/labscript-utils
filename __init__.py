@@ -11,7 +11,18 @@
 #                                                                   #
 #####################################################################
 
-__version__ = '2.2.0'
+__version__ = '2.3.0'
+
+
+import sys
+import os
+
+for path in sys.path:
+    if os.path.exists(os.path.join(path, '.is_labscript_suite_install_dir')):
+        labscript_suite_install_dir = path
+        break
+else:
+    labscript_suite_install_dir = None
 
 
 class VersionException(Exception):
@@ -30,3 +41,4 @@ def check_version(module_name, at_least, less_than, version=None):
     if not at_least_version <= installed_version < less_than_version:
         raise VersionException(
             '{module_name} {version} found. {at_least} <= {module_name} < {less_than} required.'.format(**locals()))
+

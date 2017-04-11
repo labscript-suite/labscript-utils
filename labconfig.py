@@ -21,12 +21,10 @@ except ImportError:
     # Python 2
     import ConfigParser as configparser
 
-
+from labscript_utils import labscript_suite_install_dir
 # Look for a 'labconfig' folder in the labscript install directory:
-for path in sys.path:
-    if os.path.exists(os.path.join(path, '.is_labscript_suite_install_dir')):
-        config_prefix = os.path.join(path, 'labconfig')
-        break
+if labscript_suite_install_dir is not None:
+    config_prefix = os.path.join(labscript_suite_install_dir, 'labconfig')
 else:
     # No labscript install directory found? Revert to system defaults
     if os.name == 'nt':
