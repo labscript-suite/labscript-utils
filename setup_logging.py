@@ -19,6 +19,15 @@ import __main__
 def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.INFO, maxBytes=1024*1024*50, backupCount=1):
     logger = logging.getLogger(program_name)
     main_path = __main__.__file__ if hasattr(__main__, '__file__') else __file__
+    try:
+        try:
+            program_module = __import__(program_name)
+        except ImportError:
+            program_module = __import__(program_name.lower())
+        main_path = program_module.__file__
+    except ImportError:
+        main_path = __main__.__file__ if hasattr(__main__, '__file__') else __file__
+
     log_dir = os.path.dirname(os.path.realpath(main_path))
     log_path = os.path.join(log_dir, '%s.log' % program_name)
     handler = logging.handlers.RotatingFileHandler(log_path, maxBytes=maxBytes, backupCount=backupCount)
