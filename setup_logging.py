@@ -18,7 +18,6 @@ import __main__
 
 def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.INFO, maxBytes=1024*1024*50, backupCount=1):
     logger = logging.getLogger(program_name)
-    main_path = __main__.__file__ if hasattr(__main__, '__file__') else __file__
     try:
         try:
             program_module = __import__(program_name)
