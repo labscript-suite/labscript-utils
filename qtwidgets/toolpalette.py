@@ -20,6 +20,11 @@ else:
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
 
+import qtutils.icons
+
+EXPAND_ICON = ':/qtutils/fugue/toggle-small-expand'
+CONTRACT_ICON = ':/qtutils/fugue/toggle-small'
+
 class ToolPaletteGroup(QVBoxLayout):
     
     def __init__(self,*args,**kwargs):
@@ -37,16 +42,25 @@ class ToolPaletteGroup(QVBoxLayout):
         # Create the tool palette and store a reference to it and an index indicating the order of Tool Palettes
         tool_palette = ToolPalette(self,name,*args,**kwargs)
         push_button = QPushButton(name)        
-        push_button.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Minimum)
+        push_button.setIcon(QIcon(CONTRACT_ICON))
+        push_button.setFocusPolicy(Qt.NoFocus)
+
+
+        header_widget = QWidget()
+        header_layout = QHBoxLayout()
+        header_layout.addWidget(push_button)
+        header_layout.addStretch(1)
+        header_widget.setLayout(header_layout)
+        header_layout.setContentsMargins(0,0,0,0)
         
         def create_callback(name):
             return lambda: self._on_button_clicked(name)
             
         push_button.clicked.connect(create_callback(name))
-        self._widget_groups[name] = (len(self._widget_groups),tool_palette, push_button)
+        self._widget_groups[name] = (len(self._widget_groups), tool_palette, push_button)
         
         # append to the layout
-        self.addWidget(push_button)
+        self.addWidget(header_widget)
         self.addWidget(self._widget_groups[name][1])
         
         return tool_palette
@@ -63,9 +77,9 @@ class ToolPaletteGroup(QVBoxLayout):
     def show_palette(self,name):
         if name not in self._widget_groups:
             raise RuntimeError('The tool palette does not have a palette named %s'%name)
-            
-        self._widget_groups[name][1].show()
-        #TODO: Update icon on the button
+        _, palette, push_button = self._widget_groups[name]
+        palette.show()
+        push_button.setIcon(QIcon(CONTRACT_ICON))
             
     def show_palette_by_index(self,index):
         self.show_palette(self.get_name_from_index(index))
@@ -74,9 +88,9 @@ class ToolPaletteGroup(QVBoxLayout):
         if name not in self._widget_groups:
             raise RuntimeError('The tool palette does not have a palette named %s'%name)
         
-        self._widget_groups[name][1].hide()
-        
-        #TODO: Update icon on the button
+        _, palette, push_button = self._widget_groups[name]
+        palette.hide()
+        push_button.setIcon(QIcon(EXPAND_ICON))
     
     def hide_palette_by_index(self,index):
         self.hide_palette(self.get_name_from_index(index))
