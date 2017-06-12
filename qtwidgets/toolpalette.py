@@ -44,7 +44,7 @@ class ToolPaletteGroup(QVBoxLayout):
         push_button = QPushButton(name)        
         push_button.setIcon(QIcon(CONTRACT_ICON))
         push_button.setFocusPolicy(Qt.NoFocus)
-
+        push_button.setToolTip('Click to hide')
 
         header_widget = QWidget()
         header_layout = QHBoxLayout()
@@ -80,6 +80,7 @@ class ToolPaletteGroup(QVBoxLayout):
         _, palette, push_button = self._widget_groups[name]
         palette.show()
         push_button.setIcon(QIcon(CONTRACT_ICON))
+        push_button.setToolTip('Click to hide')
             
     def show_palette_by_index(self,index):
         self.show_palette(self.get_name_from_index(index))
@@ -91,6 +92,7 @@ class ToolPaletteGroup(QVBoxLayout):
         _, palette, push_button = self._widget_groups[name]
         palette.hide()
         push_button.setIcon(QIcon(EXPAND_ICON))
+        push_button.setToolTip('Click to show')
     
     def hide_palette_by_index(self,index):
         self.hide_palette(self.get_name_from_index(index))
@@ -384,7 +386,7 @@ class ToolPalette(QScrollArea):
         
     def _update_layout(self, size):
         if size.width() + 2 == self.size().width() and size.height()+2 == self.size().height():
-            print 'relaying out widgets'
+            # print 'relaying out widgets'
             self._layout_widgets()
 
 
