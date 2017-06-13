@@ -252,7 +252,7 @@ class ToolPalette(QScrollArea):
     def __init__(self,parent,name,*args,**kwargs):
         QScrollArea.__init__(self,*args,**kwargs)
         self.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Minimum)
-        self.setFrameStyle(QFrame.HLine)
+        self.setFrameStyle(QFrame.NoFrame)
         # create the grid layout
         #self.setWidget(QWidget(self))
         #self.widget().setSizePolicy(QSizePolicy.Preferred,QSizePolicy.Preferred)
@@ -388,13 +388,9 @@ class ToolPalette(QScrollArea):
         # print self.minimumSizeHint()
         #pass resize event on to qwidget
         # call layout()
-        QWidget.resizeEvent(self,event)
-        
+        QWidget.resizeEvent(self, event)
         size = event.size()
-        QTimer.singleShot(300, lambda size=size: self._update_layout(size))
-        
-    def _update_layout(self, size):
-        if size.width() + 2 == self.size().width() and size.height()+2 == self.size().height():
+        if size.width() == self.size().width() and size.height() == self.size().height():
             # print 'relaying out widgets'
             self._layout_widgets()
 
