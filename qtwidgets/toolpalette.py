@@ -46,12 +46,17 @@ class ToolPaletteGroup(QVBoxLayout):
         push_button.setFocusPolicy(Qt.NoFocus)
         push_button.setToolTip('Click to hide')
 
+        frame = QFrame()
+        frame.setFrameStyle(QFrame.StyledPanel)
+        frame_layout = QVBoxLayout(frame)
+        frame_layout.setContentsMargins(0,0,0,0)
+
         header_widget = QWidget()
         header_layout = QHBoxLayout()
         header_layout.addWidget(push_button)
         header_layout.addStretch(1)
         header_widget.setLayout(header_layout)
-        header_layout.setContentsMargins(0,0,0,0)
+        header_layout.setContentsMargins(3,3,3,3)
         
         def create_callback(name):
             return lambda: self._on_button_clicked(name)
@@ -59,10 +64,11 @@ class ToolPaletteGroup(QVBoxLayout):
         push_button.clicked.connect(create_callback(name))
         self._widget_groups[name] = (len(self._widget_groups), tool_palette, push_button)
         
-        # append to the layout
-        self.addWidget(header_widget)
-        self.addWidget(self._widget_groups[name][1])
+        frame_layout.addWidget(header_widget)
+        frame_layout.addWidget(tool_palette)
         
+        # append to the layout
+        self.addWidget(frame)
         return tool_palette
      
     def _on_button_clicked(self,name):
@@ -245,10 +251,12 @@ class ToolPalette(QScrollArea):
     def __init__(self,parent,name,*args,**kwargs):
         QScrollArea.__init__(self,*args,**kwargs)
         self.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Minimum)
+        self.setFrameStyle(QFrame.HLine)
         # create the grid layout
         #self.setWidget(QWidget(self))
         #self.widget().setSizePolicy(QSizePolicy.Preferred,QSizePolicy.Preferred)
         self._layout = QGridLayout(self) 
+        self._layout.setContentsMargins(3,0,3,3)
         #self._layout.setMaximumSize(QSize(524287,524287))
         #self._layout.setSizeConstraint(QLayout.SetMinAndMaxSize)
         self._widget_list = []
