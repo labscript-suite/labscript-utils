@@ -50,6 +50,7 @@ class ToolPaletteGroup(QVBoxLayout):
         frame.setFrameStyle(QFrame.StyledPanel)
         frame_layout = QVBoxLayout(frame)
         frame_layout.setContentsMargins(0,0,0,0)
+        frame_layout.setSpacing(0)
 
         header_widget = QWidget()
         header_layout = QHBoxLayout()
