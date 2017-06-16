@@ -20,6 +20,11 @@ else:
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
 
+import qtutils.icons
+
+EXPAND_ICON = ':/qtutils/fugue/toggle-small-expand'
+CONTRACT_ICON = ':/qtutils/fugue/toggle-small'
+
 class ToolPaletteGroup(QVBoxLayout):
     
     def __init__(self,*args,**kwargs):
@@ -37,18 +42,34 @@ class ToolPaletteGroup(QVBoxLayout):
         # Create the tool palette and store a reference to it and an index indicating the order of Tool Palettes
         tool_palette = ToolPalette(self,name,*args,**kwargs)
         push_button = QPushButton(name)        
-        push_button.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Minimum)
+        push_button.setIcon(QIcon(CONTRACT_ICON))
+        push_button.setFocusPolicy(Qt.NoFocus)
+        push_button.setToolTip('Click to hide')
+
+        frame = QFrame()
+        frame.setFrameStyle(QFrame.StyledPanel)
+        frame_layout = QVBoxLayout(frame)
+        frame_layout.setContentsMargins(0,0,0,0)
+        frame_layout.setSpacing(0)
+
+        header_widget = QWidget()
+        header_layout = QHBoxLayout()
+        header_layout.addWidget(push_button)
+        header_layout.addStretch(1)
+        header_widget.setLayout(header_layout)
+        header_layout.setContentsMargins(3,3,3,3)
         
         def create_callback(name):
             return lambda: self._on_button_clicked(name)
             
         push_button.clicked.connect(create_callback(name))
-        self._widget_groups[name] = (len(self._widget_groups),tool_palette, push_button)
+        self._widget_groups[name] = (len(self._widget_groups), tool_palette, push_button)
+        
+        frame_layout.addWidget(header_widget)
+        frame_layout.addWidget(tool_palette)
         
         # append to the layout
-        self.addWidget(push_button)
-        self.addWidget(self._widget_groups[name][1])
-        
+        self.addWidget(frame)
         return tool_palette
      
     def _on_button_clicked(self,name):
@@ -63,9 +84,10 @@ class ToolPaletteGroup(QVBoxLayout):
     def show_palette(self,name):
         if name not in self._widget_groups:
             raise RuntimeError('The tool palette does not have a palette named %s'%name)
-            
-        self._widget_groups[name][1].show()
-        #TODO: Update icon on the button
+        _, palette, push_button = self._widget_groups[name]
+        palette.show()
+        push_button.setIcon(QIcon(CONTRACT_ICON))
+        push_button.setToolTip('Click to hide')
             
     def show_palette_by_index(self,index):
         self.show_palette(self.get_name_from_index(index))
@@ -74,9 +96,10 @@ class ToolPaletteGroup(QVBoxLayout):
         if name not in self._widget_groups:
             raise RuntimeError('The tool palette does not have a palette named %s'%name)
         
-        self._widget_groups[name][1].hide()
-        
-        #TODO: Update icon on the button
+        _, palette, push_button = self._widget_groups[name]
+        palette.hide()
+        push_button.setIcon(QIcon(EXPAND_ICON))
+        push_button.setToolTip('Click to show')
     
     def hide_palette_by_index(self,index):
         self.hide_palette(self.get_name_from_index(index))
@@ -229,10 +252,12 @@ class ToolPalette(QScrollArea):
     def __init__(self,parent,name,*args,**kwargs):
         QScrollArea.__init__(self,*args,**kwargs)
         self.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Minimum)
+        self.setFrameStyle(QFrame.NoFrame)
         # create the grid layout
         #self.setWidget(QWidget(self))
         #self.widget().setSizePolicy(QSizePolicy.Preferred,QSizePolicy.Preferred)
         self._layout = QGridLayout(self) 
+        self._layout.setContentsMargins(3,0,3,3)
         #self._layout.setMaximumSize(QSize(524287,524287))
         #self._layout.setSizeConstraint(QLayout.SetMinAndMaxSize)
         self._widget_list = []
@@ -363,14 +388,10 @@ class ToolPalette(QScrollArea):
         # print self.minimumSizeHint()
         #pass resize event on to qwidget
         # call layout()
-        QWidget.resizeEvent(self,event)
-        
+        QWidget.resizeEvent(self, event)
         size = event.size()
-        QTimer.singleShot(300, lambda size=size: self._update_layout(size))
-        
-    def _update_layout(self, size):
-        if size.width() + 2 == self.size().width() and size.height()+2 == self.size().height():
-            print 'relaying out widgets'
+        if size.width() == self.size().width() and size.height() == self.size().height():
+            # print 'relaying out widgets'
             self._layout_widgets()
 
 
