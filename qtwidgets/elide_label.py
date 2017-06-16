@@ -18,11 +18,13 @@ class ElideScrollArea(QScrollArea):
     to the side with the scrollbars hidden."""
     def __init__(self, *args, **kwargs):
         QScrollArea.__init__(self, *args, **kwargs)
-        self.horizontalScrollBar().setStyleSheet("QScrollBar {height:0px;}");
-        self.verticalScrollBar().setStyleSheet("QScrollBar {width:0px;}");
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setFrameStyle(QFrame.NoFrame)
+        self.setStyleSheet("background-color:transparent;")
         self.setElideMode(Qt.ElideNone)
         self.setWidgetResizable(True)
+
         
     def setElideMode(self, elideMode):
         if not isinstance(elideMode, Qt.TextElideMode):
@@ -50,6 +52,8 @@ class ElideScrollArea(QScrollArea):
         QScrollArea.setWidget(self, widget)
         self.setSizePolicy(QSizePolicy(self.sizePolicy().horizontalPolicy(), widget.sizePolicy().verticalPolicy()))
 
+    def wheelEvent(self, event):
+        event.ignore()
 
 class ElidedLabelContainer(QWidget):
     """A QWidget to contain a QLabel with a single line of (possibly rich)
@@ -114,6 +118,12 @@ class ElidedLabelContainer(QWidget):
         elif self._elideMode == Qt.ElideRight:
             self.scroll_area.ensureVisible(0, 0, 0, 0)
 
+    def minimumSizeHint(self):
+        return self.scroll_area.minimumSizeHint()
+
+    def sizeHint(self):
+        return self.scroll_area.minimumSizeHint()
+
 
 def elide_label(label, layout, elide_mode):
     """Take an existing label that is in a layout, and wrap it in our widgets
@@ -130,24 +140,28 @@ def elide_label(label, layout, elide_mode):
         raise NotImplementedError("Only labels that are in QBoxLayouts or QSplitters supported")
     index = layout.indexOf(label)
     container = ElidedLabelContainer(label)
+    label.setParent(container.scroll_area)
+    label.setVisible(False)
+    label.setVisible(True)
     layout.insertWidget(index, container)
     container.setElideMode(elide_mode)
-        
 
 
 if __name__ == '__main__':
     # test:
     
-    test_text = "The <b>quick</b> brown fox <b>jumped over the lazy dog</b>"
+    test_text = "The <b>quick</b> brown fox <br> <b>jumped over the lazy dog</b>"
     app = QApplication(sys.argv)
     window = QWidget()
     hlayout = QHBoxLayout(window)
+    tabwidget = QTabWidget()
     widget = QWidget()
+    tabwidget.addTab(widget, 'test')
     layout = QVBoxLayout(widget)
     normal_label = QLabel("Normal label")
     normal_label.setStyleSheet("QLabel { background-color : red; color : blue; }")
     hlayout.addWidget(normal_label)
-    hlayout.addWidget(widget)
+    hlayout.addWidget(tabwidget)
 
     elide_left = QLabel("ElideLeft: " + test_text)
     elide_right = QLabel("ElideRight: " + test_text)
