@@ -25,7 +25,6 @@ class ElideScrollArea(QScrollArea):
         self.setElideMode(Qt.ElideNone)
         self.setWidgetResizable(True)
 
-        
     def setElideMode(self, elideMode):
         if not isinstance(elideMode, Qt.TextElideMode):
             raise TypeError("Argument must be of type Qt.TextElideMode")
@@ -52,8 +51,6 @@ class ElideScrollArea(QScrollArea):
         QScrollArea.setWidget(self, widget)
         self.setSizePolicy(QSizePolicy(self.sizePolicy().horizontalPolicy(), widget.sizePolicy().verticalPolicy()))
 
-    def wheelEvent(self, event):
-        event.ignore()
 
 class ElidedLabelContainer(QWidget):
     """A QWidget to contain a QLabel with a single line of (possibly rich)
@@ -74,6 +71,12 @@ class ElidedLabelContainer(QWidget):
         self.setElideMode(Qt.ElideNone)
         self.setSizePolicy(label.sizePolicy())
         self.scroll_area.horizontalScrollBar().rangeChanged.connect(self.update_elide_widget)
+        self.setToolTip("test")
+
+    def event(self, event):
+        if event.type() == QEvent.ToolTip:
+            self.setToolTip(self.label.text())
+        return QWidget.event(self, event)
 
     def elideMode(self):
         return self._elideMode
