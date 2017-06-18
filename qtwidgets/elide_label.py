@@ -61,6 +61,8 @@ class ElidedLabelContainer(QWidget):
     """
     def __init__(self, label):
         QWidget.__init__(self)
+        if label.wordWrap():
+            raise ValueError("Cannot elide label with word wrapping enabled")
         self.label = label
         self.layout = QHBoxLayout(self)
         self.layout.setSpacing(0)
@@ -71,7 +73,8 @@ class ElidedLabelContainer(QWidget):
         self.setElideMode(Qt.ElideNone)
         self.setSizePolicy(label.sizePolicy())
         self.scroll_area.horizontalScrollBar().rangeChanged.connect(self.update_elide_widget)
-        self.setToolTip("test")
+        # self.scroll_area.horizontalScrollBar().valueChanged.connect(self.update_elide_widget)
+        self.update_elide_widget()
 
     def event(self, event):
         if event.type() == QEvent.ToolTip:
@@ -100,19 +103,19 @@ class ElidedLabelContainer(QWidget):
             self.layout.addWidget(self.scroll_area)
             self.layout.addWidget(self.ellipsis_label)
 
-    def resizeEvent(self, event):
-        result = QWidget.resizeEvent(self, event)
-        self.update_elide_widget()
-        return result
+    # def resizeEvent(self, event):
+    #     result = QWidget.resizeEvent(self, event)
+    #     self.update_elide_widget()
+    #     return result
 
     def update_elide_widget(self):
         label_width = self.label.minimumSizeHint().width()
 
         width = self.width()
         if label_width > width:
-            self.ellipsis_label.show()
+            self.ellipsis_label.setText(ELLIPSIS)
         else:
-            self.ellipsis_label.hide()
+            self.ellipsis_label.setText('')
 
         if self._elideMode == Qt.ElideNone:
             return
@@ -153,7 +156,7 @@ def elide_label(label, layout, elide_mode):
 if __name__ == '__main__':
     # test:
     
-    test_text = "The <b>quick</b> brown fox <br> <b>jumped over the lazy dog</b>"
+    test_text = "The <b>quick</b> brown fox <b>jumped over the lazy dog</b>"
     app = QApplication(sys.argv)
     window = QWidget()
     hlayout = QHBoxLayout(window)
@@ -167,6 +170,7 @@ if __name__ == '__main__':
     hlayout.addWidget(tabwidget)
 
     elide_left = QLabel("ElideLeft: " + test_text)
+    elide_left.setAlignment(Qt.AlignCenter)
     elide_right = QLabel("ElideRight: " + test_text)
     smaller_label = QLabel("Smaller label")
     smaller_label2 = QLabel("Smaller label")
@@ -190,7 +194,7 @@ if __name__ == '__main__':
     elide_label(elide_right, layout, Qt.ElideRight)
 
     def foo():
-        elide_left.setText("ElideLeft: " + test_text + test_text)
+        elide_left.setText("ElideLeft: " + test_text + test_text + ' again')
 
     QTimer.singleShot(3000, foo)
     app.exec_()
