@@ -192,7 +192,7 @@ if __name__ == '__main__':
     window.show()
     window.resize(20, 20)
 
-    elide_label(elide_left, hlayout, Qt.ElideLeft)
+    elide_label(elide_left, layout, Qt.ElideLeft)
     elide_label(elide_right, layout, Qt.ElideRight)
 
     def foo():
