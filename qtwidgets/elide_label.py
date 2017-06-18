@@ -145,6 +145,8 @@ def elide_label(label, layout, elide_mode):
     if not (isinstance(layout, QBoxLayout) or isinstance(layout, QSplitter)):
         raise NotImplementedError("Only labels that are in QBoxLayouts or QSplitters supported")
     index = layout.indexOf(label)
+    if index == -1:
+        raise ValueError("Label not found in given layout")
     container = ElidedLabelContainer(label)
     label.setParent(container.scroll_area)
     label.setVisible(False)
@@ -190,7 +192,7 @@ if __name__ == '__main__':
     window.show()
     window.resize(20, 20)
 
-    elide_label(elide_left, layout, Qt.ElideLeft)
+    elide_label(elide_left, hlayout, Qt.ElideLeft)
     elide_label(elide_right, layout, Qt.ElideRight)
 
     def foo():
