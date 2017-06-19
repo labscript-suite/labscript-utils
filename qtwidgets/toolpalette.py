@@ -258,6 +258,8 @@ class ToolPalette(QScrollArea):
         #self.widget().setSizePolicy(QSizePolicy.Preferred,QSizePolicy.Preferred)
         self._layout = QGridLayout(self) 
         self._layout.setContentsMargins(3,0,3,3)
+        self._layout.setHorizontalSpacing(3)
+        self._layout.setVerticalSpacing(3)
         #self._layout.setMaximumSize(QSize(524287,524287))
         #self._layout.setSizeConstraint(QLayout.SetMinAndMaxSize)
         self._widget_list = []
