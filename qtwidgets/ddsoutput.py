@@ -30,7 +30,7 @@ class DDSOutput(QWidget):
         self._connection_name = connection_name
         self._hardware_name = hardware_name
         
-        label_text = (self._hardware_name + ' - ' + self._connection_name) 
+        label_text = (self._hardware_name + '\n' + self._connection_name) 
         self._label = QLabel(label_text)
         self._label.setAlignment(Qt.AlignCenter)
         self._label.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Minimum)
@@ -41,27 +41,49 @@ class DDSOutput(QWidget):
         # Create widgets
         self._widgets = {}
         self._widgets['gate'] = DigitalOutput('Enabled')
-        self._widgets['freq'] = AnalogOutput('',display_name='Frequency', horizontal_alignment=True)
-        self._widgets['amp'] = AnalogOutput('',display_name='Amplitude', horizontal_alignment=True)
-        self._widgets['phase'] = AnalogOutput('',display_name='Phase', horizontal_alignment=True)
+        self._widgets['freq'] = AnalogOutput('',display_name='<i>f</i>', horizontal_alignment=True)
+        self._widgets['amp'] = AnalogOutput('',display_name='<i>A</i>', horizontal_alignment=True)
+        self._widgets['phase'] = AnalogOutput('',display_name=u'<i>&phi;</i>', horizontal_alignment=True)
         
+        # Extra layout at the top level with horizontal stretches so that our
+        # widgets do not grow to take up all available horizontal space:
+        self._outer_layout = QHBoxLayout(self)
+        self._outer_layout.setContentsMargins(0, 0, 0, 0)
+        # self._layout.setHorizontalSpacing(3)
+        self._frame = QFrame(self)
+        self._outer_layout.addStretch()
+        self._outer_layout.addWidget(self._frame)
+        self._outer_layout.addStretch()
+
         # Create grid layout that keeps widgets from expanding and keeps label centred above the widgets
-        self._layout = QGridLayout(self)
-        self._layout.setVerticalSpacing(0)
+        self._layout = QGridLayout(self._frame)
+        self._layout.setVerticalSpacing(6)
         self._layout.setHorizontalSpacing(0)
         self._layout.setContentsMargins(0,0,0,0)
         
-        h_widget = QWidget()            
-        h_layout = QHBoxLayout(h_widget)
-        h_layout.setContentsMargins(0,0,0,0)
-        h_layout.addWidget(self._widgets['gate'])
-        h_layout.addWidget(self._widgets['freq'])
-        h_layout.addWidget(self._widgets['amp'])
-        h_layout.addWidget(self._widgets['phase'])
+        v_widget = QFrame()
+        v_widget.setFrameStyle(QFrame.StyledPanel)            
+        v_layout = QVBoxLayout(v_widget)
+        v_layout.setContentsMargins(6,6,6,6)
+
+        # Extra widget with stretches around the enabled button so it doesn't
+        # stretch out to fill all horizontal space:
+        self.gate_container = QWidget()
+        gate_layout = QHBoxLayout(self.gate_container)
+        gate_layout.setContentsMargins(0,0,0,0)
+        gate_layout.setSpacing(0)
+        gate_layout.addStretch()
+        gate_layout.addWidget(self._widgets['gate'])
+        gate_layout.addStretch()
+
+        v_layout.addWidget(self.gate_container)
+        v_layout.addWidget(self._widgets['freq'])
+        v_layout.addWidget(self._widgets['amp'])
+        v_layout.addWidget(self._widgets['phase'])
         
         self._layout.addWidget(self._label,0,0)
         #self._layout.addItem(QSpacerItem(0,0,QSizePolicy.MinimumExpanding,QSizePolicy.Minimum),0,1)
-        self._layout.addWidget(h_widget,1,0)            
+        self._layout.addWidget(v_widget,1,0)            
         #self._layout.addItem(QSpacerItem(0,0,QSizePolicy.MinimumExpanding,QSizePolicy.Minimum),1,1)
         self._layout.addItem(QSpacerItem(0,0,QSizePolicy.Minimum,QSizePolicy.MinimumExpanding),2,0)
         
@@ -74,14 +96,20 @@ class DDSOutput(QWidget):
         
     def hide_sub_widget(self,subchnl):
         if subchnl in self._widgets:
-            self._widgets[subchnl].hide()
+            if subchnl == 'gate':
+                self.gate_container.hide()
+            else:
+                self._widgets[subchnl].hide()
             return
         
         raise RuntimeError('The sub-channel %s must be either gate, freq, amp or phase'%subchnl)  
     
     def show_sub_widget(self,subchnl):
         if subchnl in self._widgets:
-            self._widgets[subchnl].show()
+            if subchnl == 'gate':
+                self.gate_container.show()
+            else:
+                self._widgets[subchnl].show()
             return
         
         raise RuntimeError('The sub-channel %s must be either gate, freq, amp or phase'%subchnl)
