@@ -99,7 +99,7 @@ class CameraServer(zprocess.ZMQServer):
             elif request_data == 'abort':
                 self.abort(self, self._h5_filepath)
                 self._h5_filepath = None
-                return 'ok'
+                return 'done'
             else:
                 raise ValueError('invalid request: %s'%request_data)
         except Exception:
