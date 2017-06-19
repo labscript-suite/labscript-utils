@@ -40,7 +40,7 @@ class DDSOutput(QWidget):
         
         # Create widgets
         self._widgets = {}
-        self._widgets['gate'] = DigitalOutput('Enabled')
+        self._widgets['gate'] = DigitalOutput('Enable')
         self._widgets['freq'] = AnalogOutput('',display_name='<i>f</i>', horizontal_alignment=True)
         self._widgets['amp'] = AnalogOutput('',display_name='<i>A</i>', horizontal_alignment=True)
         self._widgets['phase'] = AnalogOutput('',display_name=u'<i>&phi;</i>', horizontal_alignment=True)
@@ -75,6 +75,11 @@ class DDSOutput(QWidget):
         gate_layout.addStretch()
         gate_layout.addWidget(self._widgets['gate'])
         gate_layout.addStretch()
+
+        self._widgets['gate'].setToolTip("Enable")
+        self._widgets['freq'].setToolTip("Frequency")
+        self._widgets['amp'].setToolTip("Amplitude")
+        self._widgets['phase'].setToolTip("Phase")
 
         v_layout.addWidget(self.gate_container)
         v_layout.addWidget(self._widgets['freq'])
