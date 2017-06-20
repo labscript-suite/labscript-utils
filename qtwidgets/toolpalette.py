@@ -344,7 +344,11 @@ class ToolPalette(QScrollArea):
             # print self._layout.verticalSpacing()
             # print self._row_count
             
-            self.setMinimumSize(QSize(self.minimumSize().width(),(max(h_size_hints)+self._layout.verticalSpacing())*self._row_count+self._layout.verticalSpacing()*2))
+            total_height = max(h_size_hints) * self._row_count
+            total_height += self._layout.verticalSpacing() * (self._row_count - 1)
+            total_height += self._layout.contentsMargins().top()
+            total_height += self._layout.contentsMargins().bottom()
+            self.setMinimumSize(QSize(self.minimumSize().width(), total_height))
             for i in range(self._layout.rowCount()):
                 if i < self._row_count:
                     self._layout.setRowMinimumHeight(i,max(h_size_hints))
@@ -375,6 +379,16 @@ class ToolPalette(QScrollArea):
     def updateMinimumSize(self):
         self.setMinimumSize(self.minimumSize())
         
+    def sizeHint(self):
+        width = QScrollArea.sizeHint(self).width()
+        height = self.minimumSize().height()
+        return QSize(width, height)
+
+    def minimumSizeHint(self):
+        width = QScrollArea.minimumSizeHint(self).width()
+        height = self.minimumSize().height()
+        return QSize(width, height)
+
     def resizeEvent(self, event):
         # overwrite the resize event!
         # print '--------- %s'%self._name
