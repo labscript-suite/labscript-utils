@@ -41,9 +41,9 @@ class DDSOutput(QWidget):
         # Create widgets
         self._widgets = {}
         self._widgets['gate'] = DigitalOutput('Enable')
-        self._widgets['freq'] = AnalogOutput('',display_name='Frequency', horizontal_alignment=True)
-        self._widgets['amp'] = AnalogOutput('',display_name='Amplitude', horizontal_alignment=True)
-        self._widgets['phase'] = AnalogOutput('',display_name='Phase', horizontal_alignment=True)
+        self._widgets['freq'] = AnalogOutput('',display_name='<i>f</i>', horizontal_alignment=True)
+        self._widgets['amp'] = AnalogOutput('',display_name='<i>A</i>', horizontal_alignment=True)
+        self._widgets['phase'] = AnalogOutput('',display_name='<i>&phi;</i>', horizontal_alignment=True)
         
         # Create grid layout that keeps widgets from expanding and keeps label centred above the widgets
         self._layout = QGridLayout(self)
@@ -54,6 +54,7 @@ class DDSOutput(QWidget):
         h_widget = QWidget()            
         h_layout = QHBoxLayout(h_widget)
         h_layout.setContentsMargins(0,0,0,0)
+        h_layout.setSpacing(0)
         h_layout.addWidget(self._widgets['gate'])
         h_layout.addWidget(self._widgets['freq'])
         h_layout.addWidget(self._widgets['amp'])
