@@ -25,6 +25,11 @@ class ElideScrollArea(QScrollArea):
         self.setElideMode(Qt.ElideNone)
         self.setWidgetResizable(True)
 
+    def event(self, event):
+        if event.type() == QEvent.LayoutRequest:
+            self.updateGeometry()
+        return QScrollArea.event(self, event)
+
     def setElideMode(self, elideMode):
         if not isinstance(elideMode, Qt.TextElideMode):
             raise TypeError("Argument must be of type Qt.TextElideMode")
@@ -196,7 +201,7 @@ if __name__ == '__main__':
     elide_label(elide_right, layout, Qt.ElideRight)
 
     def foo():
-        elide_left.setText("ElideLeft: " + test_text + test_text + ' again')
+        elide_left.setText("The <b>quick</b><br>brown fox <b>jumped <br>over the lazy dog</b>")
 
     QTimer.singleShot(3000, foo)
     app.exec_()
