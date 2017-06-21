@@ -18,7 +18,8 @@ import os
 import imp
 
 class ModuleWatcher(object):
-    def __init__(self):
+    def __init__(self, debug=False):
+        self.debug = debug
         # A lock to hold whenever you don't want modules unloaded:
         self.lock = threading.Lock()
             
@@ -53,11 +54,16 @@ class ModuleWatcher(object):
                     # not in the whitelist:
                     message = '%s modified: all modules will be reloaded next run.\n'%module_file
                     sys.stderr.write(message)
+                    if self.debug:
+                        print("ModuleWatcher: whitelist is:")
+                        for name in sorted(self.whitelist):
+                            print("    " + name)
+                        print("\nModuleWatcher: modules unloaded:")
                     # Acquire the import lock so that we don't unload
                     # modules whilst an import is in progess:
                     imp.acquire_lock()
                     try:
-                        for name in sys.modules.copy():
+                        for name in sorted(sys.modules):
                             if name not in self.whitelist:
                                 # This unloads a module. This is slightly
                                 # more general than reload(module), but
@@ -70,6 +76,8 @@ class ModuleWatcher(object):
                                 del sys.modules[name]
                                 if name in self.modified_times:
                                     del self.modified_times[name]
+                                if self.debug:
+                                    print("    " + name)
                     finally:
                         # We're done mucking around with the cached
                         # modules, normal imports in other threads
