@@ -20,6 +20,28 @@ else:
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
 
+
+class NoStealFocusDoubleSpinBox(QDoubleSpinBox):
+    """A QDoubleSpinBox that doesn't steal focus as you scroll over it with a
+    mouse wheel."""
+    def __init__(self, *args, **kwargs):
+        QDoubleSpinBox.__init__(self, *args, **kwargs)
+        self.setFocusPolicy(Qt.StrongFocus)
+
+    def focusInEvent(self, event):
+        self.setFocusPolicy(Qt.WheelFocus)
+        return QDoubleSpinBox.focusInEvent(self, event)
+
+    def focusOutEvent(self, event):
+        self.setFocusPolicy(Qt.StrongFocus)
+        return QDoubleSpinBox.focusOutEvent(self, event)
+
+    def wheelEvent(self, event):
+        if self.hasFocus():
+            return QDoubleSpinBox.wheelEvent(self, event)
+        else:
+            event.ignore()
+
 class AnalogOutput(QWidget):
     def __init__(self, hardware_name, connection_name='-', display_name=None, horizontal_alignment=False, parent=None):
         QWidget.__init__(self,parent)
@@ -31,7 +53,7 @@ class AnalogOutput(QWidget):
         self._label = QLabel(label_text)
         self._label.setAlignment(Qt.AlignCenter)
         self._label.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Minimum)
-        self._spin_widget = QDoubleSpinBox()
+        self._spin_widget = NoStealFocusDoubleSpinBox()
         self._spin_widget.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Minimum)
         self._spin_widget.setKeyboardTracking(False)
         self._combobox = QComboBox()
