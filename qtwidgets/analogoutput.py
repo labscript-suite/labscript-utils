@@ -99,11 +99,12 @@ class AnalogOutput(QWidget):
             self._layout.addWidget(self._label)
             self._layout.addWidget(self._spin_widget)
             self._layout.addWidget(self._combobox)
+            self._layout.setContentsMargins(0,0,0,0)
         else:
             self._layout = QGridLayout(self)
-            self._layout.setVerticalSpacing(0)
+            self._layout.setVerticalSpacing(3)
             self._layout.setHorizontalSpacing(0)
-            self._layout.setContentsMargins(5,5,5,5)
+            self._layout.setContentsMargins(3,3,3,3)
             
             self._label.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Minimum)
             
