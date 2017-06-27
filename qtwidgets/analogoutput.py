@@ -20,6 +20,28 @@ else:
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
 
+
+class NoStealFocusDoubleSpinBox(QDoubleSpinBox):
+    """A QDoubleSpinBox that doesn't steal focus as you scroll over it with a
+    mouse wheel."""
+    def __init__(self, *args, **kwargs):
+        QDoubleSpinBox.__init__(self, *args, **kwargs)
+        self.setFocusPolicy(Qt.StrongFocus)
+
+    def focusInEvent(self, event):
+        self.setFocusPolicy(Qt.WheelFocus)
+        return QDoubleSpinBox.focusInEvent(self, event)
+
+    def focusOutEvent(self, event):
+        self.setFocusPolicy(Qt.StrongFocus)
+        return QDoubleSpinBox.focusOutEvent(self, event)
+
+    def wheelEvent(self, event):
+        if self.hasFocus():
+            return QDoubleSpinBox.wheelEvent(self, event)
+        else:
+            event.ignore()
+
 class AnalogOutput(QWidget):
     def __init__(self, hardware_name, connection_name='-', display_name=None, horizontal_alignment=False, parent=None):
         QWidget.__init__(self,parent)
@@ -31,7 +53,7 @@ class AnalogOutput(QWidget):
         self._label = QLabel(label_text)
         self._label.setAlignment(Qt.AlignCenter)
         self._label.setSizePolicy(QSizePolicy.Fixed,QSizePolicy.Minimum)
-        self._spin_widget = QDoubleSpinBox()
+        self._spin_widget = NoStealFocusDoubleSpinBox()
         self._spin_widget.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Minimum)
         self._spin_widget.setKeyboardTracking(False)
         self._combobox = QComboBox()
@@ -99,11 +121,12 @@ class AnalogOutput(QWidget):
             self._layout.addWidget(self._label)
             self._layout.addWidget(self._spin_widget)
             self._layout.addWidget(self._combobox)
+            self._layout.setContentsMargins(0,0,0,0)
         else:
             self._layout = QGridLayout(self)
-            self._layout.setVerticalSpacing(0)
+            self._layout.setVerticalSpacing(3)
             self._layout.setHorizontalSpacing(0)
-            self._layout.setContentsMargins(5,5,5,5)
+            self._layout.setContentsMargins(3,3,3,3)
             
             self._label.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Minimum)
             
