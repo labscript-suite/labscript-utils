@@ -22,7 +22,7 @@ else:
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
     from PyQt4.QtCore import pyqtSignal as Signal
-
+import qtutils.icons
 
 class BrowseButton(QPushButton):
     def __init__(self, image_output, *args, **kwargs):
@@ -44,6 +44,8 @@ class BrowseButton(QPushButton):
         
         image_file = QFileDialog.getOpenFileName(self, 'Select image file to load', self.last_opened_folder, supported_images)
         
+        if image_file == None or image_file == "":
+            return
         image_file = os.path.abspath(image_file)
         if not os.path.exists(image_file):
             return 
@@ -55,9 +57,9 @@ class BrowseButton(QPushButton):
         with open(image_file, 'rb') as f:
             raw_data = f.read()
 
-        # print raw_data
+        
         data = base64.b64encode(raw_data)
-        print 'asdf'
+        
         self.image_output.value = data
         
     def eventFilter(self, obj, event):
@@ -119,6 +121,7 @@ class ImageOutput(QWidget):
         
         # Add the browse button
         self._browse_button = BrowseButton(self, 'Select Image')
+        self._browse_button.setIcon(QIcon(':/qtutils/fugue/image-import'))
         header_layout.addWidget(self._browse_button)
        
         # Add a spacer item to keep everything bunched
@@ -216,7 +219,6 @@ class ImageOutput(QWidget):
         
     @value.setter
     def value(self, value):
-        print 'aaaaaa'
         decoded_image = base64.b64decode(unicode(value))
         pixmap = QPixmap()
         pixmap.loadFromData(decoded_image, flags=Qt.AvoidDither | Qt.ThresholdAlphaDither | Qt.ThresholdDither)
@@ -224,7 +226,7 @@ class ImageOutput(QWidget):
         if pixmap.size() != self.image_size:
             QMessageBox.warning(self, "Failed to load image", 'The image size was incorrect. It must be %dx%d pixels.'%(self.image_size.width(), self.image_size.height()), QMessageBox.Ok, QMessageBox.Ok)
             return
-        print 'bbbb'
+        
         self._value = unicode(value)
         pixmap_item = QGraphicsPixmapItem(pixmap)
         
