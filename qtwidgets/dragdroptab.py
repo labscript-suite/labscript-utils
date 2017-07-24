@@ -14,7 +14,7 @@
 import sys
 from qtutils.qt.QtCore import *
 from qtutils.qt.QtGui import *
-
+from qtutils.qt.QtWidgets import *
 from qtutils import *
 
 debug = False
