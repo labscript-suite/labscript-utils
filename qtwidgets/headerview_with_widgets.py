@@ -1,8 +1,8 @@
 from __future__ import division
-from PyQt4 import QtCore, QtGui
+from qtutils.qt import QtCore, QtGui, QtWidgets
 
 
-class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
+class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
 
     """A QHeaderView that supports inserting arbitrary
     widgets into sections. Use setWidget(logical_index, widget)
@@ -32,7 +32,7 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
         self.widgets = {}
         self.indents = {}
         self.model = model
-        QtGui.QHeaderView.__init__(self, QtCore.Qt.Horizontal, parent)
+        QtWidgets.QHeaderView.__init__(self, QtCore.Qt.Horizontal, parent)
         self.setDefaultAlignment(QtCore.Qt.AlignLeft)
         self.sectionMoved.connect(self.update_widget_positions)
         self.sectionResized.connect(self.update_widget_positions)
@@ -40,7 +40,7 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
         self.sectionCountChanged.connect(self.update_widget_positions)
         self.model.columnsInserted.connect(self.on_columnsInserted)
         self.model.columnsRemoved.connect(self.on_columnsRemoved)
-        self.setMovable(True)
+        self.setSectionsMovable(True)
         self.vertical_padding = 0
         self.position_update_required = False
         self.custom_style = ''
@@ -51,19 +51,19 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
         self.update_indents()
 
     def showSection(self, *args, **kwargs):
-        result = QtGui.QHeaderView.showSection(self, *args, **kwargs)
+        result = QtWidgets.QHeaderView.showSection(self, *args, **kwargs)
         self.update_indents()
         self.update_widget_positions()
         return result
 
     def hideSection(self, *args, **kwargs):
-        result = QtGui.QHeaderView.hideSection(self, *args, **kwargs)
+        result = QtWidgets.QHeaderView.hideSection(self, *args, **kwargs)
         self.update_indents()
         self.update_widget_positions()
         return result
 
     def setSectionHidden(self, *args, **kwargs):
-        result = QtGui.QHeaderView.setSectionHidden(self, *args, **kwargs)
+        result = QtWidgets.QHeaderView.setSectionHidden(self, *args, **kwargs)
         self.update_indents()
         self.update_widget_positions()
         return result
@@ -71,7 +71,7 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
     def viewportEvent(self, event):
         if event.type() == QtCore.QEvent.Paint:
             self.update_widget_positions()
-        return QtGui.QHeaderView.viewportEvent(self, event)
+        return QtWidgets.QHeaderView.viewportEvent(self, event)
 
     def setWidget(self, logical_index, widget=None):
         header_item = self.model.horizontalHeaderItem(logical_index)
@@ -106,7 +106,7 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
         self.update_widget_positions()
 
     def showEvent(self, event):
-        QtGui.QHeaderView.showEvent(self, event)
+        QtWidgets.QHeaderView.showEvent(self, event)
         self.update_indents()
         self.update_widget_positions()
 
@@ -131,10 +131,10 @@ class HorizontalHeaderViewWithWidgets(QtGui.QHeaderView):
         height = fontmetrics.height()
         required_padding = (max_widget_height + 2 - height) // 2
         required_padding = max(required_padding, 3)
-        QtGui.QHeaderView.setStyleSheet(self, self.stylesheet % (required_padding, required_padding, self.custom_style))
+        QtWidgets.QHeaderView.setStyleSheet(self, self.stylesheet % (required_padding, required_padding, self.custom_style))
 
     def sectionSizeFromContents(self, logical_index):
-        base_size = QtGui.QHeaderView.sectionSizeFromContents(self, logical_index)
+        base_size = QtWidgets.QHeaderView.sectionSizeFromContents(self, logical_index)
         width, height = base_size.width(), base_size.height()
         if logical_index in self.widgets:
             widget_size = self.widgets[logical_index].size()

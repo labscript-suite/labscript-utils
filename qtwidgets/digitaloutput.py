@@ -13,12 +13,10 @@
 
 import sys
 
-if 'PySide' in sys.modules.copy():
-    from PySide.QtCore import *
-    from PySide.QtGui import *
-else:
-    from PyQt4.QtCore import *
-    from PyQt4.QtGui import *
+from qtutils.qt.QtCore import *
+from qtutils.qt.QtGui import *
+from qtutils.qt import QT_ENV, PYQT5
+from qtutils.qt.QtWidgets import *
 
 
 class DigitalOutput(QPushButton):
@@ -56,7 +54,7 @@ class DigitalOutput(QPushButton):
         
         # pass scrollwheel events of disabled buttons through to the parent
         # code adapted from: http://www.qtforum.org/article/28540/disabled-widgets-and-wheel-events.html
-        elif obj and not obj.isEnabled() and event.type() == QEvent.Wheel:
+        elif obj and not obj.isEnabled() and event.type() == QEvent.Wheel and QT_ENV != PYQT5:
             newEvent = QWheelEvent(obj.mapToParent(event.pos()), event.globalPos(),
                                    event.delta(), event.buttons(),
                                    event.modifiers(), event.orientation())

@@ -15,14 +15,10 @@ import base64
 import sys
 import os
 
-if 'PySide' in sys.modules.copy():
-    from PySide.QtCore import *
-    from PySide.QtGui import *
-else:
-    from PyQt4.QtCore import *
-    from PyQt4.QtGui import *
-    from PyQt4.QtCore import pyqtSignal as Signal
-import qtutils.icons
+from qtutils.qt.QtCore import *
+from qtutils.qt.QtGui import *
+from qtutils.qt.QtWidgets import *
+from qtutils.qt.QtCore import pyqtSignal as Signal
 
 class BrowseButton(QPushButton):
     def __init__(self, image_output, *args, **kwargs):
@@ -43,7 +39,8 @@ class BrowseButton(QPushButton):
         supported_images += ")"
         
         image_file = QFileDialog.getOpenFileName(self, 'Select image file to load', self.last_opened_folder, supported_images)
-        
+        if type(image_file) is tuple:
+            image_file, _ = image_file
         if image_file == None or image_file == "":
             return
         image_file = os.path.abspath(image_file)
