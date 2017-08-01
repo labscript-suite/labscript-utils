@@ -4,8 +4,8 @@ import sys
 import time
 import threading
 import unittest
-import six
-if six.PY2:
+from labscript_utils import PY2
+if PY2:
     import Queue as queue
     import mock
 else:
@@ -92,24 +92,24 @@ class ThreadTestCase(TestCase):
     def run(self, *args, **kwargs):
         test_thread = threading.Thread(target=self._run, args=args, kwargs=kwargs)
         test_thread.start()
-        self.mainloop()
+        self._mainloop()
         test_thread.join()
         result, exception = self._thread_return_value.get()
         if exception is not None:
             type, value, traceback = exception
-            if six.PY2:
+            if PY2:
                 exec('raise type, value, traceback')
             else:
                 raise value.with_traceback(traceback)
         return result
 
-    def mainloop(self):
+    def _mainloop(self):
         while True:
             filepath, globals_dict = self._command_queue.get()
             if filepath is None:
                 break
             
-            if six.PY2:
+            if PY2:
                 filepath_native_string = filepath.encode(sys.getfilesystemencoding())
             else:
                 filepath_native_string = filepath
@@ -130,7 +130,6 @@ class ThreadTestCase(TestCase):
                     exec(code, globals_dict)
             finally:
                 os.chdir(cwd)
-
 
     @staticmethod
     def wait_for(condition_func, timeout=5,
