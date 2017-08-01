@@ -1,7 +1,6 @@
 import os
 import sys
 import subprocess
-import StringIO
 
 this_folder = os.path.realpath(os.path.dirname(__file__))
 Win7AppId = os.path.join(this_folder, 'Win7AppId1.1.exe')

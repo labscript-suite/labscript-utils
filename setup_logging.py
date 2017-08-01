@@ -18,6 +18,9 @@ import __main__
 
 def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.INFO, maxBytes=1024*1024*50, backupCount=1):
     logger = logging.getLogger(program_name)
+    # Clear any previously added handlers from the logger:
+    for handler in logger.handlers[:]:
+        logger.removeHandler(handler)
     try:
         try:
             program_module = __import__(program_name)
