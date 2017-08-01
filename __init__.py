@@ -11,11 +11,13 @@
 #                                                                   #
 #####################################################################
 
-__version__ = '2.3.0-prerelease'
+__version__ = '2.4.0'
 
 
 import sys
 import os
+
+PY2 = sys.version_info[0] == 2
 
 for path in sys.path:
     if os.path.exists(os.path.join(path, '.is_labscript_suite_install_dir')):
