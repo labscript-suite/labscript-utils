@@ -39,6 +39,23 @@ class dotdict(dict):
     __delattr__ = dict.__delitem__
 
 
+class Any(object):
+    """A class whose instances equal any object of the given type or tuple of
+    types. For use with mock.Mock.assert_called_with when you don't care what
+    some of the arguments are"""
+    def __init__(self, types=object):
+        if isinstance(types, type):
+            self.types = (types,)
+        else:
+            self.types = types
+
+    def __eq__(self, other):
+        return any(isinstance(other, type_) for type_ in self.types)
+
+# Instance of Any() that does not specify type:
+ANY = Any()
+
+
 class ThreadTestCase(TestCase):
     """Test case that runs tests in a new thread whilst providing a mainloop
     that allows running scripts in the current thread. Those scripts can then
