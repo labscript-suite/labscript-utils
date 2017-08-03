@@ -75,7 +75,7 @@ def check_version(module_name, at_least, less_than, version=None):
         if not at_least_version <= installed_version < less_than_version:
             msg = '{module_name} {version} found. {at_least} <= {module_name} < {less_than} required.'.format(**locals())
             if exc_info is not None:
-                msg += '\n\n In addition, the following exception was raised during import:\n\n'
+                msg += '\n\n === In addition, the below exception was raised during import of {}: ===\n\n'.format(module_name)
                 msg += ''.join(traceback.format_exception(*exc_info))
             raise VersionException(msg)
     elif exc_info is not None:
@@ -83,6 +83,3 @@ def check_version(module_name, at_least, less_than, version=None):
 
     raise ValueError('Invalid version string from package {}: {}'.format(module_name, version))
 
-
-import PyQt4.QtGui
-check_version('qtutils', '1.0', '2.0')
