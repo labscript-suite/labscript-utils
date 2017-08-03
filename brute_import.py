@@ -5,18 +5,18 @@ import imp
 import marshal
 
 
-def brute_import_fallback(victim):
+def _fallback(module_name):
     # No module code to execute? Just import the usual way then and return an
     # empty module upon exception:
     try:
-        module = __import__(victim)
+        module = __import__(module_name)
         return module, None
     except Exception:
-        module = types.ModuleType(victim)
+        module = types.ModuleType(module_name)
         return module, sys.exc_info()
 
 
-def brute_import(victim):
+def brute_import(module_name):
     """Execute a module as if it were being imported, catch exceptions, and
     return the (possibly only partially initialised) module object as well as
     the exc_info for the exception (or None if there was no exception). This
@@ -24,9 +24,9 @@ def brute_import(victim):
     failing to import in order to raise a potentially more useful exception if
     the module is failing to import *because* it is the wrong version."""
 
-    sourcefile, pathname, (_, _, module_type) = imp.find_module(victim)
-    module = types.ModuleType(victim)
-    sys.modules[victim] = module
+    sourcefile, pathname, (_, _, module_type) = imp.find_module(module_name)
+    module = types.ModuleType(module_name)
+    sys.modules[module_name] = module
 
     if module_type in [imp.PY_SOURCE, imp.PY_COMPILED]:
         module.__file__ = pathname
@@ -35,20 +35,20 @@ def brute_import(victim):
         module.__file__ = os.path.join(pathname, '__init__.py')
         sourcefile = open(module.__file__)
     else:
-        return fallback(victim)
+        return _fallback(module_name)
 
     if module_type in [imp.PY_SOURCE, imp.PKG_DIRECTORY]:
         code = compile(sourcefile.read(), module.__file__, 'exec', dont_inherit=True)
     elif module_type == imp.PY_COMPILED:
         if sourcefile.read(4) != imp.get_magic():
             # Different python version, we can't execute:
-            return fallback(victim)
+            return _fallback(module_name)
         # skip timestamp:
         _ = sourcefile.read(4)
         code = marshal.load(sourcefile)
     else:
         # Some C extension or something. No code for us to execute.
-        return fallback(victim)
+        return _fallback(module_name)
         
     try:
         # Execute the module code in its namespace:
