@@ -54,7 +54,7 @@ if debug.DEBUG:
     import sys
     print('sys.version:', sys.version)
     print('PyQt4:', 'PyQt4' in sys.modules)
-    print('PyQt4:', 'PyQt5' in sys.modules)
+    print('PyQt5:', 'PyQt5' in sys.modules)
     print('PySide:', 'PySide' in sys.modules)
     print('qtutils:', 'qtutils' in sys.modules)
     print('qtutils.qt:', 'qtutils.qt' in sys.modules)
@@ -134,6 +134,7 @@ class DragDropTabBar(QTabBar):
         self.dragged_tab_parent = None
         self.prev_active_tab = None
         self.drag_icon = DragIcon(self)
+        self.drag_in_progress = False
 
     @debug.trace
     def remove_dragged_tab(self, index):
@@ -201,7 +202,7 @@ class DragDropTabBar(QTabBar):
                 # Set the mouse cursor to a picture of the tab:
                 rect = self.dragged_tab_parent.tabRect(self.dragged_tab_index)
                 pixmap = QPixmap(rect.size())
-                self.dragged_tab_parent.render(pixmap, QPoint(), QRegion(rect));
+                self.dragged_tab_parent.render(pixmap, QPoint(), QRegion(rect))
                 self.drag_icon.setPixMap(pixmap)
                 self.drag_icon.show()
             if self.dragged_tab_parent is limbo:
@@ -301,6 +302,7 @@ class DragDropTabBar(QTabBar):
         event.accept()
         self.dragged_tab_index = self.tabAt(event.pos())
         self.dragged_tab_parent = self
+        self.drag_in_progress = True
         
     @debug.trace
     def mouseMoveEvent(self, event):
@@ -308,7 +310,7 @@ class DragDropTabBar(QTabBar):
         mouse, if any, otherwise update it to the limbo object. Update the
         position of the tab in the widget it's in."""
         QTabBar.mouseMoveEvent(self, event)
-        if self.dragged_tab_index is None:
+        if not self.drag_in_progress:
             return
         event.accept()
         if self.group_id is not None:
@@ -325,9 +327,10 @@ class DragDropTabBar(QTabBar):
     def leaveEvent(self, event):
         QTabBar.leaveEvent(self, event)
         """Called if the window loses focus"""
-        if self.dragged_tab_index is None:
+        if not self.drag_in_progress:
             return
         # We've lost focus during a drag. Cancel the drag.
+        self.drag_in_progress = False
         if self.dragged_tab_parent is limbo:
             self.set_tab_parent(limbo.previous_parent, limbo.previous_index)        
         # Clear the variables about which tab is being dragged:
@@ -344,6 +347,8 @@ class DragDropTabBar(QTabBar):
         if self.dragged_tab_index is None or event.button() != Qt.LeftButton:
             return
         event.accept()
+        # Cancel the drag:
+        self.drag_in_progress = False
         widget = self.widgetAt(event.pos())
         # If the tab and the mouse are both in limbo, then put the tab
         # back at its last known place:
