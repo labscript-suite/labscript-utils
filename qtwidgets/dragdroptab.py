@@ -24,19 +24,24 @@ class limbo(object):
     def add_dragged_tab(cls, index, tab):
         assert cls.tab is None
         cls.tab = tab
-        # Make the mouse change?
+        # TODO: Make the mouse change into a drag indicator of sorts until
+        # remove_dragged_tab() called.
 
     @classmethod
     def remove_dragged_tab(cls, index):
         tab = cls.tab
         cls.tab = None
         return tab
-        # Make the mouse go back to normal?
 
     @classmethod
     def update_tab_index(cls, index, pos):
+        """We only have one tab index, so it's not going to change."""
         return index
 
+    @classmethod
+    def mapFromGlobal(self, point):
+        """We don't care about coordinates, anything is fine by us!"""
+        return point
 
 Tab = namedtuple('Tab', ['widget', 'text', 'data', 'text_color', 'tooltip',
                          'whats_this', 'button_left', 'button_right', 'icon'])
@@ -206,8 +211,9 @@ class DragDropTabBar(QTabBar):
         if self.group_id is not None:
             widget = self.widgetAt(event.pos())
             self.set_tab_parent(widget)
+        other_local_pos = widget.mapFromGlobal(self.mapToGlobal(event.pos()))
         self.dragged_tab_index = widget.update_tab_index(self.dragged_tab_index,
-                                                         event.pos())
+                                                         other_local_pos)
 
     def mouseReleaseEvent(self, event):
         """Same as mouseMove event - update the DragDropTabWidget and position of
@@ -222,8 +228,9 @@ class DragDropTabBar(QTabBar):
         else:
             if self.group_id is not None:
                 self.set_tab_parent(widget)
+            other_local_pos = widget.mapFromGlobal(self.mapToGlobal(event.pos()))
             self.dragged_tab_index = widget.update_tab_index(self.dragged_tab_index,
-                                                             event.pos())
+                                                             other_local_pos)
 
 
 class DragDropTabWidget(QTabWidget):
