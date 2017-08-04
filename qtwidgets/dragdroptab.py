@@ -98,8 +98,8 @@ Tab = namedtuple('Tab', ['widget', 'text', 'data', 'text_color', 'tooltip',
                          'whats_this', 'button_left', 'button_right', 'icon'])
 
 class DragIcon(QWidget):
-    def __init__(self):
-        QWidget.__init__(self)
+    def __init__(self, parent):
+        QWidget.__init__(self, parent)
         self.pixmap = None
         self.setWindowFlags(Qt.ToolTip)
         
@@ -133,7 +133,7 @@ class DragDropTabBar(QTabBar):
         self.dragged_tab_index = None
         self.dragged_tab_parent = None
         self.prev_active_tab = None
-        self.drag_icon = DragIcon()
+        self.drag_icon = DragIcon(self)
 
     @debug.trace
     def remove_dragged_tab(self, index):
