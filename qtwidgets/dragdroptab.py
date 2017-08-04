@@ -26,6 +26,39 @@ except Exception:
     from PyQt4.QtGui import *
     from PyQt4.QtCore import *
 
+# from PyQt5.QtGui import *
+# from PyQt5.QtCore import *
+# from PyQt5.QtWidgets import *
+
+
+class debug(object):
+    DEBUG = False
+    depth = 0
+    @classmethod
+    def trace(cls, f):
+        """decorator to print function entries and exits"""
+        if not cls.DEBUG:
+            return f
+        def wrapper(*args, **kwargs):
+            print('    '*cls.depth + '->', f.__name__)
+            try:
+                cls.depth += 1
+                return f(*args, **kwargs)
+            finally:
+                cls.depth -= 1
+                print('    '*cls.depth + '<-', f.__name__)
+        return wrapper
+
+
+if debug.DEBUG:
+    import sys
+    print('sys.version:', sys.version)
+    print('PyQt4:', 'PyQt4' in sys.modules)
+    print('PyQt4:', 'PyQt5' in sys.modules)
+    print('PySide:', 'PySide' in sys.modules)
+    print('qtutils:', 'qtutils' in sys.modules)
+    print('qtutils.qt:', 'qtutils.qt' in sys.modules)
+
 
 class limbo(object):
     """an object to be the parent of the tab when it is not in a QTabWidget"""
@@ -34,6 +67,7 @@ class limbo(object):
     previous_index = None
 
     @classmethod
+    @debug.trace
     def add_dragged_tab(cls, index, tab):
         assert cls.tab is None
         cls.tab = tab
@@ -41,17 +75,20 @@ class limbo(object):
         # remove_dragged_tab() called.
 
     @classmethod
+    @debug.trace
     def remove_dragged_tab(cls, index):
         tab = cls.tab
         cls.tab = None
         return tab
 
     @classmethod
+    @debug.trace
     def update_tab_index(cls, index, pos):
         """We only have one tab index, so it's not going to change."""
         return index
 
     @classmethod
+    @debug.trace
     def mapFromGlobal(self, point):
         """We don't care about coordinates, anything is fine by us!"""
         return point
@@ -61,22 +98,26 @@ Tab = namedtuple('Tab', ['widget', 'text', 'data', 'text_color', 'tooltip',
                          'whats_this', 'button_left', 'button_right', 'icon'])
 
 class DragIcon(QWidget):
-    def __init__(self, pixmap):
+    def __init__(self):
         QWidget.__init__(self)
-        self.pixmap = pixmap
+        self.pixmap = None
         self.setWindowFlags(Qt.ToolTip)
+        
+    @debug.trace
+    def setPixMap(self, pixmap):
+        self.pixmap = pixmap
         self.resize(pixmap.size())
-        self.show()
 
+    @debug.trace
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.drawPixmap(QPoint(), self.pixmap)
         painter.end()
 
+    @debug.trace
     def move(self, globalpos):
         QWidget.move(self, globalpos.x() - int(self.width() / 2),
                      globalpos.y() - int(self.height() / 2))
-
 
 
 class DragDropTabBar(QTabBar):
@@ -92,8 +133,9 @@ class DragDropTabBar(QTabBar):
         self.dragged_tab_index = None
         self.dragged_tab_parent = None
         self.prev_active_tab = None
-        self.drag_icon = None
+        self.drag_icon = DragIcon()
 
+    @debug.trace
     def remove_dragged_tab(self, index):
 
         tab = Tab(widget=self.parent().widget(index),
@@ -113,6 +155,7 @@ class DragDropTabBar(QTabBar):
 
         return tab
 
+    @debug.trace
     def add_dragged_tab(self, index, tab):
         """Insert the tab at the given index and set all of its configuration"""
         self.prev_active_tab = self.currentIndex()
@@ -134,6 +177,7 @@ class DragDropTabBar(QTabBar):
         if tab.icon:
             self.setTabIcon(index, tab.icon)
 
+    @debug.trace
     def moveTab(self, source_index, dest_index):
         """Move tab fron one index to another. Overriding this is not
         necessary in PyQt5, the base implementation works fine. But there
@@ -146,6 +190,7 @@ class DragDropTabBar(QTabBar):
         tab = self.remove_dragged_tab(source_index)
         self.add_dragged_tab(dest_index, tab)
 
+    @debug.trace
     def set_tab_parent(self, dest, index=0):
         """Move the tab to the given parent DragDropTabBar if it's not already
         there. The index argument will only be used if the tab is not already
@@ -157,10 +202,10 @@ class DragDropTabBar(QTabBar):
                 rect = self.dragged_tab_parent.tabRect(self.dragged_tab_index)
                 pixmap = QPixmap(rect.size())
                 self.dragged_tab_parent.render(pixmap, QPoint(), QRegion(rect));
-                self.drag_icon = DragIcon(pixmap)
+                self.drag_icon.setPixMap(pixmap)
+                self.drag_icon.show()
             if self.dragged_tab_parent is limbo:
                 self.drag_icon.hide()
-                self.drag_icon = None
             tab = self.dragged_tab_parent.remove_dragged_tab(self.dragged_tab_index)
             dest.add_dragged_tab(index, tab)
             if dest is limbo:
@@ -169,6 +214,7 @@ class DragDropTabBar(QTabBar):
             self.dragged_tab_parent = dest
             self.dragged_tab_index = index
 
+    @debug.trace
     def update_tab_index(self, index, pos):
         """Check if the tab at the given index, if being dragged by the mouse
         at the given position, needs to be moved. Move it and return the new
@@ -223,6 +269,7 @@ class DragDropTabBar(QTabBar):
         else:
             return index
 
+    @debug.trace
     def widgetAt(self, pos):
         """If the given position is over a DragDropTabBar belonging to the
         current group, return the DragDropTabBar. If it is over a TabWidget in
@@ -244,6 +291,7 @@ class DragDropTabBar(QTabBar):
         else:
             return limbo
 
+    @debug.trace
     def mousePressEvent(self, event):
         """Take note of the tab that was clicked so it can be dragged on
         mouseMoveEvents"""
@@ -254,6 +302,7 @@ class DragDropTabBar(QTabBar):
         self.dragged_tab_index = self.tabAt(event.pos())
         self.dragged_tab_parent = self
         
+    @debug.trace
     def mouseMoveEvent(self, event):
         """Update the parent of the tab to be the DragDropTabWidget under the
         mouse, if any, otherwise update it to the limbo object. Update the
@@ -268,10 +317,11 @@ class DragDropTabBar(QTabBar):
         other_local_pos = widget.mapFromGlobal(self.mapToGlobal(event.pos()))
         self.dragged_tab_index = widget.update_tab_index(self.dragged_tab_index,
                                                          other_local_pos)
-        if self.drag_icon is not None:
+        if self.dragged_tab_parent is limbo:
             # Keep the tab drag icon showing while the drag is in progress:
             self.drag_icon.move(self.mapToGlobal(event.pos()))
 
+    @debug.trace
     def leaveEvent(self, event):
         QTabBar.leaveEvent(self, event)
         """Called if the window loses focus"""
@@ -284,6 +334,7 @@ class DragDropTabBar(QTabBar):
         self.dragged_tab_index = None
         self.dragged_tab_parent = None
 
+    @debug.trace
     def mouseReleaseEvent(self, event):
         """Same as mouseMove event - update the DragDropTabWidget and position of
         the tab to the current mouse position. Unless the mouse position is
