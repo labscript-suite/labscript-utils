@@ -60,6 +60,24 @@ class limbo(object):
 Tab = namedtuple('Tab', ['widget', 'text', 'data', 'text_color', 'tooltip',
                          'whats_this', 'button_left', 'button_right', 'icon'])
 
+class DragIcon(QWidget):
+    def __init__(self, pixmap):
+        QWidget.__init__(self)
+        self.pixmap = pixmap
+        self.setWindowFlags(Qt.ToolTip)
+        self.resize(pixmap.size())
+        self.show()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.drawPixmap(QPoint(), self.pixmap)
+        painter.end()
+
+    def move(self, globalpos):
+        QWidget.move(self, globalpos.x() - int(self.width() / 2),
+                     globalpos.y() - int(self.height() / 2))
+
+
 
 class DragDropTabBar(QTabBar):
 
@@ -74,7 +92,7 @@ class DragDropTabBar(QTabBar):
         self.dragged_tab_index = None
         self.dragged_tab_parent = None
         self.prev_active_tab = None
-        self.drag_cursor = None
+        self.drag_icon = None
 
     def remove_dragged_tab(self, index):
 
@@ -137,16 +155,12 @@ class DragDropTabBar(QTabBar):
             if dest is limbo:
                 # Set the mouse cursor to a picture of the tab:
                 rect = self.dragged_tab_parent.tabRect(self.dragged_tab_index)
-                # Get the right border of the tab too:
-                rect.setWidth(rect.width() + 1)
                 pixmap = QPixmap(rect.size())
                 self.dragged_tab_parent.render(pixmap, QPoint(), QRegion(rect));
-                self.drag_cursor = QCursor(pixmap)
-                QApplication.setOverrideCursor(self.drag_cursor)
+                self.drag_icon = DragIcon(pixmap)
             if self.dragged_tab_parent is limbo:
-                # Restore the mouse cursor
-                QApplication.restoreOverrideCursor()
-                self.drag_cursor = None
+                self.drag_icon.hide()
+                self.drag_icon = None
             tab = self.dragged_tab_parent.remove_dragged_tab(self.dragged_tab_index)
             dest.add_dragged_tab(index, tab)
             if dest is limbo:
@@ -254,10 +268,9 @@ class DragDropTabBar(QTabBar):
         other_local_pos = widget.mapFromGlobal(self.mapToGlobal(event.pos()))
         self.dragged_tab_index = widget.update_tab_index(self.dragged_tab_index,
                                                          other_local_pos)
-        if self.drag_cursor is not None:
-            # Keep the tab showing as the cursor while the drag is in
-            # progress:
-            QApplication.changeOverrideCursor(self.drag_cursor)
+        if self.drag_icon is not None:
+            # Keep the tab drag icon showing while the drag is in progress:
+            self.drag_icon.move(self.mapToGlobal(event.pos()))
 
     def leaveEvent(self, event):
         QTabBar.leaveEvent(self, event)
