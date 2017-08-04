@@ -136,6 +136,8 @@ class DragDropTabBar(QTabBar):
             if dest is limbo:
                 # Set the mouse cursor to a picture of the tab:
                 rect = self.dragged_tab_parent.tabRect(self.dragged_tab_index)
+                # Get the right border of the tab too:
+                rect.setWidth(rect.width() + 1)
                 pixmap = QPixmap(rect.size())
                 self.dragged_tab_parent.render(pixmap, QPoint(), QRegion(rect));
                 cursor = QCursor(pixmap)
