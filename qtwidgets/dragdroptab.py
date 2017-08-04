@@ -60,84 +60,18 @@ if debug.DEBUG:
     print('qtutils.qt:', 'qtutils.qt' in sys.modules)
 
 
-class limbo(object):
-    """an object to be the parent of the tab when it is not in a QTabWidget"""
-    tab = None
-    previous_parent = None
-    previous_index = None
-
-    @classmethod
-    @debug.trace
-    def add_dragged_tab(cls, index, tab):
-        assert cls.tab is None
-        cls.tab = tab
-        # TODO: Make the mouse change into a drag indicator of sorts until
-        # remove_dragged_tab() called.
-
-    @classmethod
-    @debug.trace
-    def remove_dragged_tab(cls, index):
-        tab = cls.tab
-        cls.tab = None
-        return tab
-
-    @classmethod
-    @debug.trace
-    def update_tab_index(cls, index, pos):
-        """We only have one tab index, so it's not going to change."""
-        return index
-
-    @classmethod
-    @debug.trace
-    def mapFromGlobal(self, point):
-        """We don't care about coordinates, anything is fine by us!"""
-        return point
-
 
 Tab = namedtuple('Tab', ['widget', 'text', 'data', 'text_color', 'tooltip',
                          'whats_this', 'button_left', 'button_right', 'icon'])
 
-class DragIcon(QWidget):
-    def __init__(self, parent):
-        QWidget.__init__(self, parent)
-        self.pixmap = None
-        self.setWindowFlags(Qt.ToolTip)
-        
-    @debug.trace
-    def setPixMap(self, pixmap):
-        self.pixmap = pixmap
-        self.resize(pixmap.size())
 
-    @debug.trace
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.drawPixmap(QPoint(), self.pixmap)
-        painter.end()
-
-    @debug.trace
-    def move(self, globalpos):
-        QWidget.move(self, globalpos.x() - int(self.width() / 2),
-                     globalpos.y() - int(self.height() / 2))
-
-
-class DragDropTabBar(QTabBar):
-
-    tab_widgets = defaultdict(weakref.WeakSet)
-
-    def __init__(self, parent, group_id):
-        QTabBar.__init__(self, parent)
-
-        self.group_id = group_id
-        self.tab_widgets[group_id].add(self.parent())
-
-        self.dragged_tab_index = None
-        self.dragged_tab_parent = None
-        self.prev_active_tab = None
-        self.drag_icon = DragIcon(self)
-        self.drag_in_progress = False
+class _BaseDragDropTabBar(QTabBar):
+    """Base class for Limbo and DragDropTabBar containing the common add and
+    remove methods"""
 
     @debug.trace
     def remove_dragged_tab(self, index):
+        """Remove the tab at the given index and return all its configuration"""
 
         tab = Tab(widget=self.parent().widget(index),
                   text=self.tabText(index),
@@ -178,6 +112,74 @@ class DragDropTabBar(QTabBar):
         if tab.icon:
             self.setTabIcon(index, tab.icon)
 
+
+class _Limbo(_BaseDragDropTabBar):
+    """A floating TabBar to be the parent of the tab when it is not in a
+    DragDropTabBar"""
+    def __init__(self):
+        self.parent_tabwidget = QTabWidget()
+        QTabBar.__init__(self, self.parent_tabwidget)
+        self.parent_tabwidget.setTabBar(self)
+        self.previous_parent = None
+        self.previous_index = None
+        self.prev_active_tab = None
+        self.pixmap = None
+        self.setWindowFlags(Qt.ToolTip)
+        self.setUsesScrollButtons(False)
+
+    @debug.trace
+    def remove_dragged_tab(self, index):
+        result = _BaseDragDropTabBar.remove_dragged_tab(self, index)
+        self.hide()
+        return result
+
+    @debug.trace
+    def add_dragged_tab(self, index, tab):
+        result = _BaseDragDropTabBar.add_dragged_tab(self, index, tab)
+        self.show()
+        return result
+
+    @debug.trace
+    def update_tab_index(self, index, pos):
+        """We only have one tab index, so it's not going to change."""
+        return index
+
+    @debug.trace
+    def tabLayoutChange(self):
+        initial_size = self.size()
+        if self.count():
+            self.resize(self.tabSizeHint(0))
+        self.update_pos()
+
+    @debug.trace
+    def update_pos(self):
+        """Move to keep the tab centred on the mouse. Use current mouse
+        position rather than that associated with any event triggering this,
+        for maximal responsiveness."""
+        pos = QCursor.pos()
+        QWidget.move(self, pos.x() - int(self.width() / 2),
+                     pos.y() - int(self.height() / 2))
+
+
+class DragDropTabBar(_BaseDragDropTabBar):
+
+    tab_widgets = defaultdict(weakref.WeakSet)
+    limbo = None
+
+    def __init__(self, parent, group_id):
+        QTabBar.__init__(self, parent)
+
+        self.group_id = group_id
+        self.tab_widgets[group_id].add(self.parent())
+
+        self.dragged_tab_index = None
+        self.dragged_tab_parent = None
+        self.prev_active_tab = None
+        self.drag_in_progress = False
+        if self.limbo is None:
+            # One Limbo object for all instances:
+            self.__class__.limbo = _Limbo()
+
     @debug.trace
     def moveTab(self, source_index, dest_index):
         """Move tab fron one index to another. Overriding this is not
@@ -198,20 +200,11 @@ class DragDropTabBar(QTabBar):
         in the widget (the index is used for restoring a tab to its last known
         position in a tab bar, which is not needed if it is already there)."""
         if self.dragged_tab_parent != dest:
-            if dest is limbo:
-                # Set the mouse cursor to a picture of the tab:
-                rect = self.dragged_tab_parent.tabRect(self.dragged_tab_index)
-                pixmap = QPixmap(rect.size())
-                self.dragged_tab_parent.render(pixmap, QPoint(), QRegion(rect))
-                self.drag_icon.setPixMap(pixmap)
-                self.drag_icon.show()
-            if self.dragged_tab_parent is limbo:
-                self.drag_icon.hide()
             tab = self.dragged_tab_parent.remove_dragged_tab(self.dragged_tab_index)
             dest.add_dragged_tab(index, tab)
-            if dest is limbo:
-                limbo.previous_parent = self.dragged_tab_parent
-                limbo.previous_index = self.dragged_tab_index
+            if dest is self.limbo:
+                self.limbo.previous_parent = self.dragged_tab_parent
+                self.limbo.previous_index = self.dragged_tab_index
             self.dragged_tab_parent = dest
             self.dragged_tab_index = index
 
@@ -290,7 +283,7 @@ class DragDropTabBar(QTabBar):
             if rect.contains(other_local_pos):
                 return tab_widget.tabBar()
         else:
-            return limbo
+            return self.limbo
 
     @debug.trace
     def mousePressEvent(self, event):
@@ -319,9 +312,9 @@ class DragDropTabBar(QTabBar):
         other_local_pos = widget.mapFromGlobal(self.mapToGlobal(event.pos()))
         self.dragged_tab_index = widget.update_tab_index(self.dragged_tab_index,
                                                          other_local_pos)
-        if self.dragged_tab_parent is limbo:
+        if self.dragged_tab_parent is self.limbo:
             # Keep the tab drag icon showing while the drag is in progress:
-            self.drag_icon.move(self.mapToGlobal(event.pos()))
+            self.limbo.update_pos()
 
     @debug.trace
     def leaveEvent(self, event):
@@ -331,8 +324,8 @@ class DragDropTabBar(QTabBar):
             return
         # We've lost focus during a drag. Cancel the drag.
         self.drag_in_progress = False
-        if self.dragged_tab_parent is limbo:
-            self.set_tab_parent(limbo.previous_parent, limbo.previous_index)        
+        if self.dragged_tab_parent is self.limbo:
+            self.set_tab_parent(self.limbo.previous_parent, self.limbo.previous_index)        
         # Clear the variables about which tab is being dragged:
         self.dragged_tab_index = None
         self.dragged_tab_parent = None
@@ -352,11 +345,11 @@ class DragDropTabBar(QTabBar):
         widget = self.widgetAt(event.pos())
         # If the tab and the mouse are both in limbo, then put the tab
         # back at its last known place:
-        if widget is limbo and self.dragged_tab_parent is limbo:
-            self.set_tab_parent(limbo.previous_parent, limbo.previous_index)
+        if widget is self.limbo and self.dragged_tab_parent is self.limbo:
+            self.set_tab_parent(self.limbo.previous_parent, self.limbo.previous_index)
         # But if we're above a tab widget, put it there. Otherwise leave it
         # where it is (don't move it into limbo)
-        elif widget is not limbo:
+        elif widget is not self.limbo:
             if self.group_id is not None:
                 self.set_tab_parent(widget)
             other_local_pos = widget.mapFromGlobal(self.mapToGlobal(event.pos()))
@@ -415,4 +408,16 @@ if __name__ == '__main__':
 
     qapplication = QApplication([])
     app = RunViewer()
+    
+    timer = QTimer()
+    timer.start(500)
+
+    import time
+
+    def change_text():
+        if DragDropTabBar.limbo is not None:
+            limbo = DragDropTabBar.limbo
+            if limbo.count():
+                limbo.setTabText(0, str(time.time()))
+    timer.timeout.connect(change_text)  # Let the interpreter run each 500 ms.
     qapplication.exec_()
