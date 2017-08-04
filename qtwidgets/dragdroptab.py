@@ -206,12 +206,22 @@ class DragDropTabBar(QTabBar):
             return index
 
     def widgetAt(self, pos):
-        """If the given position is over a DragDropTabWidget belonging to the
-        current group, return its corresponding DragDropTabBar. Otherwise
-        return the limbo object."""
+        """If the given position is over a DragDropTabBar belonging to the
+        current group, return the DragDropTabBar. If it is over a TabWidget in
+        the same group that has no tabs, or the dragged tab as its only tab,
+        return its DragDropTabBar. Otherwise return the limbo object."""
         for tab_widget in self.tab_widgets[self.group_id]:
-            other_local_pos = tab_widget.mapFromGlobal(self.mapToGlobal(pos))
-            if tab_widget.rect().contains(other_local_pos):
+            count = tab_widget.tabBar().count()
+            if count == 0 or (count == 1 and self.dragged_tab_parent is tab_widget.tabBar()):
+                widget = tab_widget
+            else:
+                widget = tab_widget.tabBar()
+            other_local_pos = widget.mapFromGlobal(self.mapToGlobal(pos))
+            rect = widget.rect()
+            if isinstance(widget, DragDropTabBar):
+                # Include the whole horizontal part of the tabBar:
+                rect.setWidth(widget.parent().width())
+            if rect.contains(other_local_pos):
                 return tab_widget.tabBar()
         else:
             return limbo
