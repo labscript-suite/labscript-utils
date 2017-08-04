@@ -43,7 +43,11 @@ if not os.path.exists(config_prefix):
 
 config_prefix = os.path.abspath(config_prefix)
 
-default_config_path = os.path.join(config_prefix,'%s.ini'%socket.gethostname())
+if sys.platform == 'darwin':
+    hostname = os.popen("scutil --get LocalHostName").read()[:-1]
+else:
+    hostname = socket.gethostname()
+default_config_path = os.path.join(config_prefix,'%s.ini'%hostname)
 
 class LabConfig(configparser.SafeConfigParser):
     NoOptionError = configparser.NoOptionError
