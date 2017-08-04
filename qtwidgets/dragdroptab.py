@@ -214,13 +214,13 @@ class DragDropTabBar(QTabBar):
             count = tab_widget.tabBar().count()
             if count == 0 or (count == 1 and self.dragged_tab_parent is tab_widget.tabBar()):
                 widget = tab_widget
+                rect = widget.rect()
             else:
                 widget = tab_widget.tabBar()
-            other_local_pos = widget.mapFromGlobal(self.mapToGlobal(pos))
-            rect = widget.rect()
-            if isinstance(widget, DragDropTabBar):
+                rect = widget.rect()
                 # Include the whole horizontal part of the tabBar:
                 rect.setWidth(widget.parent().width())
+            other_local_pos = widget.mapFromGlobal(self.mapToGlobal(pos))
             if rect.contains(other_local_pos):
                 return tab_widget.tabBar()
         else:
