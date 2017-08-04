@@ -133,6 +133,16 @@ class DragDropTabBar(QTabBar):
         in the widget (the index is used for restoring a tab to its last known
         position in a tab bar, which is not needed if it is already there)."""
         if self.dragged_tab_parent != dest:
+            if dest is limbo:
+                # Set the mouse cursor to a picture of the tab:
+                rect = self.dragged_tab_parent.tabRect(self.dragged_tab_index)
+                pixmap = QPixmap(rect.size())
+                self.dragged_tab_parent.render(pixmap, QPoint(), QRegion(rect));
+                cursor = QCursor(pixmap)
+                QApplication.setOverrideCursor(cursor)
+            if self.dragged_tab_parent is limbo:
+                # Restore the mouse cursor
+                QApplication.restoreOverrideCursor()
             tab = self.dragged_tab_parent.remove_dragged_tab(self.dragged_tab_index)
             dest.add_dragged_tab(index, tab)
             if dest is limbo:
