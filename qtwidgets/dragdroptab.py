@@ -69,6 +69,20 @@ class _BaseDragDropTabBar(QTabBar):
     """Base class for Limbo and DragDropTabBar containing the common add and
     remove methods"""
 
+    # The QPoint of the mouse relative to the top left corner the tab at the
+    # time the drag began. Shared by all instances:
+    _dragged_tab_grab_point = None
+
+    @property
+    def dragged_tab_grab_point(self):
+        return self._dragged_tab_grab_point
+
+    @dragged_tab_grab_point.setter
+    def dragged_tab_grab_point(self, value):
+        # Setter specifies the class because we want subclasses to all share
+        # it:
+        _BaseDragDropTabBar._dragged_tab_grab_point = value
+
     @debug.trace
     def remove_dragged_tab(self, index):
         """Remove the tab at the given index and return all its configuration"""
@@ -123,7 +137,6 @@ class _Limbo(_BaseDragDropTabBar):
         self.previous_parent = None
         self.previous_index = None
         self.prev_active_tab = None
-        self.pixmap = None
         self.setWindowFlags(Qt.ToolTip)
         self.setUsesScrollButtons(False)
 
@@ -153,17 +166,38 @@ class _Limbo(_BaseDragDropTabBar):
 
     @debug.trace
     def update_pos(self):
-        """Move to keep the tab centred on the mouse. Use current mouse
-        position rather than that associated with any event triggering this,
-        for maximal responsiveness."""
-        pos = QCursor.pos()
-        QWidget.move(self, pos.x() - int(self.width() / 2),
-                     pos.y() - int(self.height() / 2))
+        """Move to keep the tab grabbed by the mouse. grab_point is the
+        position on the tab relative to its top left corner where it is
+        grabbed by the mouse. Use current mouse position rather than that
+        associated with any event triggering this, for maximal
+        responsiveness."""
+        QWidget.move(self, QCursor.pos() - self.dragged_tab_grab_point)
 
 
 class DragDropTabBar(_BaseDragDropTabBar):
 
+    # Keeping track of which tab widgets are in each group (that is, share a
+    # common group_id):
     tab_widgets = defaultdict(weakref.WeakSet)
+
+    # Whether or not a drag is in progress. It is important to have this in
+    # addition to the below information so that we can set it to False when a
+    # drag is about to be cancelled, even though we are not going to set the
+    # below variables to None until after some processing. During that
+    # processing, re-entrant event processing can see that there is no drag in
+    # progress even though the below variables are still not None, and know
+    # not to act as if there is a drag in progress (since the drag is in the
+    # process of being cancelled).
+    _drag_in_progress = False
+
+    # The index and parent TabBar of the dragged tab, or None if no drag is in
+    # progress. Shared by all instances:
+    _dragged_tab_index = None
+    _dragged_tab_parent = None
+
+    # A TabWidget to hold the tab being dragged. Shared by all instsances, but
+    # not instantiated until first instance is created, since there may not be
+    # a QApplication at import time.
     limbo = None
 
     def __init__(self, parent, group_id):
@@ -172,13 +206,35 @@ class DragDropTabBar(_BaseDragDropTabBar):
         self.group_id = group_id
         self.tab_widgets[group_id].add(self.parent())
 
-        self.dragged_tab_index = None
-        self.dragged_tab_parent = None
         self.prev_active_tab = None
-        self.drag_in_progress = False
         if self.limbo is None:
             # One Limbo object for all instances:
             self.__class__.limbo = _Limbo()
+
+    # Setters and getters for the class variables:
+    @property
+    def drag_in_progress(self):
+        return self._drag_in_progress
+
+    @drag_in_progress.setter
+    def drag_in_progress(self, value):
+        self.__class__._drag_in_progress = value
+
+    @property
+    def dragged_tab_index(self):
+        return self._dragged_tab_index
+
+    @dragged_tab_index.setter
+    def dragged_tab_index(self, value):
+        self.__class__._dragged_tab_index = value
+
+    @property
+    def dragged_tab_parent(self):
+        return self._dragged_tab_parent
+
+    @dragged_tab_parent.setter
+    def dragged_tab_parent(self, value):
+        self.__class__._dragged_tab_parent = value
 
     @debug.trace
     def moveTab(self, source_index, dest_index):
@@ -278,7 +334,8 @@ class DragDropTabBar(_BaseDragDropTabBar):
                 widget = tab_widget.tabBar()
                 rect = widget.rect()
                 # Include the whole horizontal part of the tabBar:
-                rect.setWidth(widget.parent().width())
+                rect.setLeft(widget.parent().rect().left())
+                rect.setRight(widget.parent().rect().right())
             other_local_pos = widget.mapFromGlobal(self.mapToGlobal(pos))
             if rect.contains(other_local_pos):
                 return tab_widget.tabBar()
@@ -293,9 +350,10 @@ class DragDropTabBar(_BaseDragDropTabBar):
         if event.button() != Qt.LeftButton:
             return
         event.accept()
+        self.drag_in_progress = True
         self.dragged_tab_index = self.tabAt(event.pos())
         self.dragged_tab_parent = self
-        self.drag_in_progress = True
+        self.dragged_tab_grab_point = event.pos() - self.tabRect(self.dragged_tab_index).topLeft()
         
     @debug.trace
     def mouseMoveEvent(self, event):
@@ -313,8 +371,12 @@ class DragDropTabBar(_BaseDragDropTabBar):
         self.dragged_tab_index = widget.update_tab_index(self.dragged_tab_index,
                                                          other_local_pos)
         if self.dragged_tab_parent is self.limbo:
-            # Keep the tab drag icon showing while the drag is in progress:
+            # Update the position of the dragged tab following the mouse:
             self.limbo.update_pos()
+        else:
+            # The tab is in a TabBar. Tell its parent tab widget to
+            # repaint to show the new position:
+            self.dragged_tab_parent.parent().update()
 
     @debug.trace
     def leaveEvent(self, event):
@@ -329,6 +391,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
         # Clear the variables about which tab is being dragged:
         self.dragged_tab_index = None
         self.dragged_tab_parent = None
+        self.dragged_tab_grab_point = None
 
     @debug.trace
     def mouseReleaseEvent(self, event):
@@ -357,6 +420,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
         # Clear the variables about which tab is being dragged:
         self.dragged_tab_index = None
         self.dragged_tab_parent = None
+        self.dragged_tab_grab_point = None
 
 
 class DragDropTabWidget(QTabWidget):
