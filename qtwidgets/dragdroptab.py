@@ -26,9 +26,9 @@ except Exception:
     from PyQt4.QtGui import *
     from PyQt4.QtCore import *
 
-#from PyQt5.QtGui import *
-#from PyQt5.QtCore import *
-#from PyQt5.QtWidgets import *
+# from PyQt5.QtGui import *
+# from PyQt5.QtCore import *
+# from PyQt5.QtWidgets import *
 
 
 class debug(object):
@@ -180,6 +180,70 @@ class _Limbo(_BaseDragDropTabBar):
         _BaseDragDropTabBar.update(self)
 
 
+class TabAnimation(QAbstractAnimation):
+
+    # Animation speed in pixels per millisecond:
+    v = 0.5
+
+    def __init__(self, parent):
+        QAbstractAnimation.__init__(self, parent)
+        # The left edges of where the tabs will be drawn. This animates over
+        # time to approach the left edge as returned by parent.tabRect().
+        # Stored as floats for smooth animation, should be rounded to ints
+        # before painting with them.
+        self.positions = []
+        self.previous_time = 0
+
+    @debug.trace
+    def duration(self):
+        return -1
+
+    @debug.trace
+    def ensure_running(self):
+        if self.state() == QAbstractAnimation.Stopped:
+            self.start()
+
+    @debug.trace
+    def target(self, i):
+        """Return the target position we are animating toward for a tab"""
+        return self.parent().tabRect(i).left()
+
+    @debug.trace
+    def tabInserted(self, index):
+        self.positions.insert(index, float(self.parent().tabRect(index).left()))
+        self.ensure_running()
+
+    @debug.trace
+    def tabRemoved(self, index):
+        del self.positions[index]
+        self.ensure_running()
+
+    @debug.trace
+    def on_tab_moved(self, source_index, dest_index):
+        self.positions.insert(dest_index, self.positions.pop(source_index))
+        self.ensure_running()
+
+    @debug.trace
+    def updateCurrentTime(self, current_time):
+        dt = current_time - self.previous_time
+        self.previous_time = current_time
+        finished = True
+        for i, pos in enumerate(self.positions):
+            target_pos = self.target(i)
+            if int(round(pos)) != target_pos:
+                finished = False
+                direction = 1 if target_pos > pos else -1
+                new_pos = pos + direction * self.v * dt
+                if (new_pos - target_pos) == direction * abs(new_pos - target_pos):
+                    # Overshot:
+                    new_pos = target_pos
+                self.positions[i] = new_pos
+        if finished:
+            self.previous_time = 0
+            self.stop()
+        else:
+            self.parent().update()
+
 class DragDropTabBar(_BaseDragDropTabBar):
 
     # Keeping track of which tab widgets are in each group (that is, share a
@@ -217,8 +281,8 @@ class DragDropTabBar(_BaseDragDropTabBar):
             # One Limbo object for all instances:
             self.__class__.limbo = _Limbo()
 
-        self.tabMoved.connect(self.on_tab_moved)
-        self.animated_tab_positions = []
+        self.animation = TabAnimation(self)
+        self.tabMoved.connect(self.animation.on_tab_moved)
 
     # Setters and getters for the class variables:
     @property
@@ -252,7 +316,8 @@ class DragDropTabBar(_BaseDragDropTabBar):
         given mouse position."""
         if index is None:
             assert pos is not None
-            index = dest.insertion_index_at(pos - self.dragged_tab_grab_point)
+            index = dest.insertion_index_at(self.mapToGlobal(pos -
+                                                             self.dragged_tab_grab_point))
         if self.dragged_tab_parent != dest:
             tab = self.dragged_tab_parent.remove_dragged_tab(self.dragged_tab_index)
             dest.add_dragged_tab(index, tab)
@@ -277,15 +342,17 @@ class DragDropTabBar(_BaseDragDropTabBar):
 
     @debug.trace
     def update_tab_index(self, index, pos):
-        """Check if the tab at the given index, if being dragged by the mouse
-        at the given position, needs to be moved. Move it and return the new
-        index."""
+        """Check if the tab at the given index, being dragged by the mouse at
+        the given position, needs to be moved. Move it and return the new
+        index. Also update the animation position of the tab so that it can be
+        correctly animated once released."""
 
         # If the tab rect were pinned to the mouse at the point it was
         # grabbed, where would it be?
         pinned_rect = self.tabRect(index)
         pinned_rect.translate(pos-self.dragged_tab_grab_point - pinned_rect.topLeft())
         left = pinned_rect.left()
+        self.animation.positions[index] = left
         right = pinned_rect.right()
 
         move_target = None
@@ -349,7 +416,8 @@ class DragDropTabBar(_BaseDragDropTabBar):
         self.drag_in_progress = True
         self.dragged_tab_index = self.tabAt(event.pos())
         self.dragged_tab_parent = self
-        self.dragged_tab_grab_point = event.pos() - self.tabRect(self.dragged_tab_index).topLeft()
+        self.dragged_tab_grab_point = (event.pos()
+                                       - self.tabRect(self.dragged_tab_index).topLeft())
         
     @debug.trace
     def mouseMoveEvent(self, event):
@@ -411,7 +479,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
             if self.group_id is not None:
                 self.set_tab_parent(widget, event.pos())
             widget.update()
-
+            widget.animation.ensure_running()
         # Clear the variables about which tab is being dragged:
         self.dragged_tab_index = None
         self.dragged_tab_parent = None
@@ -427,35 +495,43 @@ class DragDropTabBar(_BaseDragDropTabBar):
     @debug.trace
     def tabInserted(self, index):
         _BaseDragDropTabBar.tabInserted(self, index)
-        print('tab inserted!')
-        self.animated_tab_positions.insert(index, self.tabRect(index).left())
+        self.animation.tabInserted(index)
 
     @debug.trace
     def tabRemoved(self, index):
         _BaseDragDropTabBar.tabRemoved(self, index)
-        del self.animated_tab_positions[index]
-        print('tab removed!')
+        self.animation.tabRemoved(index)
 
     @debug.trace
-    def on_tab_moved(self, source_index, dest_index):
-        print('on tab moved!')
+    def tabLayoutChange(self):
+        _BaseDragDropTabBar.tabLayoutChange(self)
+        self.animation.ensure_running()
+
+    @debug.trace
+    def paint_tab(self, index, painter, option):
+        painter.save()
+        if self.is_dragged_tab(index):
+            xpos = self.mapFromGlobal(QCursor.pos()).x() - self.dragged_tab_grab_point.x()
+            painter.translate(xpos - self.tabRect(self.dragged_tab_index).left(), 0)
+        else:
+            painter.translate(int(round(self.animation.positions[index]))
+                              - self.tabRect(index).left(), 0)
+        self.initStyleOption(option, index)
+        painter.drawControl(QStyle.CE_TabBarTab, option)
+        painter.restore()
 
     @debug.trace
     def paintEvent(self, event):
         painter = QStylePainter(self)
         option = QStyleOptionTab()
         for index in range(self.count()):
-            if self.is_dragged_tab(index):
+            if self.currentIndex() == index:
+                # Draw the active tab last so it's on top:
                 continue
-            self.initStyleOption(option, index)
-            painter.drawControl(QStyle.CE_TabBarTab, option)
-        if self.dragged_tab_parent is self:
-            # Draw the dragged tab last so it's on top:
-            xpos = self.mapFromGlobal(QCursor.pos()).x() - self.dragged_tab_grab_point.x()
-            painter.translate(xpos - self.tabRect(self.dragged_tab_index).left(), 0)
-            self.initStyleOption(option, self.dragged_tab_index)
-            painter.drawControl(QStyle.CE_TabBarTab, option)
-
+            self.paint_tab(index, painter, option)
+        if self.currentIndex() != -1:
+            self.paint_tab(self.currentIndex(), painter, option)
+        painter.end()
 
 class DragDropTabWidget(QTabWidget):
     """A tab widget that supports dragging and dropping of tabs between tab
