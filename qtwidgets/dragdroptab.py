@@ -265,7 +265,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
     _dragged_tab_index = None
     _dragged_tab_parent = None
 
-    # A TabWidget to hold the tab being dragged. Shared by all instsances, but
+    # A TabWidget to hold the tab being dragged. Shared by all instances, but
     # not instantiated until first instance is created, since there may not be
     # a QApplication at import time.
     limbo = None
@@ -283,6 +283,12 @@ class DragDropTabBar(_BaseDragDropTabBar):
 
         self.animation = TabAnimation(self)
         self.tabMoved.connect(self.animation.on_tab_moved)
+        self.setUsesScrollButtons(False)
+
+    def sizeHint(self):
+        hint = _BaseDragDropTabBar.sizeHint(self)
+        hint.setWidth(min(hint.width(), self.parent().width()))
+        return hint
 
     # Setters and getters for the class variables:
     @property
@@ -334,7 +340,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
         """Compute at which index the tab with given upper left corner
         position in global coordinates should be inserted into the tabBar."""
         left = self.mapFromGlobal(pos).x()
-        for other in range(0, self.count()):
+        for other in range(self.count()):
             other_midpoint = self.tabRect(other).center().x()
             if other_midpoint > left:
                 return other
@@ -357,7 +363,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
 
         move_target = None
 
-        for other in range(0, self.count()):
+        for other in range(self.count()):
             other_midpoint = self.tabRect(other).center().x()
             if other < index and left < other_midpoint:
                 move_target = other
@@ -373,8 +379,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
             # child StackedWidget's current widget when it gets a tabMoved
             # signal durint a mouseMove event:
             if self.currentIndex() == move_target:
-                stack = self.parent().findChild(QStackedWidget, 'qt_tabwidget_stackedwidget')
-                stack.setCurrentWidget(self.parent().widget(move_target))
+                self.parent().stack.setCurrentWidget(self.parent().widget(move_target))
 
             return move_target
         return index
@@ -511,11 +516,19 @@ class DragDropTabBar(_BaseDragDropTabBar):
     def paint_tab(self, index, painter, option):
         painter.save()
         if self.is_dragged_tab(index):
+            # The dragged tab is pinned to the mouse:
             xpos = self.mapFromGlobal(QCursor.pos()).x() - self.dragged_tab_grab_point.x()
-            painter.translate(xpos - self.tabRect(self.dragged_tab_index).left(), 0)
         else:
-            painter.translate(int(round(self.animation.positions[index]))
-                              - self.tabRect(index).left(), 0)
+            # Other tabs are at their current animated position:
+            xpos = int(round(self.animation.positions[index]))
+        tabrect = self.tabRect(index)
+        if xpos < 0:
+            # Don't draw tabs at negative positions:
+            xpos = 0
+        if xpos > self.sizeHint().width() - tabrect.width():
+            # Don't draw tabs further right than the end of the tabBar:
+            xpos = self.sizeHint().width() - tabrect.width()
+        painter.translate(xpos - tabrect.left(), 0)
         self.initStyleOption(option, index)
         painter.drawControl(QStyle.CE_TabBarTab, option)
         painter.restore()
@@ -524,7 +537,9 @@ class DragDropTabBar(_BaseDragDropTabBar):
     def paintEvent(self, event):
         painter = QStylePainter(self)
         option = QStyleOptionTab()
-        for index in range(self.count()):
+        # Draw in reverse order so if there is overlap, tabs to the left are
+        # on top:
+        for index in range(self.count() -1 , -1, -1):
             if self.currentIndex() == index:
                 # Draw the active tab last so it's on top:
                 continue
@@ -533,6 +548,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
             self.paint_tab(self.currentIndex(), painter, option)
         painter.end()
 
+
 class DragDropTabWidget(QTabWidget):
     """A tab widget that supports dragging and dropping of tabs between tab
     widgets that share a group_id. a group_id of None indicates that tab
@@ -540,8 +556,18 @@ class DragDropTabWidget(QTabWidget):
     def __init__(self, group_id=None):
         QTabWidget.__init__(self)
         self.setTabBar(DragDropTabBar(self, group_id))
+        self.tabBar().setExpanding(False)
+        self.stack = self.findChild(QStackedWidget, 'qt_tabwidget_stackedwidget')
         self.tab_bar = self.tabBar() # Backward compatibility for BLACS
 
+    def minimumSizeHint(self):
+        # Minimum width is that of the stacked widget only or the active tab only,
+        # allowing the TabWidget to shrink.
+        hint = QTabWidget.minimumSizeHint(self)
+        stack_minwidth = self.stack.minimumSizeHint().width()
+        active_tab_minwidth = self.tabBar().tabRect(self.tabBar().currentIndex()).width() + 10
+        hint.setWidth(max(stack_minwidth, active_tab_minwidth))
+        return hint
 
 if __name__ == '__main__':    
     class ViewPort(object):
