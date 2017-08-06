@@ -270,54 +270,28 @@ class DragDropTabBar(_BaseDragDropTabBar):
         at the given position, needs to be moved. Move it and return the new
         index."""
 
-        # What's the closest tab to the given position?
-
-        # Consider a point that has the same x position as the given position
-        # but is otherwise on the TabBar:
-        bar_pos = QPoint(pos.x(), self.rect().bottom())
-
-        # Is there a tab under the point?
-        closest_tab = self.tabAt(bar_pos)
-        if closest_tab == -1:
-            # No there isn't. Are we to the left of the first tab?
-            if pos.x() < self.rect().left():
-                closest_tab = 0
-            else:
-                # No? Then we're to the right of the last tab:
-                closest_tab = self.count() - 1
-
-        if closest_tab == index:
-            # We don't need to move:
-            return index
-
-        tab_rect = self.tabRect(index)
-        tab_width = tab_rect.width()
+        # If the tab rect were pinned to the mouse at the point it was
+        # grabbed, where would it be?
+        pinned_rect = self.tabRect(index)
+        pinned_rect.translate(pos-self.dragged_tab_grab_point - pinned_rect.topLeft())
+        left = pinned_rect.left()
+        right = pinned_rect.right()
 
         move_target = None
-        if closest_tab < index:
-            # Mouse is over a tab to the left. Is it far enough to the left
-            # that it should be swapped with a tab to the left?
-            for other_tab in range(closest_tab, index):
-                other_tab_rect = self.tabRect(other_tab)
-                other_tab_width = other_tab_rect.width()
-                if pos.x() < other_tab_rect.left() + tab_width:
-                    move_target = other_tab
-                    break
-        elif closest_tab > index:
-            # Mouse is over a tab to the right. Is it far enough to the right
-            # that it should be swapped with a tab to the right?
-            for other_tab in range(closest_tab, index, -1):
-                other_tab_rect = self.tabRect(other_tab)
-                other_tab_width = other_tab_rect.width()
-                if pos.x() > other_tab_rect.right() - tab_width:
-                    move_target = other_tab
-                    break
 
+        for other in range(0, self.count()):
+            other_midpoint = self.tabRect(other).center().x()
+            if other < index and left < other_midpoint:
+                move_target = other
+                # break to move as far left as warranted:
+                break
+            elif other > index and right > other_midpoint:
+                move_target = other
+                # Don't break because we might move further right
         if move_target is not None:
             self.moveTab(index, move_target)
             return move_target
-        else:
-            return index
+        return index
 
     @debug.trace
     def widgetAt(self, pos):
@@ -430,7 +404,7 @@ class DragDropTabWidget(QTabWidget):
     def __init__(self, group_id=None):
         QTabWidget.__init__(self)
         self.setTabBar(DragDropTabBar(self, group_id))
-        self.setMovable(False)
+        # self.setMovable(True)
 
     @property
     def tab_bar(self):
@@ -445,7 +419,7 @@ if __name__ == '__main__':
             self.tab_widget = DragDropTabWidget(id)
             container_layout.addWidget(self.tab_widget)
             self.tab_widget.addTab(QLabel("foo %d"%i), 'foo')
-            self.tab_widget.addTab(QLabel("bar %d"%i), 'bar')
+            self.tab_widget.addTab(QLabel("bar %d"%i), 'barsdfdfsfsdf')
             self.tab_widget.tabBar().setTabTextColor(0, QColor(255, 0, 0))
             self.tab_widget.tabBar().setTabTextColor(1, QColor(0, 255, 0))
             
