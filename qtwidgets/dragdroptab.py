@@ -284,11 +284,12 @@ class DragDropTabBar(_BaseDragDropTabBar):
         self.animation = TabAnimation(self)
         self.tabMoved.connect(self.animation.on_tab_moved)
         self.setUsesScrollButtons(False)
+        self.setElideMode(Qt.ElideRight)
 
-    def sizeHint(self):
-        hint = _BaseDragDropTabBar.sizeHint(self)
-        hint.setWidth(min(hint.width(), self.parent().width()))
-        return hint
+    @debug.trace
+    def update(self):
+        _BaseDragDropTabBar.update(self)
+        self.animation.ensure_running()
 
     # Setters and getters for the class variables:
     @property
@@ -347,11 +348,20 @@ class DragDropTabBar(_BaseDragDropTabBar):
         return self.count()
 
     @debug.trace
+    def update_dragged_tab_animation_pos(self, pos):
+        # update the animation position of the dragged tab so that it can be
+        # correctly animated once released.
+        assert self.dragged_tab_parent is self
+        pinned_rect = self.tabRect(self.dragged_tab_index)
+        pinned_rect.translate(pos - self.dragged_tab_grab_point - pinned_rect.topLeft())
+        left = pinned_rect.left()
+        self.animation.positions[self.dragged_tab_index] = left
+
+    @debug.trace
     def update_tab_index(self, index, pos):
         """Check if the tab at the given index, being dragged by the mouse at
         the given position, needs to be moved. Move it and return the new
-        index. Also update the animation position of the tab so that it can be
-        correctly animated once released."""
+        index."""
 
         # If the tab rect were pinned to the mouse at the point it was
         # grabbed, where would it be?
@@ -457,6 +467,10 @@ class DragDropTabBar(_BaseDragDropTabBar):
         if self.dragged_tab_parent is self.limbo:
             self.set_tab_parent(self.limbo.previous_parent, self.limbo.previous_index) 
 
+        # Store the position of the tab so it can animate:
+        other_local_pos = self.dragged_tab_parent.mapFromGlobal(self.mapToGlobal(event.pos()))
+        self.dragged_tab_parent.update_dragged_tab_animation_pos(other_local_pos)
+
         # Tell the parent to redraw the tabs:
         self.dragged_tab_parent.update()
 
@@ -487,8 +501,14 @@ class DragDropTabBar(_BaseDragDropTabBar):
         elif widget is not self.limbo:
             if self.group_id is not None:
                 self.set_tab_parent(widget, event.pos())
-            widget.update()
-            widget.animation.ensure_running()
+
+        # Store the position of the tab so it can animate:
+        other_local_pos = self.dragged_tab_parent.mapFromGlobal(self.mapToGlobal(event.pos()))
+        self.dragged_tab_parent.update_dragged_tab_animation_pos(other_local_pos)
+
+        # Tell the parent to redraw the tabs:
+        self.dragged_tab_parent.update()
+
         # Clear the variables about which tab is being dragged:
         self.dragged_tab_index = None
         self.dragged_tab_parent = None
@@ -529,9 +549,9 @@ class DragDropTabBar(_BaseDragDropTabBar):
         if xpos < 0:
             # Don't draw tabs at negative positions:
             xpos = 0
-        if xpos > self.sizeHint().width() - tabrect.width():
+        if xpos > self.width() - tabrect.width():
             # Don't draw tabs further right than the end of the tabBar:
-            xpos = self.sizeHint().width() - tabrect.width()
+            xpos = self.width() - tabrect.width()
         painter.translate(xpos - tabrect.left(), 0)
         self.initStyleOption(option, index)
         painter.drawControl(QStyle.CE_TabBarTab, option)
@@ -563,15 +583,6 @@ class DragDropTabWidget(QTabWidget):
         self.tabBar().setExpanding(False)
         self.stack = self.findChild(QStackedWidget, 'qt_tabwidget_stackedwidget')
         self.tab_bar = self.tabBar() # Backward compatibility for BLACS
-
-    def minimumSizeHint(self):
-        # Minimum width is that of the stacked widget only or the active tab only,
-        # allowing the TabWidget to shrink.
-        hint = QTabWidget.minimumSizeHint(self)
-        stack_minwidth = self.stack.minimumSizeHint().width()
-        active_tab_minwidth = self.tabBar().tabRect(self.tabBar().currentIndex()).width() + 10
-        hint.setWidth(max(stack_minwidth, active_tab_minwidth))
-        return hint
 
 if __name__ == '__main__':    
     class ViewPort(object):
