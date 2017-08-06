@@ -414,10 +414,12 @@ class DragDropTabBar(_BaseDragDropTabBar):
                 # If we're leaving, add a buffer region so that we don't leave
                 # until we have passed a certain distance:
                 if self.drag_in_progress and self.dragged_tab_parent is widget:
-                    rect.setTop(rect.top() - 10)
-                    rect.setBottom(rect.bottom() + 10)
                     rect.setLeft(rect.left() - 10)
                     rect.setRight(rect.right() + 10)
+                # No buffer in the vertical directions, but make the tab bars
+                # a slightly bigger target for both coming and going:
+                rect.setTop(rect.top() - 10)
+                rect.setBottom(rect.bottom() + 10)
             other_local_pos = widget.mapFromGlobal(self.mapToGlobal(pos))
             if rect.contains(other_local_pos):
                 return tab_widget.tabBar()
@@ -454,6 +456,8 @@ class DragDropTabBar(_BaseDragDropTabBar):
             other_local_pos = widget.mapFromGlobal(self.mapToGlobal(event.pos()))
             self.dragged_tab_index = widget.update_tab_index(self.dragged_tab_index,
                                                              other_local_pos)
+            if self.dragged_tab_parent is not self.limbo:
+                self.dragged_tab_parent.update_dragged_tab_animation_pos(other_local_pos)
             widget.update()
 
     @debug.trace
@@ -467,9 +471,9 @@ class DragDropTabBar(_BaseDragDropTabBar):
         if self.dragged_tab_parent is self.limbo:
             self.set_tab_parent(self.limbo.previous_parent, self.limbo.previous_index) 
 
-        # Store the position of the tab so it can animate:
-        other_local_pos = self.dragged_tab_parent.mapFromGlobal(self.mapToGlobal(event.pos()))
-        self.dragged_tab_parent.update_dragged_tab_animation_pos(other_local_pos)
+        # No animation, just set the tab's animated rect to its actual rect:
+        pos = self.dragged_tab_parent.tabRect(self.dragged_tab_index).topLeft()
+        self.dragged_tab_parent.update_dragged_tab_animation_pos(pos)
 
         # Tell the parent to redraw the tabs:
         self.dragged_tab_parent.update()
@@ -496,15 +500,16 @@ class DragDropTabBar(_BaseDragDropTabBar):
         # back at its last known place:
         if widget is self.limbo and self.dragged_tab_parent is self.limbo:
             self.set_tab_parent(self.limbo.previous_parent, self.limbo.previous_index)
-        # But if we're above a tab bar, put it there. Otherwise leave it
-        # where it is (don't move it into limbo)
-        elif widget is not self.limbo:
-            if self.group_id is not None:
-                self.set_tab_parent(widget, event.pos())
-
-        # Store the position of the tab so it can animate:
-        other_local_pos = self.dragged_tab_parent.mapFromGlobal(self.mapToGlobal(event.pos()))
-        self.dragged_tab_parent.update_dragged_tab_animation_pos(other_local_pos)
+        # But if we're above a tab bar that it's not already in, put it there.
+        # Otherwise leave it where it is (don't move it into limbo)
+        elif widget is not self.limbo and widget is not self.dragged_tab_parent:
+            self.set_tab_parent(widget, event.pos())
+        else:
+            # It's already in this widget. Store the position of the tab so it
+            # can animate:
+            other_local_pos = self.dragged_tab_parent.mapFromGlobal(
+                                  self.mapToGlobal(event.pos()))
+            self.dragged_tab_parent.update_dragged_tab_animation_pos(other_local_pos)
 
         # Tell the parent to redraw the tabs:
         self.dragged_tab_parent.update()
