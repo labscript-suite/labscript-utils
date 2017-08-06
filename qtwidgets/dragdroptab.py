@@ -401,9 +401,13 @@ class DragDropTabBar(_BaseDragDropTabBar):
                 # Include the whole horizontal part of the tabBar:
                 rect.setLeft(widget.parent().rect().left())
                 rect.setRight(widget.parent().rect().right())
-                # And an extra ten pixels at the top and bottom:
-                rect.setTop(rect.top() - 10)
-                rect.setBottom(rect.bottom() + 10)
+                # If we're leaving, add a buffer region so that we don't leave
+                # until we have passed a certain distance:
+                if self.drag_in_progress and self.dragged_tab_parent is widget:
+                    rect.setTop(rect.top() - 10)
+                    rect.setBottom(rect.bottom() + 10)
+                    rect.setLeft(rect.left() - 10)
+                    rect.setRight(rect.right() + 10)
             other_local_pos = widget.mapFromGlobal(self.mapToGlobal(pos))
             if rect.contains(other_local_pos):
                 return tab_widget.tabBar()
