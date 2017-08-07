@@ -139,15 +139,36 @@ class _Limbo(_BaseDragDropTabBar):
         self.prev_active_tab = None
         self.setWindowFlags(Qt.ToolTip)
         self.setUsesScrollButtons(False)
+        # For storing a pixmap to render during animations when we no longer
+        # own the tab:
+        self.pixmap = None
+        self.animation_in_progress = False
 
     @debug.trace
     def remove_dragged_tab(self, index):
+        # Grab a pixmap of our current contents for rendering in case there is
+        # animation of the tab flying back to a tab bar:
+        self.pixmap = QPixmap(self.size())
+        self.render(self.pixmap, QPoint(), QRegion(self.rect()))
         result = _BaseDragDropTabBar.remove_dragged_tab(self, index)
         self.hide()
         return result
 
     @debug.trace
+    def animation_starting(self):
+        self.animation_in_progress = True
+        self.show()
+
+    @debug.trace
+    def animation_over(self):
+        if self.animation_in_progress:
+            self.pixmap = None
+            self.animation_in_progress = False
+            self.hide()
+
+    @debug.trace
     def add_dragged_tab(self, index, tab):
+        self.animation_over() # cancel any animation in progress
         result = _BaseDragDropTabBar.add_dragged_tab(self, index, tab)
         self.show()
         return result
@@ -176,8 +197,19 @@ class _Limbo(_BaseDragDropTabBar):
         grabbed by the mouse. Use current mouse position rather than that
         associated with any event triggering this, for maximal
         responsiveness."""
-        self.move(QCursor.pos() - self.dragged_tab_grab_point)
+        if self.dragged_tab_grab_point is not None:
+            self.move(QCursor.pos() - self.dragged_tab_grab_point)
         _BaseDragDropTabBar.update(self)
+
+    @debug.trace
+    def paintEvent(self, event):
+        if self.animation_in_progress:
+            # Just draw the pixmap we've been given
+            painter = QPainter(self)
+            painter.drawPixmap(QPoint(), self.pixmap)
+            painter.end()
+        else:
+            _BaseDragDropTabBar.paintEvent(self, event)
 
 
 class TabAnimation(QAbstractAnimation):
@@ -196,7 +228,15 @@ class TabAnimation(QAbstractAnimation):
         # Stored as floats for smooth animation, should be rounded to ints
         # before painting with them.
         self.positions = []
+        # The position of the floating limbo tab, if it's in the process of being
+        # sucked back into the tab bar that owns this animation object:
+        self.limbo_position = None
+        self.limbo_target_tab = None
+        self.limbo = None
         self.previous_time = 0
+
+        # A flag to set to avoid recursion when we ask our parent to update:
+        self.ignore_ensure_running = False
 
     @debug.trace
     def duration(self):
@@ -204,6 +244,8 @@ class TabAnimation(QAbstractAnimation):
 
     @debug.trace
     def ensure_running(self):
+        if self.ignore_ensure_running:
+            return
         if self.state() == QAbstractAnimation.Stopped:
             self.start()
 
@@ -228,10 +270,25 @@ class TabAnimation(QAbstractAnimation):
         self.ensure_running()
 
     @debug.trace
+    def animate_limbo(self, limbo, index):
+        """If the floating tab in limbo is being sucked back into one of our
+        tabs, then we can animate that by hiding the relevant tab rect off to
+        the side somwhere whilst the floating tab swoops in."""
+        # floating tab doesn't own it anymore.
+        self.limbo = limbo
+        self.limbo.animation_starting()
+        self.limbo_position = self.parent().mapFromGlobal(limbo.pos())
+        self.limbo_target_tab = index
+        self.ensure_running()
+
+    @debug.trace
     def updateCurrentTime(self, current_time):
         dt = current_time - self.previous_time
         self.previous_time = current_time
+
         finished = True
+
+        # Move tabs toward their target:
         for i, pos in enumerate(self.positions):
             target_pos = self.target(i)
             if int(round(pos)) != target_pos:
@@ -243,11 +300,53 @@ class TabAnimation(QAbstractAnimation):
                     # Overshot:
                     new_pos = target_pos
                 self.positions[i] = new_pos
+
+        # move the floating tab toward its target, if applicable:
+        if self.limbo is not None:
+            pos_x = self.limbo_position.x()
+            pos_y = self.limbo_position.y()
+            target_pos = self.parent().tabRect(self.limbo_target_tab).topLeft()
+            target_pos_x = target_pos.x()
+            target_pos_y = target_pos.y()
+            direction_x = 1 if target_pos_x > pos_x else -1
+            direction_y = 1 if target_pos_y > pos_y else -1
+
+            dx = abs(pos_x - target_pos_x)
+            dy = abs(pos_y - target_pos_y)
+
+            # We stop the animation when it's close enough:
+            if dx + dy > 15:
+
+                finished = False
+
+                new_pos_x = pos_x + direction_x *  dx * dt / self.tau
+                new_pos_y = pos_y +  direction_y *  dy * dt / self.tau
+
+                if (new_pos_x - target_pos_x) == direction_x * abs(new_pos_x - target_pos_x):
+                    # Overshot:
+                    new_pos_x = target_pos_x
+                if (new_pos_y - target_pos_y) == direction_y * abs(new_pos_y - target_pos_y):
+                    # Overshot:
+                    new_pos_y = target_pos_y
+
+                self.limbo_position = QPoint(new_pos_x, new_pos_y)
+                self.limbo.move(self.parent().mapToGlobal(self.limbo_position))
+            else:
+                self.limbo.animation_over()
+                self.limbo = None
+                self.limbo_position = None
+                self.limbo_target_tab = None
         if finished:
             self.previous_time = 0
             self.stop()
-        else:
-            self.parent().update()
+        # Update the parent whilst blocking signals back to us to prevent
+        # recursion:
+        self.ignore_ensure_running = True
+        if self.limbo is not None:
+            self.limbo.update()
+        self.parent().update()
+        self.ignore_ensure_running = False
+
 
 class DragDropTabBar(_BaseDragDropTabBar):
 
@@ -484,7 +583,9 @@ class DragDropTabBar(_BaseDragDropTabBar):
         # We've lost focus during a drag. Cancel the drag.
         self.drag_in_progress = False
         if self.dragged_tab_parent is self.limbo:
-            self.set_tab_parent(self.limbo.previous_parent, self.limbo.previous_index) 
+            index = self.limbo.previous_index
+            self.set_tab_parent(self.limbo.previous_parent, index)
+            self.limbo.previous_parent.animation.animate_limbo(self.limbo, index)
 
         # Put the tab right back in where it goes, by passing in the position
         # equal to the grab point. This way it won't animate:
@@ -516,7 +617,9 @@ class DragDropTabBar(_BaseDragDropTabBar):
         # If the tab and the mouse are both in limbo, then put the tab
         # back at its last known place:
         if widget is self.limbo and self.dragged_tab_parent is self.limbo:
-            self.set_tab_parent(self.limbo.previous_parent, self.limbo.previous_index)
+            index = self.limbo.previous_index
+            self.set_tab_parent(self.limbo.previous_parent, index)
+            self.limbo.previous_parent.animation.animate_limbo(self.limbo, index)
         # But if we're above a tab bar that it's not already in, put it there.
         # Otherwise leave it where it is (don't move it into limbo)
         elif widget is not self.limbo and widget is not self.dragged_tab_parent:
@@ -560,6 +663,10 @@ class DragDropTabBar(_BaseDragDropTabBar):
 
     @debug.trace
     def paint_tab(self, index, painter, option):
+        # Don't paint the tab if it's the floating tab's target whilst it is
+        # animated flying in:
+        if index == self.animation.limbo_target_tab:
+            return
         painter.save()
         if self.is_dragged_tab(index):
             # The dragged tab is pinned to the mouse:
