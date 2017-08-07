@@ -499,7 +499,8 @@ class DragDropTabBar(_BaseDragDropTabBar):
             # child StackedWidget's current widget when it gets a tabMoved
             # signal durint a mouseMove event:
             if self.currentIndex() == move_target:
-                self.parent().stack.setCurrentWidget(self.parent().widget(move_target))
+                stack = self.parent().findChild(QStackedWidget, 'qt_tabwidget_stackedwidget')
+                stack.setCurrentWidget(self.parent().widget(move_target))
 
             return move_target
         return index
@@ -512,28 +513,42 @@ class DragDropTabBar(_BaseDragDropTabBar):
         return its DragDropTabBar. Otherwise return the limbo object."""
         for tab_widget in self.tab_widgets[self.group_id]:
             count = tab_widget.tabBar().count()
-            if count == 0:
+            
+            if tab_widget.accept_drops_bar_only:
+                if count == 0:
+                    widget = tab_widget
+                    rect = widget.rect()
+                    # The region at the top of the TabWidget equal to the height
+                    # of a tab:
+                    height = self.dragged_tab_parent.tabRect(self.dragged_tab_index).height()
+                    rect.setHeight(height)
+                else:
+                    widget = tab_widget.tabBar()
+                    rect = widget.rect()
+                    # Include the whole horizontal part of the tabBar:
+                    rect.setLeft(widget.parent().rect().left())
+                    rect.setRight(widget.parent().rect().right())
+                    # If we're leaving, add a buffer region so that we don't leave
+                    # until we have passed a certain distance:
+                    if self.drag_in_progress and self.dragged_tab_parent is widget:
+                        rect.setLeft(rect.left() - 10)
+                        rect.setRight(rect.right() + 10)
+                    # No buffer in the vertical directions, but make the tab bars
+                    # a slightly bigger target for both coming and going:
+                    rect.setTop(rect.top() - 10)
+                    rect.setBottom(rect.bottom() + 10)
+
+            else:
                 widget = tab_widget
                 rect = widget.rect()
-                # The region at the top of the TabWidget equal to the height
-                # of a tab:
-                height = self.dragged_tab_parent.tabRect(self.dragged_tab_index).height()
-                rect.setHeight(height)
-            else:
-                widget = tab_widget.tabBar()
-                rect = widget.rect()
-                # Include the whole horizontal part of the tabBar:
-                rect.setLeft(widget.parent().rect().left())
-                rect.setRight(widget.parent().rect().right())
                 # If we're leaving, add a buffer region so that we don't leave
                 # until we have passed a certain distance:
                 if self.drag_in_progress and self.dragged_tab_parent is widget:
                     rect.setLeft(rect.left() - 10)
                     rect.setRight(rect.right() + 10)
-                # No buffer in the vertical directions, but make the tab bars
-                # a slightly bigger target for both coming and going:
-                rect.setTop(rect.top() - 10)
-                rect.setBottom(rect.bottom() + 10)
+                    rect.setTop(rect.top() - 10)
+                    rect.setBottom(rect.bottom() + 10)
+
             other_local_pos = widget.mapFromGlobal(self.mapToGlobal(pos))
             if rect.contains(other_local_pos):
                 return tab_widget.tabBar()
@@ -706,12 +721,16 @@ class DragDropTabWidget(QTabWidget):
     """A tab widget that supports dragging and dropping of tabs between tab
     widgets that share a group_id. a group_id of None indicates that tab
     dragging is disabled."""
-    def __init__(self, group_id=None):
+    def __init__(self, group_id=None, accept_drops_bar_only=True):
         QTabWidget.__init__(self)
         self.setTabBar(DragDropTabBar(self, group_id))
         self.tabBar().setExpanding(False)
-        self.stack = self.findChild(QStackedWidget, 'qt_tabwidget_stackedwidget')
         self.tab_bar = self.tabBar() # Backward compatibility for BLACS
+
+        # Whether to accept drops only on the tab bar at the top,
+        # as opposed to accepting them anywhere on the tabWidget:
+        self.accept_drops_bar_only = accept_drops_bar_only
+
 
 if __name__ == '__main__':    
     class ViewPort(object):
