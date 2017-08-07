@@ -219,14 +219,12 @@ class TabAnimation(QAbstractAnimation):
     # Animation timescale - has units of time (milliseconds), but can
     # be thought of as the velocity in pixels per millisecond per pixel of
     # displacement that the object is from its target.
-    tau = 60
+    tau = float(60)
 
     def __init__(self, parent):
         QAbstractAnimation.__init__(self, parent)
         # The left edges of where the tabs will be drawn. This animates over
         # time to approach the left edge as returned by parent.tabRect().
-        # Stored as floats for smooth animation, should be rounded to ints
-        # before painting with them.
         self.positions = []
         # The position of the floating limbo tab, if it's in the process of being
         # sucked back into the tab bar that owns this animation object:
@@ -235,8 +233,8 @@ class TabAnimation(QAbstractAnimation):
         self.limbo = None
         self.previous_time = 0
 
-        # A flag to set to avoid recursion when we ask our parent to update:
-        self.ignore_ensure_running = False
+        # A flag to set to avoid recursion when we ask widgets to update:
+        self.callback_in_progress = False
 
     @debug.trace
     def duration(self):
@@ -244,7 +242,8 @@ class TabAnimation(QAbstractAnimation):
 
     @debug.trace
     def ensure_running(self):
-        if self.ignore_ensure_running:
+        # Don't recurse:
+        if self.callback_in_progress:
             return
         if self.state() == QAbstractAnimation.Stopped:
             self.start()
@@ -256,7 +255,7 @@ class TabAnimation(QAbstractAnimation):
 
     @debug.trace
     def tabInserted(self, index):
-        self.positions.insert(index, float(self.parent().tabRect(index).left()))
+        self.positions.insert(index, self.parent().tabRect(index).left())
         self.ensure_running()
 
     @debug.trace
@@ -291,15 +290,18 @@ class TabAnimation(QAbstractAnimation):
         # Move tabs toward their target:
         for i, pos in enumerate(self.positions):
             target_pos = self.target(i)
-            if int(round(pos)) != target_pos:
+            dx = target_pos - pos
+            # Animate while the tab is more than a pixel away from its target:
+            if abs(dx) > 1:
                 finished = False
-                direction = 1 if target_pos > pos else -1
-                dx = abs(pos - target_pos)
-                new_pos = pos + direction *  dx * dt / self.tau
-                if (new_pos - target_pos) == direction * abs(new_pos - target_pos):
-                    # Overshot:
+                new_pos = pos + dx * dt / self.tau
+                # Check for overshoot:
+                if dx * (target_pos - new_pos) < 0:
                     new_pos = target_pos
                 self.positions[i] = new_pos
+            else:
+                # Once it's close enough, snap it to the final value
+                self.positions[i] = target_pos
 
         # move the floating tab toward its target, if applicable:
         if self.limbo is not None:
@@ -308,29 +310,25 @@ class TabAnimation(QAbstractAnimation):
             target_pos = self.parent().tabRect(self.limbo_target_tab).topLeft()
             target_pos_x = target_pos.x()
             target_pos_y = target_pos.y()
-            direction_x = 1 if target_pos_x > pos_x else -1
-            direction_y = 1 if target_pos_y > pos_y else -1
+            dx = target_pos_x - pos_x
+            dy = target_pos_y - pos_y 
 
-            dx = abs(pos_x - target_pos_x)
-            dy = abs(pos_y - target_pos_y)
-
-            # We stop the animation when it's close enough:
-            if dx + dy > 15:
+            # Animate while the floating tab is more 15  pixels of taxicab-
+            # metric distance away from its target:
+            if abs(dx) + abs(dy) > 15:
 
                 finished = False
 
-                new_pos_x = pos_x + direction_x *  dx * dt / self.tau
-                new_pos_y = pos_y +  direction_y *  dy * dt / self.tau
+                new_pos_x = pos_x + dx * dt / self.tau
+                new_pos_y = pos_y + dy * dt / self.tau
 
-                if (new_pos_x - target_pos_x) == direction_x * abs(new_pos_x - target_pos_x):
-                    # Overshot:
+                # Check for overshoot:
+                if dx * (target_pos_x - new_pos_x) < 0:
                     new_pos_x = target_pos_x
-                if (new_pos_y - target_pos_y) == direction_y * abs(new_pos_y - target_pos_y):
-                    # Overshot:
+                if dy * (target_pos_y - new_pos_y) < 0:
                     new_pos_y = target_pos_y
 
                 self.limbo_position = QPoint(new_pos_x, new_pos_y)
-                self.limbo.move(self.parent().mapToGlobal(self.limbo_position))
             else:
                 self.limbo.animation_over()
                 self.limbo = None
@@ -341,11 +339,12 @@ class TabAnimation(QAbstractAnimation):
             self.stop()
         # Update the parent whilst blocking signals back to us to prevent
         # recursion:
-        self.ignore_ensure_running = True
+        self.callback_in_progress = True
         if self.limbo is not None:
+            self.limbo.move(self.parent().mapToGlobal(self.limbo_position))
             self.limbo.update()
         self.parent().update()
-        self.ignore_ensure_running = False
+        self.callback_in_progress = False
 
 
 class DragDropTabBar(_BaseDragDropTabBar):
@@ -688,7 +687,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
             xpos = self.mapFromGlobal(QCursor.pos()).x() - self.dragged_tab_grab_point.x()
         else:
             # Other tabs are at their current animated position:
-            xpos = int(round(self.animation.positions[index]))
+            xpos = self.animation.positions[index]
         tabrect = self.tabRect(index)
         if xpos < 0:
             # Don't draw tabs at negative positions:
