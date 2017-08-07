@@ -182,8 +182,12 @@ class _Limbo(_BaseDragDropTabBar):
 
 class TabAnimation(QAbstractAnimation):
 
-    # Animation speed in pixels per millisecond:
-    v = 0.5
+    # We move tabs with speed proportional to the distance from their target.
+
+    # Animation timescale - has units of time (milliseconds), but can
+    # be thought of as the velocity in pixels per millisecond per pixel of
+    # displacement that the object is from its target.
+    tau = 60
 
     def __init__(self, parent):
         QAbstractAnimation.__init__(self, parent)
@@ -233,7 +237,8 @@ class TabAnimation(QAbstractAnimation):
             if int(round(pos)) != target_pos:
                 finished = False
                 direction = 1 if target_pos > pos else -1
-                new_pos = pos + direction * self.v * dt
+                dx = abs(pos - target_pos)
+                new_pos = pos + direction *  dx * dt / self.tau
                 if (new_pos - target_pos) == direction * abs(new_pos - target_pos):
                     # Overshot:
                     new_pos = target_pos
