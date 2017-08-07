@@ -287,6 +287,12 @@ class DragDropTabBar(_BaseDragDropTabBar):
         self.setElideMode(Qt.ElideRight)
 
     @debug.trace
+    def sizeHint(self):
+        hint = _BaseDragDropTabBar.sizeHint(self)
+        hint.setWidth(self.parent().width())
+        return hint
+
+    @debug.trace
     def update(self):
         _BaseDragDropTabBar.update(self)
         self.animation.ensure_running()
@@ -402,9 +408,13 @@ class DragDropTabBar(_BaseDragDropTabBar):
         return its DragDropTabBar. Otherwise return the limbo object."""
         for tab_widget in self.tab_widgets[self.group_id]:
             count = tab_widget.tabBar().count()
-            if count == 0 or (count == 1 and self.dragged_tab_parent is tab_widget.tabBar()):
+            if count == 0:
                 widget = tab_widget
                 rect = widget.rect()
+                # The region at the top of the TabWidget equal to the height
+                # of a tab:
+                height = self.dragged_tab_parent.tabRect(self.dragged_tab_index).height()
+                rect.setHeight(height)
             else:
                 widget = tab_widget.tabBar()
                 rect = widget.rect()
@@ -471,8 +481,10 @@ class DragDropTabBar(_BaseDragDropTabBar):
         if self.dragged_tab_parent is self.limbo:
             self.set_tab_parent(self.limbo.previous_parent, self.limbo.previous_index) 
 
-        # No animation, just set the tab's animated rect to its actual rect:
+        # Put the tab right back in where it goes, by passing in the position
+        # equal to the grab point. This way it won't animate:
         pos = self.dragged_tab_parent.tabRect(self.dragged_tab_index).topLeft()
+        pos += self.dragged_tab_grab_point
         self.dragged_tab_parent.update_dragged_tab_animation_pos(pos)
 
         # Tell the parent to redraw the tabs:
@@ -490,7 +502,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
         outside of any widgets at the time of mouse release, in which case
         move the tab to its last known parent and position."""
         _BaseDragDropTabBar.mouseReleaseEvent(self, event)
-        if self.dragged_tab_index is None or event.button() != Qt.LeftButton:
+        if not self.drag_in_progress or event.button() != Qt.LeftButton:
             return
         event.accept()
         # Cancel the drag:
@@ -503,7 +515,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
         # But if we're above a tab bar that it's not already in, put it there.
         # Otherwise leave it where it is (don't move it into limbo)
         elif widget is not self.limbo and widget is not self.dragged_tab_parent:
-            self.set_tab_parent(widget, event.pos())
+            self.set_tab_parent(widget, pos=event.pos())
         else:
             # It's already in this widget. Store the position of the tab so it
             # can animate:
