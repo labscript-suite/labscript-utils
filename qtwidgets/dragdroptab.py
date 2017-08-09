@@ -21,14 +21,13 @@ try:
     from qtutils.qt.QtGui import *
     from qtutils.qt.QtWidgets import *
     from qtutils.qt.QtCore import *
+    from qtutils.qt import QT_ENV, PYQT5
 except Exception:
     # Can remove this once labscript_utils is ported to qtutils v2
     from PyQt4.QtGui import *
     from PyQt4.QtCore import *
-
-# from PyQt5.QtGui import *
-# from PyQt5.QtCore import *
-# from PyQt5.QtWidgets import *
+    PYQT5 = 'PyQt5'
+    QT_ENV = 'PyQt4'
 
 
 class debug(object):
@@ -703,7 +702,11 @@ class DragDropTabBar(_BaseDragDropTabBar):
     @debug.trace
     def paintEvent(self, event):
         painter = QStylePainter(self)
-        option = QStyleOptionTab()
+        if QT_ENV != PYQT5:
+            # Use the version that supports icons and buttons in Qt4
+            option = QStyleOptionTabV3()
+        else:
+            option = QStyleOptionTab()
         # Draw in reverse order so if there is overlap, tabs to the left are
         # on top:
         for index in range(self.count() -1 , -1, -1):
@@ -737,12 +740,15 @@ if __name__ == '__main__':
             #ui = UiLoader().load('viewport.ui')
             self.tab_widget = DragDropTabWidget(id)
             container_layout.addWidget(self.tab_widget)
-            self.tab_widget.addTab(QLabel("foo %d"%i), 'foo')
-            self.tab_widget.addTab(QLabel("bar %d"%i), 'barsdfdfsfsdf')
+            self.tab_widget.addTab(QLabel("foo %d"%i), 'foo %d 1' % i)
+            self.tab_widget.addTab(QLabel("bar %d"%i), 'bar bar bar %d 1' % i)
             self.tab_widget.tabBar().setTabTextColor(0, QColor(255, 0, 0))
             self.tab_widget.tabBar().setTabTextColor(1, QColor(0, 255, 0))
-            
-            
+
+            self.tab_widget.tabBar().setTabIcon(1, lyse_icon)
+            self.tab_widget.tabBar().setTabIcon(0, runmanager_icon)
+
+
     class RunViewer(object):
         def __init__(self):
             # Load the gui:
@@ -764,6 +770,12 @@ if __name__ == '__main__':
         
 
     qapplication = QApplication([])
+
+    import qtutils.icons
+
+    lyse_icon = QIcon(':/qtutils/custom/lyse')
+    runmanager_icon = QIcon(':/qtutils/custom/runmanager')
+
     app = RunViewer()
     
     timer = QTimer()
@@ -775,6 +787,16 @@ if __name__ == '__main__':
         if DragDropTabBar.limbo is not None:
             limbo = DragDropTabBar.limbo
             if limbo.count():
-                limbo.setTabText(0, str(time.time()))
-    timer.timeout.connect(change_text)  # Let the interpreter run each 500 ms.
+                tab_text = limbo.tabText(0)
+                split = str(tab_text).split()
+                text = ' '.join(split[:-1])
+                number = int(split[-1])
+                number = number + 1
+                limbo.setTabText(0, text + ' ' + str(number))
+                if number % 2:
+                    limbo.setTabIcon(0, lyse_icon)
+                else:
+                    limbo.setTabIcon(0, runmanager_icon)
+
+    timer.timeout.connect(change_text)
     qapplication.exec_()
