@@ -21,13 +21,11 @@ try:
     from qtutils.qt.QtGui import *
     from qtutils.qt.QtWidgets import *
     from qtutils.qt.QtCore import *
-    from qtutils.qt import QT_ENV, PYQT5
 except Exception:
     # Can remove this once labscript_utils is ported to qtutils v2
     from PyQt4.QtGui import *
     from PyQt4.QtCore import *
-    PYQT5 = 'PyQt5'
-    QT_ENV = 'PyQt4'
+    QStyleOptionTab = QStyleOptionTabV3
 
 
 class debug(object):
@@ -702,11 +700,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
     @debug.trace
     def paintEvent(self, event):
         painter = QStylePainter(self)
-        if QT_ENV != PYQT5:
-            # Use the version that supports icons and buttons in Qt4
-            option = QStyleOptionTabV3()
-        else:
-            option = QStyleOptionTab()
+        option = QStyleOptionTab()
         # Draw in reverse order so if there is overlap, tabs to the left are
         # on top:
         for index in range(self.count() -1 , -1, -1):
