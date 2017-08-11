@@ -21,14 +21,12 @@ else:
 appids = {'runmanager': 'Monashbec.Labscript.Runmanager.%s'%labscript_installation,
          'runviewer': 'Monashbec.Labscript.Runviewer.%s'%labscript_installation,
          'blacs': 'Monashbec.Labscript.Blacs.%s'%labscript_installation,
-         'lyse': 'Monashbec.Labscript.Lyse.%s'%labscript_installation,
-         'mise': 'Monashbec.Labscript.Mise.%s'%labscript_installation}
+         'lyse': 'Monashbec.Labscript.Lyse.%s'%labscript_installation}
 
 app_descriptions = {'runmanager': 'runmanager - the labscript suite',
                    'runviewer': 'runviewer - the labscript suite',
                    'blacs': 'blacs - the labscript suite',
-                   'lyse': 'lyse - the labscript suite',
-                   'mise': 'mise - the labscript suite'}
+                   'lyse': 'lyse - the labscript suite'}
 
 def make_shortcut(path, target, arguments, working_directory, icon_path, description, appid):
     import sys, os
