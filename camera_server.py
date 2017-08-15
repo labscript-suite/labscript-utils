@@ -97,7 +97,7 @@ class CameraServer(zprocess.ZMQServer):
                 self._h5_filepath = None
                 return 'done'
             elif request_data == 'abort':
-                self.abort(self, self._h5_filepath)
+                self.abort()
                 self._h5_filepath = None
                 return 'done'
             else:
@@ -198,5 +198,3 @@ if __name__ == '__main__':
     print('starting camera server on port %d...' % port)
     server = CameraServer(port)
     server.shutdown_on_interrupt()
-
-
