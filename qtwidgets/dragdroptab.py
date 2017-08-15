@@ -12,13 +12,9 @@
 #####################################################################
 
 import sys
-if 'PySide' in sys.modules.copy():
-    from PySide.QtCore import *
-    from PySide.QtGui import *
-else:
-    from PyQt4.QtCore import *
-    from PyQt4.QtGui import *
-
+from qtutils.qt.QtCore import *
+from qtutils.qt.QtGui import *
+from qtutils.qt.QtWidgets import *
 from qtutils import *
 
 debug = False
@@ -393,8 +389,8 @@ if __name__ == '__main__':
             container_layout.addWidget(self.tab_widget)
             self.tab_widget.addTab(QLabel("foo %d"%i), 'foo')
             self.tab_widget.addTab(QLabel("bar %d"%i), 'bar')
-            self.tab_widget.tabBar().setTabTextColor(0,"red")
-            self.tab_widget.tabBar().setTabTextColor(1,"green")
+            self.tab_widget.tabBar().setTabTextColor(0, QColor(255, 0, 0))
+            self.tab_widget.tabBar().setTabTextColor(1, QColor(0, 255, 0))
             
             
     class RunViewer(object):

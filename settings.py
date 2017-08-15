@@ -10,17 +10,16 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+try:
+    from labscript_utils import check_version
+except ImportError:
+    raise ImportError('Require labscript_utils > 2.1.0')
 
-import os
-import sys
-if 'PySide' in sys.modules.copy():
-    import PySide # This is done so that we can eval() constants from the PySide module (eg column ASC/DESC sort order)
-    from PySide.QtCore import *
-    from PySide.QtGui import *
-else:
-    import PyQt4
-    from PyQt4.QtCore import *
-    from PyQt4.QtGui import *
+check_version('qtutils', '2.0.0', '3.0.0')
+
+from qtutils.qt.QtCore import *
+from qtutils.qt.QtGui import *
+from qtutils.qt.QtWidgets import *
 
 import h5_lock, h5py
 from labscript_utils.qtwidgets.fingertab import FingerTabWidget
