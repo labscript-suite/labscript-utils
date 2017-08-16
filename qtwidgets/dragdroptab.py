@@ -16,16 +16,9 @@ from __future__ import print_function
 import weakref
 from collections import namedtuple, defaultdict
 
-
-try:
-    from qtutils.qt.QtGui import *
-    from qtutils.qt.QtWidgets import *
-    from qtutils.qt.QtCore import *
-except Exception:
-    # Can remove this once labscript_utils is ported to qtutils v2
-    from PyQt4.QtGui import *
-    from PyQt4.QtCore import *
-    QStyleOptionTab = QStyleOptionTabV3
+from qtutils.qt.QtGui import *
+from qtutils.qt.QtWidgets import *
+from qtutils.qt.QtCore import *
 
 
 class debug(object):

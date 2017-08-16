@@ -14,6 +14,7 @@
 import sys
 import os
 import socket
+import subprocess
 
 try:
     import configparser
@@ -43,7 +44,11 @@ if not os.path.exists(config_prefix):
 
 config_prefix = os.path.abspath(config_prefix)
 
-default_config_path = os.path.join(config_prefix,'%s.ini'%socket.gethostname())
+if sys.platform == 'darwin':
+    hostname = subprocess.check_output(['scutil', '--get', 'LocalHostName']).decode('utf8').strip()
+else:
+    hostname = socket.gethostname()
+default_config_path = os.path.join(config_prefix,'%s.ini'%hostname)
 
 class LabConfig(configparser.SafeConfigParser):
     NoOptionError = configparser.NoOptionError

@@ -13,12 +13,9 @@
 
 import sys
 
-if 'PySide' in sys.modules.copy():
-    from PySide.QtCore import *
-    from PySide.QtGui import *
-else:
-    from PyQt4.QtCore import *
-    from PyQt4.QtGui import *
+from qtutils.qt.QtCore import *
+from qtutils.qt.QtGui import *
+from qtutils.qt.QtWidgets import *
 
 
 class NoStealFocusDoubleSpinBox(QDoubleSpinBox):
@@ -274,4 +271,4 @@ if __name__ == '__main__':
     
     
     sys.exit(qapplication.exec_())
-    
+    
