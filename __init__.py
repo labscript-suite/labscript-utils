@@ -52,7 +52,7 @@ def _get_version(module_name):
         # different we should return the one we got at the first atttempted
         # import:
         module, _ = brute_import(module_name)
-    return getattr(module, '__version__'), exc_info
+    return getattr(module, '__version__', None), exc_info
 
 
 def _reraise(exc_info):
