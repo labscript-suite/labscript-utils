@@ -10,11 +10,11 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-from __future__ import division
+from __future__ import division, unicode_literals, print_function, absolute_import
 
-from UnitConversionBase import *
+from .UnitConversionBase import *
 from numpy import int16
-        
+
 class BidirectionalCoilDriver(UnitConversion):
     base_unit = 'V'
     derived_units = ['A']

@@ -10,8 +10,9 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+from __future__ import division, unicode_literals, print_function, absolute_import
 
-from UnitConversionBase import *
+from .UnitConversionBase import *
 from scipy.special import lambertw
 from numpy import exp, abs
 class OptotuneLens(UnitConversion):
@@ -61,4 +62,4 @@ class OptotuneLens(UnitConversion):
         return current/self.parameters['current_cal']
         
     def I_from_base(self,volts):
-        return volts*self.parameters['current_cal']
+        return volts*self.parameters['current_cal']
