@@ -10,6 +10,10 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+from __future__ import division, unicode_literals, print_function, absolute_import
+from labscript_utils import PY2
+if PY2:
+    str = unicode
 
 import threading
 import os
@@ -124,10 +128,10 @@ if __name__ == '__main__':
     
     def callback(name,modified):
         if modified is None:
-            print name,'has been deleted'
+            print(name,'has been deleted')
         else:
-            print name, 'was modified at',modified
-        
-    f = FileWatcher(callback, files='test.txt',folders='foobar')  
+            print(name, 'was modified at',modified)
+
+    f = FileWatcher(callback, files='test.txt',folders='foobar')
     time.sleep(60)
     
