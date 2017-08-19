@@ -553,6 +553,8 @@ class DragDropTabBar(_BaseDragDropTabBar):
             return
         event.accept()
         self.drag_in_progress = True
+        # Ensure we get all mouse events until the mouse is released:
+        self.grabMouse()
         self.dragged_tab_index = self.tabAt(event.pos())
         self.dragged_tab_parent = self
         self.dragged_tab_grab_point = (event.pos()
@@ -579,33 +581,6 @@ class DragDropTabBar(_BaseDragDropTabBar):
             widget.update()
 
     @debug.trace
-    def leaveEvent(self, event):
-        _BaseDragDropTabBar.leaveEvent(self, event)
-        """Called if the window loses focus"""
-        if not self.drag_in_progress:
-            return
-        # We've lost focus during a drag. Cancel the drag.
-        self.drag_in_progress = False
-        if self.dragged_tab_parent is self.limbo:
-            index = self.limbo.previous_index
-            self.set_tab_parent(self.limbo.previous_parent, index)
-            self.limbo.previous_parent.animation.animate_limbo(self.limbo, index)
-
-        # Put the tab right back in where it goes, by passing in the position
-        # equal to the grab point. This way it won't animate:
-        pos = self.dragged_tab_parent.tabRect(self.dragged_tab_index).topLeft()
-        pos += self.dragged_tab_grab_point
-        self.dragged_tab_parent.update_dragged_tab_animation_pos(pos)
-
-        # Tell the parent to redraw the tabs:
-        self.dragged_tab_parent.update()
-
-        # Clear the variables about which tab is being dragged:
-        self.dragged_tab_index = None
-        self.dragged_tab_parent = None
-        self.dragged_tab_grab_point = None
-
-    @debug.trace
     def mouseReleaseEvent(self, event):
         """Same as mouseMove event - update the DragDropTabWidget and position of
         the tab to the current mouse position. Unless the mouse position is
@@ -618,6 +593,8 @@ class DragDropTabBar(_BaseDragDropTabBar):
         # Cancel the drag:
         self.drag_in_progress = False
         widget = self.widgetAt(event.pos())
+        # Tell Qt to no longer send all mouse events to this widget:
+        self.releaseMouse()
         # If the tab and the mouse are both in limbo, then put the tab
         # back at its last known place:
         if widget is self.limbo and self.dragged_tab_parent is self.limbo:
