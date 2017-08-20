@@ -1,7 +1,5 @@
 from __future__ import division, unicode_literals, print_function, absolute_import
 from labscript_utils import PY2
-if PY2:
-    str = unicode
 
 import sys
 import json
@@ -15,8 +13,9 @@ VALID_PROPERTY_LOCATIONS = {
     "unit_conversion_parameters"
     }
 
-if sys.version < '3':
+if PY2:
     STRING_DATATYPES = [str, np.string_, unicode]
+    str = unicode
 else:
     STRING_DATATYPES = [str, np.string_, bytes]
 
