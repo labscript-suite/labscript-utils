@@ -33,7 +33,7 @@ def count_types():
     
 def write_to_file(types):
     with open('memprof.txt','w') as f:
-        names = types.keys()
+        names = list(types.keys())
         names.sort(key=lambda name: -types[name])
         for name in names:
             f.write(str(name).rjust(60) + ' ' + str(types[name]).rjust(8) + '\n')
