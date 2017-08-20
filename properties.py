@@ -26,6 +26,7 @@ def serialise(value):
 
 
 def deserialise(value):
+    value = str(value)
     assert value.startswith(JSON_IDENTIFIER)
     return json.loads(value[len(JSON_IDENTIFIER):])
     # return json.loads(value.replace(JSON_IDENTIFIER, '', 1))
