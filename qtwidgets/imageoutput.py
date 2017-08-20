@@ -10,6 +10,10 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+from __future__ import division, unicode_literals, print_function, absolute_import
+from labscript_utils import PY2
+if PY2:
+    str = unicode
 
 import base64
 import sys
@@ -96,7 +100,7 @@ class ImageView(QGraphicsView):
     
 class ImageOutput(QWidget):
     
-    imageUpdated = Signal(unicode)
+    imageUpdated = Signal(str)
 
     def __init__(self, name, width, height, *args, **kwargs):
         QWidget.__init__(self, *args, **kwargs)        
@@ -147,7 +151,7 @@ class ImageOutput(QWidget):
         self._Image = None
         
         # the base64encoded value
-        self._value = unicode("")
+        self._value = str("")
         
         # The image item to be added to the scene
         self._pixmap_item = None
@@ -212,11 +216,11 @@ class ImageOutput(QWidget):
         
     @property
     def value(self):
-        return unicode(self._value)
+        return str(self._value)
         
     @value.setter
     def value(self, value):
-        decoded_image = base64.b64decode(unicode(value))
+        decoded_image = base64.b64decode(str(value))
         pixmap = QPixmap()
         pixmap.loadFromData(decoded_image, flags=Qt.AvoidDither | Qt.ThresholdAlphaDither | Qt.ThresholdDither)
         # print decoded_image
@@ -224,7 +228,7 @@ class ImageOutput(QWidget):
             QMessageBox.warning(self, "Failed to load image", 'The image size was incorrect. It must be %dx%d pixels.'%(self.image_size.width(), self.image_size.height()), QMessageBox.Ok, QMessageBox.Ok)
             return
         
-        self._value = unicode(value)
+        self._value = str(value)
         pixmap_item = QGraphicsPixmapItem(pixmap)
         
         if self._pixmap_item is not None:
