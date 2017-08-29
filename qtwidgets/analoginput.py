@@ -119,7 +119,7 @@ class AnalogInput(QWidget):
 
     def set_data(self, data):
         self.data = np.append(self.data, data)
-        self.set_value(np.mean(data))
+        self.set_value(data[-1])
         if self.data.size > 1000:
             self.data = np.delete(self.data, np.arange(self.data.size-1000))
         if self.win is not None:
