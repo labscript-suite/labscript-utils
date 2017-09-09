@@ -23,10 +23,11 @@ from labscript_utils.qtwidgets.InputPlotWindow import PlotWindow
 
 
 class AnalogInput(QWidget):
-    def __init__(self, hardware_name, connection_name='-', display_name=None, horizontal_alignment=False, parent=None):
+    def __init__(self, device_name, hardware_name, connection_name='-', display_name=None, horizontal_alignment=False, parent=None):
         QWidget.__init__(self, parent)
 
         self.plot = None
+        self._device_name = device_name
         self._connection_name = connection_name
         self._hardware_name = hardware_name
         self.win = None
@@ -127,7 +128,7 @@ class AnalogInput(QWidget):
     def open_plot_window(self):
         if self.win is None:
             self.win = PlotWindow()
-            to_child, from_child = self.win.start(self._connection_name, self._hardware_name, 'z')
+            to_child, from_child = self.win.start(self._connection_name, self._hardware_name, self._device_name)
 
             check_plot_window_thread = threading.Thread(target=self._check_plot_window, args=(from_child, ))
             check_plot_window_thread.daemon = True
