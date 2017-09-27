@@ -112,7 +112,7 @@ class AnalogInput(QWidget):
     def get_AI(self):
         return self._AI
 
-    @inmain_decorator(False)
+    @inmain_decorator(True)
     def set_value(self, value):
         if value is not None:
             text = "%0.4f" % value
