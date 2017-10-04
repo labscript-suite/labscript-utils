@@ -687,7 +687,7 @@ class DragDropTabWidget(QTabWidget):
     """A tab widget that supports dragging and dropping of tabs between tab
     widgets that share a group_id. a group_id of None indicates that tab
     dragging is disabled."""
-    def __init__(self, group_id=None, accept_drops_bar_only=True):
+    def __init__(self, group_id=None, accept_drops_bar_only=False):
         QTabWidget.__init__(self)
         self.setTabBar(DragDropTabBar(self, group_id))
         self.tabBar().setExpanding(False)
