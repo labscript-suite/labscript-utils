@@ -14,10 +14,9 @@ VALID_PROPERTY_LOCATIONS = {
     }
 
 if PY2:
-    STRING_DATATYPES = [str, np.string_, unicode]
     str = unicode
-else:
-    STRING_DATATYPES = [str, np.string_, bytes]
+
+STRING_DATATYPES = [str, np.string_, bytes]
 
 
 def serialise(value):
@@ -56,6 +55,8 @@ def _get_device_properties(h5_file, device_name):
     for key, val in gp.attrs.items():
         # Deserialize values if stored as JSON
         if type(val) in STRING_DATATYPES:
+            if type(val) in [bytes, np.string_]:
+                val = val.decode()
             if val.startswith(JSON_IDENTIFIER):
                 properties[key] = deserialise(val)
             else:
@@ -66,14 +67,14 @@ def _get_device_properties(h5_file, device_name):
 
 def _get_con_table_properties(h5_file, device_name):
     dataset = h5_file['connection table']
-    row = dataset[dataset['name'] == device_name][0]
+    row = dataset[dataset['name'] == device_name.encode('utf-8')][0]
     json_string = row['properties']
     return deserialise(json_string)
 
 
 def _get_unit_conversion_parameters(h5_file, device_name):
     dataset = h5_file['connection table']
-    row = dataset[dataset['name'] == device_name][0]
+    row = dataset[dataset['name'] == device_name.encode('utf-8')][0]
     json_string = row['unit conversion params']
     return deserialise(json_string)
 

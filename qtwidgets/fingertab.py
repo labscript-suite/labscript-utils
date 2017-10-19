@@ -1,9 +1,13 @@
 # Code by LegoStormtroopr
 #
 # License:
-# This [trivial fingertab gist](https://gist.github.com/LegoStormtroopr/5075267) is released 
-# as Public Domain, but boy would it beswell if you could credit me, or tweet me 
+# This [trivial fingertab gist](https://gist.github.com/LegoStormtroopr/5075267) is released
+# as Public Domain, but boy would it beswell if you could credit me, or tweet me
 # [@LegoStormtoopr](http://www.twitter.com/legostormtroopr) to say thanks!
+from __future__ import division, unicode_literals, print_function, absolute_import
+from labscript_utils import PY2
+if PY2:
+    str = unicode
 
 import sys
 from qtutils.qt import QtCore, QtGui, QtWidgets
