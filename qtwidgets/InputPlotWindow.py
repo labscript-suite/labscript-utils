@@ -1,3 +1,4 @@
+from __future__ import division, unicode_literals, print_function, absolute_import
 from zprocess import Process
 import pyqtgraph as pg
 import numpy as np
@@ -6,6 +7,9 @@ import qtutils.qt.QtGui as QtGui
 import zmq
 from labscript_utils.labconfig import LabConfig
 import threading
+from labscript_utils import PY2
+if PY2:
+    memoryview = buffer
 
 # maximum amount of datapoints to be plotted at once
 MAX_DATA = 1000
@@ -28,7 +32,7 @@ class PlotWindow(Process):
         context = zmq.Context()
         self.socket = context.socket(zmq.SUB)
         self.socket.connect("tcp://127.0.0.1:%d" % broker_pub_port)
-        self.socket.setsockopt(zmq.SUBSCRIBE, "{} {}".format(self._device_name, self._hardware_name))
+        self.socket.setsockopt(zmq.SUBSCRIBE, "{} {}".format(self._device_name, self._hardware_name).encode('utf-8'))
 
         self.analog_in_thread = threading.Thread(target=self._analog_read_loop)
         self.analog_in_thread.daemon = True
@@ -41,7 +45,7 @@ class PlotWindow(Process):
     def _analog_read_loop(self):
         while True:
             devicename_and_channel, data = self.socket.recv_multipart()
-            self.update_plot(np.frombuffer(buffer(data), dtype=np.float64))
+            self.update_plot(np.frombuffer(memoryview(data), dtype=np.float64))
 
     @inmain_decorator(False)
     def update_plot(self, data):
