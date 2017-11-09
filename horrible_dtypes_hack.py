@@ -18,3 +18,4 @@ def dtypeslist2dict(list_):
     for name, type in list_:
         dtypes['names'].append(name)
         dtypes['formats'].append(type)
+    return dtypes
