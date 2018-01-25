@@ -17,8 +17,10 @@ from qtutils.qt.QtCore import *
 from qtutils.qt.QtGui import *
 from qtutils.qt.QtWidgets import *
 from qtutils import *
+import qtutils.icons
 
 import threading
+import time
 from labscript_utils.qtwidgets.InputPlotWindow import PlotWindow
 
 
@@ -43,6 +45,10 @@ class AnalogInput(QWidget):
         self._line_edit.setAlignment(Qt.AlignRight)
         self._line_edit.setReadOnly(True)
 
+        self._plot_btn = QPushButton()
+        self._plot_btn.setIcon(QIcon(':/qtutils/fugue/chart-up'))
+        self._plot_btn.clicked.connect(self.open_plot_window)
+
         self._value_changed_function = None
 
         self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
@@ -52,6 +58,7 @@ class AnalogInput(QWidget):
             self._layout = QHBoxLayout(self)
             self._layout.addWidget(self._label)
             self._layout.addWidget(self._line_edit)
+            self._layout.addWidget(self._plot_btn)
         else:
             self._layout = QGridLayout(self)
             self._layout.setVerticalSpacing(0)
@@ -69,34 +76,13 @@ class AnalogInput(QWidget):
 
             self._layout.addWidget(self._label, 0, 0)
             self._layout.addWidget(h_widget, 1, 0)
+            self._layout.addWidget(self._plot_btn, 2, 0)
             self._layout.addItem(QSpacerItem(0, 0, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum), 1, 1)
-
-        # Install the event filter that will allow us to catch right click mouse release events so we can popup a menu even when the button is disabled
-        self.installEventFilter(self)
 
         self.set_value(None)
 
         # The Analog input object that is in charge of this button
         self._AI = None
-
-        self.installEventFilter(self)
-        self._line_edit.installEventFilter(self)
-        self.single_click_timer = QTimer()
-        self.single_click_timer.setInterval(200)
-        self.single_click_timer.timeout.connect(self.single_click)
-
-    def single_click(self):
-        self.single_click_timer.stop()
-
-    def eventFilter(self, object, event):
-        if event.type() == QEvent.MouseButtonPress and event.button() == Qt.LeftButton:
-            self.single_click_timer.start()
-            return True
-        elif event.type() == QEvent.MouseButtonDblClick and event.button() == Qt.LeftButton:
-            self.single_click_timer.stop()
-            self.open_plot_window()
-            return True
-        return False
 
     # Setting and getting methods for the Digitl Out object in charge of this button
     def set_AI(self, AI, notify_old_AI=True, notify_new_AI=True):
@@ -120,19 +106,24 @@ class AnalogInput(QWidget):
             text = "no value"
         self._line_edit.setText(text)
 
-    def _check_plot_window(self, from_child):
+    def _check_plot_window(self):
         while self.win is not None:
-            if from_child.get() == "closed":
+            time.sleep(0.1)
+            if self.from_child.get() == "closed":
                 self.win = None
+                self.to_child = None
+                self.from_child = None
 
     def open_plot_window(self):
         if self.win is None:
             self.win = PlotWindow()
-            to_child, from_child = self.win.start(self._connection_name, self._hardware_name, self._device_name)
+            self.to_child, self.from_child = self.win.start(self._connection_name, self._hardware_name, self._device_name)
 
-            check_plot_window_thread = threading.Thread(target=self._check_plot_window, args=(from_child, ))
+            check_plot_window_thread = threading.Thread(target=self._check_plot_window)
             check_plot_window_thread.daemon = True
             check_plot_window_thread.start()
+        else:
+            self.to_child.put('focus')
 
 
 # A simple test!
@@ -142,7 +133,7 @@ if __name__ == '__main__':
 
     window = QWidget()
     layout = QVBoxLayout(window)
-    button = AnalogInput('AI1')
+    button = AnalogInput('AI1', 'AI1')
 
     layout.addWidget(button)
 

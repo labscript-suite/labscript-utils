@@ -26,7 +26,7 @@ class PlotWindow(Process):
             title = "{} ({})".format(self._hardware_name, self._connection_name)
         else:
             title = "{}".format(self._hardware_name)
-        self.win = pg.plot([], title=title)
+        self.plot_win = pg.plot([], title=title)
 
         broker_pub_port = int(LabConfig().get('ports', 'BLACS_Broker_Pub'))
         context = zmq.Context()
@@ -38,6 +38,10 @@ class PlotWindow(Process):
         self.analog_in_thread.daemon = True
         self.analog_in_thread.start()
 
+        self.cmd_thread = threading.Thread(target=self._cmd_loop)
+        self.cmd_thread.daemon = True
+        self.cmd_thread.start()
+
         QtGui.QApplication.instance().exec_()
 
         self.to_parent.put("closed")
@@ -47,10 +51,33 @@ class PlotWindow(Process):
             devicename_and_channel, data = self.socket.recv_multipart()
             self.update_plot(np.frombuffer(memoryview(data), dtype=np.float64))
 
-    @inmain_decorator(False)
-    def update_plot(self, data):
-        self.data = np.append(self.data, data)
-        if self.data.size > MAX_DATA:
-            self.data = np.delete(self.data, np.arange(self.data.size - MAX_DATA))
+    def _cmd_loop(self):
+        while True:
+            cmd = self.from_parent.get()
+            if cmd == 'focus':
+                self.setTopLevelWindow()
 
-        self.win.plot(self.data, clear=True)
+    @inmain_decorator(False)
+    def setTopLevelWindow(self):
+        self.plot_win.win.activateWindow()
+        self.plot_win.win.raise_()
+
+    @inmain_decorator(False)
+    def update_plot(self, new_data):
+        if self.data.size < MAX_DATA:
+            if new_data.size + self.data.size <= MAX_DATA:
+                self.data = np.append(self.data, new_data)
+            else:
+                if new_data.size < MAX_DATA:
+                    self.data = np.roll(self.data, -new_data.size)
+                    self.data[self.data.size - new_data.size:self.data.size] = new_data
+                else:
+                    self.data = new_data[new_data.size - MAX_DATA:new_data.size]
+        else:
+            if new_data.size <= self.data.size:
+                self.data = np.roll(self.data, -new_data.size)
+                self.data[self.data.size - new_data.size:self.data.size] = new_data
+            else:
+                self.data = new_data[new_data.size - self.data.size:new_data.size]
+
+        self.plot_win.plot(self.data, clear=True)
