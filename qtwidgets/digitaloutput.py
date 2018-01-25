@@ -92,16 +92,16 @@ class DigitalOutput(QPushButton):
         # either a string '1' or '0', True or False or 1 or 0
         self.setChecked(bool(int(state)))
     
+    
 class InvertedDigitalOutput(DigitalOutput):
     @property
     def state(self):
-        return not self.isChecked()
-        
+        return not DigitalOutput.state.fget(self)
+
     @state.setter
     def state(self,state):
-        # conversion to integer, then bool means we can safely pass in
-        # either a string '1' or '0', True or False or 1 or 0
-        self.setChecked(not bool(int(state)))
+        DigitalOutput.state.fset(self, not state)
+
 
 # A simple test!
 if __name__ == '__main__':
