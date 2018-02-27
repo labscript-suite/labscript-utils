@@ -58,7 +58,7 @@ class ErrorWindow(tkinter.Text):
 
         # Copy geometry methods of self.frame without overriding Text
         # methods -- hack!
-        text_meths = vars(tkinter.Text).keys()
+        text_meths = list(vars(tkinter.Text).keys())
         methods = list(vars(tkinter.Pack).keys()) + list(vars(tkinter.Grid).keys()) + list(vars(tkinter.Place).keys())
         methods = set(methods).difference(text_meths)
 
