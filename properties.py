@@ -51,7 +51,7 @@ def set_device_properties(h5_file, device_name, properties):
             # If type not supported by HDF5, store as JSON
             if 'has no native HDF5 equivalent' in str(e):
                 json_string = serialise(val)
-                gp.attrs.create(key, json_string.encode())
+                gp.attrs.create(key, json_string)
             else:
                 raise
 
