@@ -11,9 +11,10 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+from __future__ import division, unicode_literals, print_function, absolute_import
 
 import copy
-import new
+from types import MethodType
 import math
 from numpy import iterable, array
 
@@ -60,8 +61,8 @@ class UnitConversion(object):
                             break
                 
                 temp_units.insert(position,(unit,self.unit_list[unit]))
-            except Exception, e:
-                print e
+            except Exception as e:
+                print(e)
                 pass
                 
         self.units = temp_units
@@ -71,11 +72,11 @@ class UnitConversion(object):
                 #if derived_unit == unit[2]:
                 exec("def "+unit[0]+derived_unit+"_to_base(self,value): return self."+derived_unit+"_to_base(value)*"+unit[1])
                 exec ("a="+unit[0]+derived_unit+"_to_base")
-                self.__dict__[unit[0]+derived_unit+"_to_base"] = new.instancemethod(a,self,UnitConversion)
+                self.__dict__[unit[0]+derived_unit+"_to_base"] = MethodType(a,self,UnitConversion)
                 exec("def "+unit[0]+derived_unit+"_from_base(self,value): return self."+derived_unit+"_from_base(value/float("+unit[1]+"))")
                 exec ("a="+unit[0]+derived_unit+"_from_base")
-                self.__dict__[unit[0]+derived_unit+"_from_base"] = new.instancemethod(a,self,UnitConversion)
-        
+                self.__dict__[unit[0]+derived_unit+"_from_base"] = MethodType(a,self,UnitConversion)
+
         # Make another loop to stop infinite regression!
         derived_copy = copy.copy(self.derived_units)
         for unit in self.units:

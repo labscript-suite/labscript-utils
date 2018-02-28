@@ -10,7 +10,7 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-
+from __future__ import division, unicode_literals, print_function, absolute_import
 import sys
 
 from qtutils.qt.QtCore import *
@@ -297,8 +297,8 @@ class ToolPalette(QScrollArea):
         # How many widgets can fit in a row?
         # TODO: Work out hwy I need layout_spacing*3 here (we are getting the width of the scroll area, 
         # so need to take into account the borders around the grid layout? What are they?)
-        num_widgets_per_row = int((layout_width-layout_spacing*3)/(max_width+layout_spacing))
-        
+        num_widgets_per_row = (layout_width-layout_spacing*3)//(max_width+layout_spacing)
+
         # print self._name
         # print 'number_of_widgets: %d'%len(self._widget_list)
         # print 'layout_width: %d'%layout_width
@@ -410,9 +410,9 @@ class ToolPalette(QScrollArea):
 if __name__ == '__main__':
     
     qapplication = QApplication(sys.argv)
-    
-    from ddsoutput import DDSOutput
-    
+
+    from .ddsoutput import DDSOutput
+
     window = QWidget()
     layout = QVBoxLayout(window)
     widget = QWidget()

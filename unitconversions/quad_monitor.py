@@ -10,8 +10,9 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+from __future__ import division, unicode_literals, print_function, absolute_import
 
-from UnitConversionBase import *
+from .UnitConversionBase import *
 class quad_monitor(UnitConversion):
     base_unit = 'V'
     derived_units = ['A', 'Gcm']

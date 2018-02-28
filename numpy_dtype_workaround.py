@@ -1,6 +1,6 @@
 #####################################################################
 #                                                                   #
-# __init__.py                                                       #
+# numpy_dtype_workaround.py                                         #
 #                                                                   #
 # Copyright 2013, Monash University                                 #
 #                                                                   #
@@ -11,9 +11,14 @@
 #                                                                   #
 #####################################################################
 from __future__ import division, unicode_literals, print_function, absolute_import
+from labscript_utils import PY2
 
-import os
-for module in os.listdir(os.path.split(__file__)[0]):
-    if module.endswith('.py'):
-        exec('from .%s import *'%module[:-3])
-del module
+def dtype_workaround(dtypes):
+    """Convert names specified in compound datatype tuples to the native
+    string type. This is a workaround for numpy issue #2407 until the fix
+    becomes available:
+    https://github.com/numpy/numpy/issues/2407
+    """
+    if PY2:
+        return [(bytes(name), dtype) for name, dtype in dtypes]
+    return dtypes

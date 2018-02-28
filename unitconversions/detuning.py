@@ -10,8 +10,9 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+from __future__ import division, unicode_literals, print_function, absolute_import
 
-from UnitConversionBase import *
+from .UnitConversionBase import *
 
 class detuning(UnitConversion):
     base_unit = 'Hz'

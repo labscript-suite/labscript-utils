@@ -10,8 +10,9 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+from __future__ import division, unicode_literals, print_function, absolute_import
 
-__version__ = '2.5.0'
+__version__ = '2.6.0'
 
 
 import sys

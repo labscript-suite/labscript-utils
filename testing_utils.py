@@ -10,15 +10,16 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+from __future__ import division, unicode_literals, print_function, absolute_import
+from labscript_utils import PY2
+if PY2:
+    str = unicode
 
-
-from __future__ import print_function
 import os
 import sys
 import time
 import threading
 import unittest
-from labscript_utils import PY2
 if PY2:
     import Queue as queue
     import mock

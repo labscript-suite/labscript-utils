@@ -10,6 +10,7 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+from __future__ import division, unicode_literals, print_function, absolute_import
 
 import time
 
@@ -33,7 +34,7 @@ class _ProfilingImporter(object):
             self.depth -= 1
         time_taken = time.time() - start_time
         if time_taken > self.threshold:
-            print ' '*self.depth + '[%.2f] import %s'%(time_taken, name)
+            print(' '*self.depth + '[%.2f] import %s'%(time_taken, name))
         return result
 
 
