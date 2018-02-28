@@ -52,10 +52,14 @@ class ConnectionTable(object):
                     if self.logger: self.logger.error(msg)
                     raise
 
-                self.master_pseudoclock = _ensure_str(dataset.attrs['master_pseudoclock'])
+                self.raw_table = dataset[:]
+                try:
+                    self.master_pseudoclock = _ensure_str(dataset.attrs['master_pseudoclock'])
+                except KeyError:
+                    self.master_pseudoclock = None
 
                 try:
-                    all_connections = [Connection(raw_row) for raw_row in dataset[:]]
+                    all_connections = [Connection(raw_row) for raw_row in self.raw_table]
                     self.table = {connection.name: connection for connection in all_connections}
                     for name, connection in self.table.items():
                         connection.populate_children(self.table)
@@ -326,10 +330,11 @@ class Connection(object):
         return None    
 
 
-# if __name__ == '__main__':
-#     c = ConnectionTable('/home/bilbo/labscript_shared/Experiments/cjb7_dev/connectiontable.h5')
-#     c.print_details()
-#     d = ConnectionTable('/home/bilbo/labscript_shared/Experiments/cjb7_dev/connectiontable.h5')
-#     list(d.toplevel_children.values())[0]._rowdict['properties']['test'] = 'fake_property'
-#     del c.table['bragg_beam_0']
-#     c.assert_superset(d)
+if __name__ == '__main__':
+    a = ConnectionTable('/home/bilbo/labscript_suite/labconfig/bilbo-Precision-5520_BLACS.h5')
+    c = ConnectionTable('/home/bilbo/labscript_shared/Experiments/cjb7_dev/connectiontable.h5')
+    c.print_details()
+    d = ConnectionTable('/home/bilbo/labscript_shared/Experiments/cjb7_dev/connectiontable.h5')
+    list(d.toplevel_children.values())[0]._rowdict['properties']['test'] = 'fake_property'
+    del c.table['bragg_beam_0']
+    c.assert_superset(d)
