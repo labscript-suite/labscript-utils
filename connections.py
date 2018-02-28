@@ -330,11 +330,11 @@ class Connection(object):
         return None    
 
 
-if __name__ == '__main__':
-    a = ConnectionTable('/home/bilbo/labscript_suite/labconfig/bilbo-Precision-5520_BLACS.h5')
-    c = ConnectionTable('/home/bilbo/labscript_shared/Experiments/cjb7_dev/connectiontable.h5')
-    c.print_details()
-    d = ConnectionTable('/home/bilbo/labscript_shared/Experiments/cjb7_dev/connectiontable.h5')
-    list(d.toplevel_children.values())[0]._rowdict['properties']['test'] = 'fake_property'
-    del c.table['bragg_beam_0']
-    c.assert_superset(d)
+# if __name__ == '__main__':
+#     a = ConnectionTable('/home/bilbo/labscript_suite/labconfig/bilbo-Precision-5520_BLACS.h5')
+#     c = ConnectionTable('/home/bilbo/labscript_shared/Experiments/cjb7_dev/connectiontable.h5')
+#     c.print_details()
+#     d = ConnectionTable('/home/bilbo/labscript_shared/Experiments/cjb7_dev/connectiontable.h5')
+#     list(d.toplevel_children.values())[0]._rowdict['properties']['test'] = 'fake_property'
+#     del c.table['bragg_beam_0']
+#     c.assert_superset(d)
