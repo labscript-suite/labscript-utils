@@ -61,7 +61,7 @@ def _get_device_properties(h5_file, device_name):
     properties = {}
     for key, val in gp.attrs.items():
         # Deserialize values if stored as JSON
-        if is_json(value):
+        if is_json(val):
             properties[key] = deserialise(val)
         else:
             properties[key] = val
