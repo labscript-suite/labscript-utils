@@ -62,7 +62,7 @@ class ConnectionTable(object):
                     all_connections = [Connection(raw_row) for raw_row in self.raw_table]
                     self.table = {connection.name: connection for connection in all_connections}
                     for name, connection in self.table.items():
-                        connection.populate_children(self.table)
+                        connection.find_relatives(self.table)
                         if connection.parent_port is None:
                             self.toplevel_children[name] = connection
                 except Exception:
@@ -165,7 +165,8 @@ class ConnectionTable(object):
     # connected via "dds 0"
     def find_child(self, parent_name, parent_port):
         for name, connection in self.table.items():
-            if connection.parent == parent_name and connection.parent_port == parent_port:
+            if (connection.parent_name == parent_name 
+                    and connection.parent_port == parent_port):
                 return connection
         return None
     
@@ -204,15 +205,16 @@ class Connection(object):
         # Populate attributes:
         self.name = self._rowdict['name']
         self.device_class = self._rowdict['class']
-        self.parent = self._rowdict['parent']
+        self.parent_name = self._rowdict['parent']
         self.parent_port = self._rowdict['parent port']
         self.unit_conversion_class = self._rowdict['unit conversion class']
         self._unit_conversion_params = self._rowdict['unit conversion params']
         self.BLACS_connection = self._rowdict['BLACS_connection']
         self._properties = self._rowdict['properties']
         
-        # To be populated by self.find_children:
+        # To be populated by self.find_relatives:
         self.child_list = {}
+        self.parent = None
         
     def _deserialise(self, name, value):
         """deserialise one item of the row depending on what it is"""
@@ -234,12 +236,14 @@ class Connection(object):
                 return ast.literal_eval(value)
         return _ensure_str(value)
 
-    def populate_children(self, table):
-        """Populate child devices based on a list of other connection
-        objects"""
+    def find_relatives(self, table):
+        """Populate child devices based on a list of other connection objects,
+        and set self.parent to our parent device."""
         for name, connection in table.items():
-            if connection.parent == self.name:
+            if connection.parent_name == self.name:
                 self.child_list[connection.name] = connection
+            if name == self.parent_name:
+                self.parent = connection
 
     def __eq__(self, other):
         return self._rowdict == other._rowdict
