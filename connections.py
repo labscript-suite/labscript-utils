@@ -62,7 +62,7 @@ class ConnectionTable(object):
                     all_connections = [Connection(raw_row) for raw_row in self.raw_table]
                     self.table = {connection.name: connection for connection in all_connections}
                     for name, connection in self.table.items():
-                        connection.find_relatives(self.table)
+                        connection._populate_relatives(self.table)
                         if connection.parent_port is None:
                             self.toplevel_children[name] = connection
                 except Exception:
@@ -212,7 +212,7 @@ class Connection(object):
         self.BLACS_connection = self._rowdict['BLACS_connection']
         self._properties = self._rowdict['properties']
         
-        # To be populated by self.find_relatives:
+        # To be populated by self._populate_relatives:
         self.child_list = {}
         self.parent = None
         
@@ -236,7 +236,7 @@ class Connection(object):
                 return ast.literal_eval(value)
         return _ensure_str(value)
 
-    def find_relatives(self, table):
+    def _populate_relatives(self, table):
         """Populate child devices based on a list of other connection objects,
         and set self.parent to our parent device."""
         for name, connection in table.items():
