@@ -116,18 +116,19 @@ class DoubleImportDenier(object):
         msg += "Traceback (second time imported, as %s):\n" % name
         msg += "------------\n%s------------" % tb
 
-        # We set sys.tracebacklimit to 0 or None to not print all the nonsense
-        # from the import machinary in the traceback, it is not useful to the
-        # user in reporting this exception. But we have to jump through this
-        # hoop to make sure sys.tracebacklimit is restored after our exception
-        # is raised, since putting it in a finally: block doesn't work:
+        # We set sys.tracebacklimit a small numberto not print all the
+        # nonsense from the import machinary in the traceback, it is not
+        # useful to the user in reporting this exception. But we have to jump
+        # through this hoop to make sure sys.tracebacklimit is restored after
+        # our exception is raised, since putting it in a finally: block
+        # doesn't work:
         self._restore_tracebacklimit_after_exception()
 
         if PY2:
-            sys.tracebacklimit = 0
+            sys.tracebacklimit = 1
             raise RuntimeError(msg)
         else:
-            sys.tracebacklimit = None
+            sys.tracebacklimit = 2
             exec('raise RuntimeError(msg) from None')
 
 
