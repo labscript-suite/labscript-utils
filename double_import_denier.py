@@ -41,7 +41,7 @@ class DoubleImportDenier(object):
         self.names_by_filepath = {}
         self.tracebacks = {}
         UNKNOWN = ('<unknown: imported prior to double_import_denier.enable()>\n')
-        for name, module in sorted(sys.modules.items()):
+        for name, module in sys.modules.items():
             if hasattr(module, '__file__'):
                 path = os.path.realpath(module.__file__)
                 self.names_by_filepath[path] = name
