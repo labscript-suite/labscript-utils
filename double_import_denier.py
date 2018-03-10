@@ -74,7 +74,9 @@ class DoubleImportDenier(object):
                   if 'importlib._bootstrap' not in frame
                   and 'imp.load_module' not in frame
                   and not ('imp.py' in frame
-                           and ('load_module' in frame or 'load_source' in frame))]
+                           and ('load_module' in frame
+                                or 'load_source' in frame
+                                or 'load_package' in frame))]
         return ''.join(frames)
 
     def _restore_tracebacklimit_after_exception(self):
