@@ -20,25 +20,6 @@ import re
 
 DEBUG = False
 
-def _restore_tracebacklimit_after_exception():
-    """Record the current value of sys.tracebacklimit, if any, and set a
-    temporary sys.excepthook to restore it to that value (or delete it) after
-    the next exception."""
-    orig_excepthook = sys.excepthook
-    exists = hasattr(sys, 'tracebacklimit')
-    orig_tracebacklimit = getattr(sys, 'tracebacklimit', None)
-    def excepthook(*args, **kwargs):
-        # Raise the error normally
-        orig_excepthook(*args, **kwargs)
-        # Restore sys.tracebacklimit
-        if exists:
-            sys.tracebacklimit = orig_tracebacklimit
-        else:
-            del sys.tracebacklimit
-        # Restore sys.excepthook:
-        sys.excepthook = orig_excepthook
-    sys.excepthook = excepthook
-
 
 class Loader(object):
     def __init__(self, fp, pathname, description):
@@ -96,6 +77,25 @@ class DoubleImportDenier(object):
                            and ('load_module' in frame or 'load_source' in frame))]
         return ''.join(frames)
 
+    def _restore_tracebacklimit_after_exception(self):
+        """Record the current value of sys.tracebacklimit, if any, and set a
+        temporary sys.excepthook to restore it to that value (or delete it)
+        after the next exception."""
+        orig_excepthook = sys.excepthook
+        exists = hasattr(sys, 'tracebacklimit')
+        orig_tracebacklimit = getattr(sys, 'tracebacklimit', None)
+        def excepthook(*args, **kwargs):
+            # Raise the error normally
+            orig_excepthook(*args, **kwargs)
+            # Restore sys.tracebacklimit
+            if exists:
+                sys.tracebacklimit = orig_tracebacklimit
+            else:
+                del sys.tracebacklimit
+            # Restore sys.excepthook:
+            sys.excepthook = orig_excepthook
+        sys.excepthook = excepthook
+
     def _raise_error(self, path, name, tb, other_name, other_tb):
         msg = """Double import! The same file has been imported under two
         different names, resulting in two copies of the module. This is almost
@@ -119,7 +119,7 @@ class DoubleImportDenier(object):
         # user in reporting this exception. But we have to jump through this
         # hoop to make sure sys.tracebacklimit is restored after our exception
         # is raised, since putting it in a finally: block doesn't work:
-        _restore_tracebacklimit_after_exception()
+        self._restore_tracebacklimit_after_exception()
 
         if PY2:
             sys.tracebacklimit = 0
@@ -154,7 +154,7 @@ def disable():
 
 if __name__ == '__main__':
     # Run from this directory as __main__:
-    # enable()
+    enable()
 
     def test1():
         # Import numpy.linalg twice under different names:
