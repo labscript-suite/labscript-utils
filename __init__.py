@@ -28,6 +28,10 @@ for path in sys.path:
 else:
     labscript_suite_install_dir = None
 
+# Enforce that the same file can't be imported under multiple names, to help
+# prevent subtle bugs:
+import labscript_utils.double_import_denier
+labscript_utils.double_import_denier.enable()
 
 class VersionException(Exception):
     pass
