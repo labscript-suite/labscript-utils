@@ -20,6 +20,9 @@ import re
 
 DEBUG = False
 
+if not PY2:
+    from importlib._bootstrap import _call_with_frames_removed
+
 
 class Loader(object):
     def __init__(self, fp, pathname, description):
@@ -29,7 +32,25 @@ class Loader(object):
 
     def load_module(self, name):
         if DEBUG: print('loading', name, 'from', self.pathname)
-        return imp.load_module(name, self.fp, self.pathname, self.description)
+        if PY2:
+            return imp.load_module(name, self.fp, self.pathname, self.description)
+        else:
+            return _call_with_frames_removed(
+                imp.load_module, name, self.fp, self.pathname, self.description)
+
+    if not PY2:
+        # Functions that are part of the import machinery and should be excluded
+        # from tracebacks, which Python does by detecting if the function's
+        # __code__ object's _co_filename attr is "<frozen importlib._bootstrap>",
+        # and that the stack ends with a call to _call_with_frames_removed.
+        # It's not so bad to mess with the filename of these functions since they
+        # are deprecated in Python 3.
+        import_funcs = [load_module, imp.load_module, imp.load_source,
+                        imp.load_compiled, imp.load_package]
+        if imp.load_dynamic is not None:
+            import_funcs.append(imp.load_dynamic)
+        for func in import_funcs:
+            imp._fix_co_filename(func.__code__, "<frozen importlib._bootstrap>")
 
 
 class DoubleImportDenier(object):
