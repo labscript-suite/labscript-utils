@@ -51,6 +51,9 @@ def vectorise(method):
 class UnitConversion(object):
     _magnitude_list = {'p': 1e-12,'n':1e-9, 'u':1e-6,'m': 1e-3,
                        'k': 1e3, 'M': 1e6,'G': 1e9,'T': 1e12}
+
+    unit_list = _magnitude_list # alias for backward compat
+
     def __init__(self, params):
         magnitudes = params.get('magnitudes', [])
         
@@ -85,3 +88,5 @@ class UnitConversion(object):
         # list of derived_units without prefixes, then by magnitude:
         derived_units_sortlist.sort()
         self.derived_units = [unit for sortinfo, unit in derived_units_sortlist]
+
+        self.units = self._magnitudes # alias for backward compat
