@@ -55,7 +55,7 @@ class MemoryProfiler(object):
         types = self.count_types()
         for type_ in types:
             try:
-                diffs[type_] = types[type_] - self.initial_counts[type]
+                diffs[type_] = types[type_] - self.initial_counts[type_]
             except KeyError:
                 diffs[type_] = types[type_]
         self.write_to_file(diffs)
