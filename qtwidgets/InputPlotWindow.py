@@ -32,7 +32,7 @@ class PlotWindow(Process):
         context = zmq.Context()
         self.socket = context.socket(zmq.SUB)
         self.socket.connect("tcp://127.0.0.1:%d" % broker_pub_port)
-        self.socket.setsockopt(zmq.SUBSCRIBE, "{} {}".format(self._device_name, self._hardware_name).encode('utf-8'))
+        self.socket.setsockopt(zmq.SUBSCRIBE, "{} {}\0".format(self._device_name, self._hardware_name).encode('utf-8'))
 
         self.analog_in_thread = threading.Thread(target=self._analog_read_loop)
         self.analog_in_thread.daemon = True
