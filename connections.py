@@ -55,7 +55,8 @@ class ConnectionTable(object):
                 except Exception:
                     msg = 'could not open connection table dataset in %s' % h5file
                     if self.logger: self.logger.error(msg)
-                    raise
+                    raise_exception_in_thread(sys.exc_info())
+                    return
 
                 self.raw_table = dataset[:]
                 try:
