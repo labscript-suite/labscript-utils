@@ -187,7 +187,13 @@ class ConnectionTable(object):
         return None
 
     def remove_device(self, device_name):
-        del self.toplevel_children[device_name]
+        """Removes a device from the ConnectionTable, but keeps it in the
+        raw_table. This can help make comparissons of connection tables fail
+        for tables with broken devices."""
+        if device_name in self.toplevel_children:
+            del self.toplevel_children[device_name]
+        if device_name == self.master_pseudoclock:
+            self.master_pseudoclock = None
         del self.table[device_name]
 
 
