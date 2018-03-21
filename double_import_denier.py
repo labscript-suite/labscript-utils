@@ -17,6 +17,7 @@ import os
 import imp
 import traceback
 import re
+import pkgutil
 
 DEBUG = False
 
@@ -24,8 +25,9 @@ if not PY2:
     from importlib._bootstrap import _call_with_frames_removed
 
 
-class Loader(object):
-    def __init__(self, fp, pathname, description):
+class Loader(pkgutil.ImpLoader):
+    def __init__(self, fullname, fp, pathname, description):
+        pkgutil.ImpLoader.__init__(self, fullname, fp, pathname, description)
         self.fp = fp
         self.pathname = pathname
         self.description = description
@@ -85,7 +87,7 @@ class DoubleImportDenier(object):
                 self._raise_error(path, fullname, tb, other_name, other_tb)
             self.names_by_filepath[path] = fullname
             self.tracebacks[path] = tb
-        return Loader(fp, pathname, description)
+        return Loader(fullname, fp, pathname, description)
 
     def _format_tb(self, tb):
         """Take a formatted traceback as returned by traceback.format_stack()
