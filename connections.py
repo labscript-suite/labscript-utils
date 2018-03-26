@@ -25,10 +25,8 @@ if PY2:
     str = unicode
 
 def _ensure_str(s):
-    """Decode ascii bytes to unicode if neccesary"""
-    if isinstance(s, bytes):
-        return s.decode()
-    return s
+    """convert bytestrings and numpy strings to python strings"""
+    return s.decode() if isinstance(s, bytes) else str(s)
 
 
 class ConnectionTable(object):    

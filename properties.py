@@ -22,9 +22,9 @@ if PY2:
 
 
 def is_json(value):
-    if type(value) in [np.string_, bytes]:
+    if isinstance(value, bytes):
         return value[:len(JSON_IDENTIFIER)] == JSON_IDENTIFIER.encode('utf8')
-    elif type(value) == str:
+    elif isinstance(value, str):
         return value.startswith(JSON_IDENTIFIER)
     return False
 
@@ -76,10 +76,10 @@ def _get_con_table_properties(h5_file, device_name):
     namecol_dtype = dataset['name'].dtype
     if namecol_dtype.type is np.bytes_:
         device_name = device_name.encode('utf8')
-    elif name_dtype is vlenstr:
+    elif namecol_dtype is vlenstring:
         pass
     else:
-        raise TypeError(name_dtype)
+        raise TypeError(namecol_dtype)
 
     row = dataset[dataset['name'] == device_name][0]
     json_string = row['properties']
@@ -94,10 +94,10 @@ def _get_unit_conversion_parameters(h5_file, device_name):
     namecol_dtype = dataset['name'].dtype
     if namecol_dtype.type is np.bytes_:
         device_name = device_name.encode('utf8')
-    elif name_dtype is vlenstr:
+    elif namecol_dtype is vlenstring:
         pass
     else:
-        raise TypeError(name_dtype)
+        raise TypeError(namecol_dtype)
 
     row = dataset[dataset['name'] == device_name][0]
     json_string = row['unit conversion params']
