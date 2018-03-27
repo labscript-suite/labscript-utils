@@ -20,7 +20,9 @@ import numpy as np
 import copy
 import ast
 from labscript_utils.dict_diff import dict_diff
-from labscript_utils import PY2 
+import sys
+from zprocess import raise_exception_in_thread
+from labscript_utils import PY2
 if PY2:
     str = unicode
 
@@ -40,6 +42,9 @@ class ConnectionTable(object):
             self.logger.debug('Parsing connection table from %s'%h5file)
             
         self.toplevel_children = {}
+        self.table = {}
+        self.master_pseudoclock = None
+        self.raw_table = np.empty(0)
 
         try:
             with h5py.File(h5file,'r') as hdf5_file:
@@ -48,13 +53,14 @@ class ConnectionTable(object):
                 except Exception:
                     msg = 'could not open connection table dataset in %s' % h5file
                     if self.logger: self.logger.error(msg)
-                    raise
+                    raise_exception_in_thread(sys.exc_info())
+                    return
 
                 self.raw_table = dataset[:]
                 try:
                     self.master_pseudoclock = _ensure_str(dataset.attrs['master_pseudoclock'])
                 except KeyError:
-                    self.master_pseudoclock = None
+                    pass
 
                 try:
                     all_connections = [Connection(raw_row) for raw_row in self.raw_table]
@@ -66,13 +72,13 @@ class ConnectionTable(object):
                 except Exception:
                     msg = 'Could not parse connection table in %s' % h5file
                     if self.logger: self.logger.error(msg)
-                    raise
+                    raise_exception_in_thread(sys.exc_info())
 
         except Exception:
             msg = 'Could not open connection table file %s' % h5file
             if self.logger: self.logger.exception(msg)
-            raise
-    
+            raise_exception_in_thread(sys.exc_info())
+
     def assert_superset(self, other):
         # let's check that we're a superset of the connection table in "other"
         if not isinstance(other, ConnectionTable):
@@ -177,6 +183,16 @@ class ConnectionTable(object):
                 if result is not None:
                     return result
         return None
+
+    def remove_device(self, device_name):
+        """Removes a device from the ConnectionTable, but keeps it in the
+        raw_table. This can help make comparissons of connection tables fail
+        for tables with broken devices."""
+        if device_name in self.toplevel_children:
+            del self.toplevel_children[device_name]
+        if device_name == self.master_pseudoclock:
+            self.master_pseudoclock = None
+        del self.table[device_name]
 
 
 class Connection(object):
