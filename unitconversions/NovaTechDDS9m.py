@@ -11,8 +11,8 @@
 #                                                                   #
 #####################################################################
 
-from __future__ import division
-from UnitConversionBase import *
+from __future__ import division, unicode_literals, print_function, absolute_import
+from .UnitConversionBase import *
 
 class NovaTechDDS9mFreqConversion(UnitConversion):
     # This must be defined outside of init, and must match the default hardware unit specified within the BLACS tab

@@ -10,6 +10,7 @@
 # the project for the full license.                                 #
 #                                                                   #
 #####################################################################
+from __future__ import division, unicode_literals, print_function, absolute_import
 
 import sys, os
 import logging, logging.handlers
@@ -37,7 +38,7 @@ def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.
     handler.setFormatter(formatter)
     handler.setLevel(log_level)
     logger.addHandler(handler)
-    if sys.stdout.isatty():
+    if sys.stdout is not None and sys.stdout.isatty():
         terminalhandler = logging.StreamHandler(sys.stdout)
         terminalhandler.setFormatter(formatter)
         terminalhandler.setLevel(terminal_level)

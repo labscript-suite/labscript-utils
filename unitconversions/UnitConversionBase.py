@@ -11,11 +11,33 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+from __future__ import division, unicode_literals, print_function, absolute_import
 
 import copy
-import new
+from types import MethodType
 import math
 from numpy import iterable, array
+
+
+class _MultiplicativeConversion(object):
+    """Callable for conversion functions that are just multiplicative
+       transformations of another conversion function"""
+    def __init__(self, name, unprefixed_method, factor, to_base):
+        self.unprefixed_method = unprefixed_method
+        self.factor = float(factor)
+        self.to_base = bool(to_base)
+        self.__name__ = name
+
+    def __get__(self, instance, class_):
+        """Bind like an instance method"""
+        return MethodType(self, instance)
+
+    def __call__(self, value):
+        if self.to_base:
+            return self.unprefixed_method(value) * self.factor
+        else:
+            return self.unprefixed_method(value / self.factor)
+
 
 def vectorise(method):
     def f(instance, arg):
@@ -25,69 +47,46 @@ def vectorise(method):
             return method(instance, arg)
     return f
             
+
 class UnitConversion(object):
-    unit_list = {'p':'10**-12','n':'10**-9','u':'10**-6','m':'10**-3',
-                 'k':'10**3','M':'10**6','G':'10**9','T':'10**12'}
-    def __init__(self,params):
-        magnitudes = []
-        if 'magnitudes' in params:
-            magnitudes = params['magnitudes']
+    _magnitude_list = {'p': 1e-12,'n':1e-9, 'u':1e-6,'m': 1e-3,
+                       'k': 1e3, 'M': 1e6,'G': 1e9,'T': 1e12}
+
+    unit_list = _magnitude_list # alias for backward compat
+
+    def __init__(self, params):
+        magnitudes = params.get('magnitudes', [])
         
-        # order the unit order of magnitudes
-        # We want lowest (negative) to -3 and then largest positive to 3
-        temp_units = []
-        for unit in magnitudes:
-            try:
-                if unit == u'\u03bc': # a unicode 'mu' symbol
-                    unit = 'u'
-                magnitude = math.log10(eval(self.unit_list[unit]))
-                if magnitude < 0:
-                    position = 0
-                    for u in temp_units:
-                        if math.log10(eval(u[1])) > magnitude:
-                            break
-                        else:
-                            position += 1
-                    
-                else:
-                    position = 0
-                    for u in temp_units:                        
-                        if math.log10(eval(u[1])) < 0:
-                            position += 1
-                        elif math.log10(eval(u[1])) > magnitude:
-                            position += 1
-                        else:
-                            break
-                
-                temp_units.insert(position,(unit,self.unit_list[unit]))
-            except Exception, e:
-                print e
-                pass
-                
-        self.units = temp_units
-        
-        for unit in self.units:
-            for derived_unit in self.derived_units:
-                #if derived_unit == unit[2]:
-                exec("def "+unit[0]+derived_unit+"_to_base(self,value): return self."+derived_unit+"_to_base(value)*"+unit[1])
-                exec ("a="+unit[0]+derived_unit+"_to_base")
-                self.__dict__[unit[0]+derived_unit+"_to_base"] = new.instancemethod(a,self,UnitConversion)
-                exec("def "+unit[0]+derived_unit+"_from_base(self,value): return self."+derived_unit+"_from_base(value/float("+unit[1]+"))")
-                exec ("a="+unit[0]+derived_unit+"_from_base")
-                self.__dict__[unit[0]+derived_unit+"_from_base"] = new.instancemethod(a,self,UnitConversion)
-        
-        # Make another loop to stop infinite regression!
-        derived_copy = copy.copy(self.derived_units)
-        for unit in self.units:
-            for derived_unit in derived_copy:        
-                # Add unit to derived unit list (put in correct order)
-                # Find derived unit location in list
-                pos = self.derived_units.index(derived_unit)
-                if math.log10(eval(unit[1])) > 0:
-                    pos+=1
-                # Is this unit a negative or positive order of magnitude?
-                
-                #if unit[0] == 'u':
-                #    self.derived_units.insert(pos,'µ'+derived_unit)
-                #else:
-                self.derived_units.insert(pos,unit[0]+derived_unit)
+        # Convert any unicode 'mu' symbol to a 'u':
+        magnitudes = [p if p != '\u03bc' else 'u' for p in magnitudes]
+        self._magnitudes = {prefix: self._magnitude_list[prefix] for prefix in magnitudes}
+
+        # A list of tuples we will use to sort the list of derived units once
+        # we produce the units for the provided magnitudes:
+        derived_units_sortlist = []
+
+        for i, derived_unit in enumerate(self.derived_units):
+            # Append the unit magnitude derived unit to the list:
+            sortinfo = (i, 1)
+            derived_units_sortlist.append((sortinfo, derived_unit))
+
+            # Dynamically create instance methods for each other magnitude:
+            unprefixed_to_base = getattr(self, derived_unit + "_to_base")
+            unprefixed_from_base = getattr(self, derived_unit + "_from_base")
+            for prefix, factor in self._magnitudes.items():
+                unit = prefix + derived_unit
+                to_base_name = unit + "_to_base"
+                from_base_name = unit + "_from_base"
+                self.__dict__[to_base_name] = _MultiplicativeConversion(to_base_name, unprefixed_to_base, factor, to_base=True)
+                self.__dict__[from_base_name] = _MultiplicativeConversion(from_base_name, unprefixed_from_base, factor, to_base=False)
+
+                # Append to the sortlist:
+                sortinfo = (i, factor)
+                derived_units_sortlist.append((sortinfo, unit))
+
+        # Sort derived units first by position of the unit in the original
+        # list of derived_units without prefixes, then by magnitude:
+        derived_units_sortlist.sort()
+        self.derived_units = [unit for sortinfo, unit in derived_units_sortlist]
+
+        self.units = self._magnitudes # alias for backward compat

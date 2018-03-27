@@ -10,8 +10,9 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+from __future__ import division, unicode_literals, print_function, absolute_import
 
-
+from labscript_utils import PY2
 import sys
 import os
 import types
@@ -37,6 +38,8 @@ def brute_import(module_name):
     is useful for say, inspecting the __version__ string of a module that is
     failing to import in order to raise a potentially more useful exception if
     the module is failing to import *because* it is the wrong version."""
+    if PY2:
+        module_name = bytes(module_name)
 
     sourcefile, pathname, (_, _, module_type) = imp.find_module(module_name)
     module = types.ModuleType(module_name)
@@ -63,7 +66,7 @@ def brute_import(module_name):
     else:
         # Some C extension or something. No code for us to execute.
         return _fallback(module_name)
-        
+
     try:
         # Execute the module code in its namespace:
         exec(code, module.__dict__)

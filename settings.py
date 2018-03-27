@@ -10,6 +10,11 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+from __future__ import division, unicode_literals, print_function, absolute_import
+from labscript_utils import PY2
+if PY2:
+    str = unicode
+
 try:
     from labscript_utils import check_version
 except ImportError:
@@ -21,7 +26,7 @@ from qtutils.qt.QtCore import *
 from qtutils.qt.QtGui import *
 from qtutils.qt.QtWidgets import *
 
-import h5_lock, h5py
+import labscript_utils.h5_lock, h5py
 from labscript_utils.qtwidgets.fingertab import FingerTabWidget
 
 # Create a generic interface for displaying pages of settings
@@ -68,9 +73,9 @@ class Settings(object):
                     data = eval(group.attrs[name])
                 except Exception:
                     # TODO: log this properly
-                    print 'Could not load settings data for %s. It may contain data that could not be evaluated. All settings have now been lost'%name
-                    data = {}                
-            return data    
+                    print('Could not load settings data for %s. It may contain data that could not be evaluated. All settings have now been lost'%name)
+                    data = {}
+            return data
         else:
             raise Exception("the Settings module cannot handle the storage type: %s"%str(self.storage))
         

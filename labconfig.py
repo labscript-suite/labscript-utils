@@ -10,17 +10,18 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+from __future__ import division, unicode_literals, print_function, absolute_import
 
 import sys
 import os
 import socket
 import subprocess
 
-try:
-    import configparser
-except ImportError:
-    # Python 2
+from labscript_utils import PY2
+if PY2:
     import ConfigParser as configparser
+else:
+    import configparser
 
 from labscript_utils import labscript_suite_install_dir
 # Look for a 'labconfig' folder in the labscript install directory:

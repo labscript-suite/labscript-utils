@@ -10,9 +10,10 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+from __future__ import division, unicode_literals, print_function, absolute_import
 
-from UnitConversionBase import *
-from NovaTechDDS9m import NovaTechDDS9mAmpConversion
+from .UnitConversionBase import *
+from .NovaTechDDS9m import NovaTechDDS9mAmpConversion
 from numpy import *
 
 class SineAom(NovaTechDDS9mAmpConversion):

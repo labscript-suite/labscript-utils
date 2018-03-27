@@ -10,6 +10,7 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+from __future__ import division, unicode_literals, print_function, absolute_import
 
 import sys
 
@@ -92,6 +93,17 @@ class DigitalOutput(QPushButton):
         # either a string '1' or '0', True or False or 1 or 0
         self.setChecked(bool(int(state)))
     
+    
+class InvertedDigitalOutput(DigitalOutput):
+    @property
+    def state(self):
+        return not DigitalOutput.state.fget(self)
+
+    @state.setter
+    def state(self,state):
+        DigitalOutput.state.fset(self, not state)
+
+
 # A simple test!
 if __name__ == '__main__':
     
@@ -107,4 +119,4 @@ if __name__ == '__main__':
     
     
     sys.exit(qapplication.exec_())
-    
+    
