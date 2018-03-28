@@ -38,7 +38,7 @@ def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.
     handler.setFormatter(formatter)
     handler.setLevel(log_level)
     logger.addHandler(handler)
-    if sys.stdout is not None and sys.stdout.isatty():
+    if sys.stdout is not None and sys.stdout.fileno() >= 0:
         terminalhandler = logging.StreamHandler(sys.stdout)
         terminalhandler.setFormatter(formatter)
         terminalhandler.setLevel(terminal_level)
