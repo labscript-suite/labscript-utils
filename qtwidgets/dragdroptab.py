@@ -366,6 +366,9 @@ class DragDropTabBar(_BaseDragDropTabBar):
     # a QApplication at import time.
     limbo = None
 
+    SCROLL_BUTTON_WIDTH = 15
+    SCROLL_DISTANCE = 80
+
     def __init__(self, parent, group_id):
         _BaseDragDropTabBar.__init__(self, parent)
 
@@ -379,13 +382,62 @@ class DragDropTabBar(_BaseDragDropTabBar):
 
         self.animation = TabAnimation(self)
         self.tabMoved.connect(self.animation.on_tab_moved)
-        self.setUsesScrollButtons(False)
+        self.scroll_offset_pixels = 0
+        self.left_scrollbutton = QToolButton(self)
+        self.right_scrollbutton = QToolButton(self)
+        self.left_scrollbutton.setArrowType(Qt.LeftArrow)
+        self.right_scrollbutton.setArrowType(Qt.RightArrow)
+        self.left_scrollbutton.setAutoRepeat(True)
+        self.right_scrollbutton.setAutoRepeat(True)
+        self.left_scrollbutton.clicked.connect(
+           lambda: self.on_scroll_button_clicked(self.left_scrollbutton))
+        self.right_scrollbutton.clicked.connect(
+            lambda: self.on_scroll_button_clicked(self.right_scrollbutton))
+        self.currentChanged.connect(self.ensure_visible)
+        self.left_scrollbutton.hide()
+        self.right_scrollbutton.hide()
+        _BaseDragDropTabBar.setUsesScrollButtons(self, False)
         self.setElideMode(Qt.ElideRight)
+        self.uses_scrollbuttons = False
+
+    @debug.trace
+    def setUsesScrollButtons(self, uses_scrollbuttons):
+        self.uses_scrollbuttons = uses_scrollbuttons
+        if uses_scrollbuttons:
+            # No elision if we are scrollable:
+            self.setElideMode(Qt.ElideNone)
+        else:
+            self.setElideMode(Qt.ElideRight)
+        self.update_scroll_button_state()
+        self.update()
+
+    @debug.trace
+    def ensure_visible(self, index):
+        # Ensure the tab is visible if we're using scrollbuttons:
+        if index == -1 or not self.uses_scrollbuttons:
+            return
+        left_protruding_width = -self.tabRect(index).left() + 10
+        if left_protruding_width > 0:
+            self.scroll_offset_pixels -= left_protruding_width
+        right_protruding_width = (self.tabRect(index).right() - 
+                                  (self.width() - 2 * self.SCROLL_BUTTON_WIDTH) + 12)
+        if right_protruding_width > 0:
+            self.scroll_offset_pixels += right_protruding_width
+        self.update_scroll_button_state()
+        self.update()
 
     @debug.trace
     def sizeHint(self):
         hint = _BaseDragDropTabBar.sizeHint(self)
         hint.setWidth(self.parent().width())
+        return hint
+
+    @debug.trace
+    def minimumSizeHint(self):
+        hint = _BaseDragDropTabBar.minimumSizeHint(self)
+        if self.uses_scrollbuttons:
+            # No minimum if we are scrollable
+            hint.setWidth(0)
         return hint
 
     @debug.trace
@@ -548,13 +600,30 @@ class DragDropTabBar(_BaseDragDropTabBar):
             return self.limbo
 
     @debug.trace
+    def tabRect(self, index):
+        rect = _BaseDragDropTabBar.tabRect(self, index)
+        rect.translate(-self.scroll_offset_pixels, 0)
+        return rect
+
+    @debug.trace
+    def tabAt(self, pos):
+        for i in range(self.count()):
+            if self.tabRect(i).contains(pos):
+             return i
+        return -1
+
+    @debug.trace
     def mousePressEvent(self, event):
         """Take note of the tab that was clicked so it can be dragged on
         mouseMoveEvents"""
-        _BaseDragDropTabBar.mousePressEvent(self, event)
         if event.button() != Qt.LeftButton:
             return
         event.accept()
+        index = self.tabAt(event.pos())
+        if index == -1:
+            return
+        self.setCurrentIndex(index)
+        self.dragged_tab_index = index
         self.drag_in_progress = True
         # Ensure we get all mouse events until the mouse is released:
         self.grabMouse()
@@ -644,6 +713,53 @@ class DragDropTabBar(_BaseDragDropTabBar):
     def tabLayoutChange(self):
         _BaseDragDropTabBar.tabLayoutChange(self)
         self.animation.ensure_running()
+        self.update_scroll_button_state()
+        self.ensure_visible(self.currentIndex())
+
+    @debug.trace
+    def update_scroll_button_state(self):
+        if not self.uses_scrollbuttons:
+            self.left_scrollbutton.hide()
+            self.right_scrollbutton.hide()
+            return
+        all_tabs_right_edge = self.tabRect(self.count() - 1).right()
+        all_tabs_left_edge = self.tabRect(0).left()
+        total_width_of_all_tabs =  all_tabs_right_edge - all_tabs_left_edge
+        min_scroll_offset = 0
+        max_scroll_offset = max(0, total_width_of_all_tabs - self.width() + 
+                                   2 * self.SCROLL_BUTTON_WIDTH + 2)
+        if self.scroll_offset_pixels <= min_scroll_offset:
+            self.scroll_offset_pixels = min_scroll_offset
+            self.left_scrollbutton.setEnabled(False)
+        else:
+            self.left_scrollbutton.setEnabled(True)
+        if self.scroll_offset_pixels >= max_scroll_offset:
+            self.scroll_offset_pixels = max_scroll_offset
+            self.right_scrollbutton.setEnabled(False)
+        else:
+            self.right_scrollbutton.setEnabled(True)
+        self.left_scrollbutton.resize(self.SCROLL_BUTTON_WIDTH,
+                                          self.height() - 6)
+        self.right_scrollbutton.resize(self.SCROLL_BUTTON_WIDTH,
+                                       self.height() - 6)
+        self.left_scrollbutton.move(self.width() - 2*self.SCROLL_BUTTON_WIDTH, 3)
+        self.right_scrollbutton.move(self.width() - self.SCROLL_BUTTON_WIDTH, 3)
+
+        if self.left_scrollbutton.isEnabled() or self.right_scrollbutton.isEnabled():
+            self.left_scrollbutton.show()
+            self.right_scrollbutton.show()
+        else:
+            self.left_scrollbutton.hide()
+            self.right_scrollbutton.hide()
+
+    @debug.trace
+    def on_scroll_button_clicked(self, button):
+        if button is self.left_scrollbutton:
+            self.scroll_offset_pixels -= self.SCROLL_DISTANCE
+        elif button is self.right_scrollbutton:
+            self.scroll_offset_pixels += self.SCROLL_DISTANCE
+        self.update_scroll_button_state()
+        self.update()
 
     @debug.trace
     def paint_tab(self, index, painter, option):
@@ -659,13 +775,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
             # Other tabs are at their current animated position:
             xpos = self.animation.positions[index]
         tabrect = self.tabRect(index)
-        if xpos < 0:
-            # Don't draw tabs at negative positions:
-            xpos = 0
-        if xpos > self.width() - tabrect.width():
-            # Don't draw tabs further right than the end of the tabBar:
-            xpos = self.width() - tabrect.width()
-        painter.translate(xpos - tabrect.left(), 0)
+        painter.translate(xpos - tabrect.left() - self.scroll_offset_pixels, 0)
         self.initStyleOption(option, index)
         painter.drawControl(QStyle.CE_TabBarTab, option)
         painter.restore()
@@ -683,6 +793,12 @@ class DragDropTabBar(_BaseDragDropTabBar):
             self.paint_tab(index, painter, option)
         if self.currentIndex() != -1:
             self.paint_tab(self.currentIndex(), painter, option)
+        # Erase the region where the buttons need to be:
+        if self.left_scrollbutton.isEnabled() or self.right_scrollbutton.isEnabled():
+            rect = self.rect()
+            rect.moveLeft(self.width() - 2 * self.SCROLL_BUTTON_WIDTH)
+            rect.moveBottom(rect.bottom() - 2)
+            painter.eraseRect(rect)
         painter.end()
 
 
@@ -700,6 +816,16 @@ class DragDropTabWidget(QTabWidget):
         # as opposed to accepting them anywhere on the tabWidget:
         self.accept_drops_bar_only = accept_drops_bar_only
 
+        # Use scroll buttons by default:
+        self.setUsesScrollButtons(True)
+
+    def setUsesScrollButtons(self, uses_scrollbuttons):
+        self.tabBar().setUsesScrollButtons(uses_scrollbuttons)
+
+    def setElideMode(self, mode):
+        # Ignored. Elision is set entirely depending on whether scroll buttons
+        # are used (ElideRight if they are not, no elision if they are)
+        pass
 
 if __name__ == '__main__':    
     class ViewPort(object):
