@@ -623,11 +623,10 @@ class DragDropTabBar(_BaseDragDropTabBar):
         if index == -1:
             return
         self.setCurrentIndex(index)
-        self.dragged_tab_index = index
         self.drag_in_progress = True
         # Ensure we get all mouse events until the mouse is released:
         self.grabMouse()
-        self.dragged_tab_index = self.tabAt(event.pos())
+        self.dragged_tab_index = index
         self.dragged_tab_parent = self
         self.dragged_tab_grab_point = (event.pos()
                                        - self.tabRect(self.dragged_tab_index).topLeft())
