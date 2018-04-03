@@ -425,16 +425,23 @@ class DragDropTabBar(_BaseDragDropTabBar):
                 self.FLUSH_GAP - self.SCROLL_BUTTON_GAP)
 
     @debug.trace
-    def ensure_visible(self, index):
+    def ensure_visible(self, index, prefer_left=True):
         # Ensure the tab is visible if we're using scrollbuttons:
         if index == -1 or not self.uses_scrollbuttons:
             return
         left_protruding_width = -self.tabRect(index).left() + self._leftflush()
-        if left_protruding_width > 0:
-            self.scroll_offset -= left_protruding_width
         right_protruding_width = self.tabRect(index).right() - self._rightflush()
-        if right_protruding_width > 0:
+        if left_protruding_width > 0 and not right_protruding_width > 0:
+            self.scroll_offset -= left_protruding_width
+        elif right_protruding_width > 0 and not left_protruding_width > 0:
             self.scroll_offset += right_protruding_width
+        elif left_protruding_width > 0 and right_protruding_width > 0:
+            # Both edges are out of bounds. Which way do we move?
+            if prefer_left:
+                self.scroll_offset -= left_protruding_width
+            else:
+                self.scroll_offset += right_protruding_width
+
         self.update_scroll_button_state()
         self.update()
 
@@ -608,8 +615,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
             other_local_pos = widget.mapFromGlobal(self.mapToGlobal(pos))
             if rect.contains(other_local_pos):
                 return tab_widget.tabBar()
-        else:
-            return self.limbo
+        return self.limbo
 
     @debug.trace
     def tabRect(self, index):
@@ -773,12 +779,12 @@ class DragDropTabBar(_BaseDragDropTabBar):
         if button is self.left_scrollbutton:
             for i in range(self.count() - 1, -1, -1):
                 if self.tabRect(i).left() < self._leftflush():
-                    self.ensure_visible(i)
+                    self.ensure_visible(i, prefer_left=True)
                     break
         elif button is self.right_scrollbutton:
             for i in range(self.count()):
                 if self.tabRect(i).right() > self._rightflush():
-                    self.ensure_visible(i)
+                    self.ensure_visible(i, prefer_left=False)
                     break
         self.update_scroll_button_state()
         self.update()
