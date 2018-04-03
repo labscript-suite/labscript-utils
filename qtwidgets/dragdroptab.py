@@ -421,7 +421,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
         """The position a tab's right edge should be when it is otherwise made
         flush with the right edge of the tabBar. Includes space for the scroll
         buttons"""
-        return (self.width() -2 * self.SCROLL_BUTTON_WIDTH - 
+        return (self.width() - 2 * self.SCROLL_BUTTON_WIDTH - 
                 self.FLUSH_GAP - self.SCROLL_BUTTON_GAP)
 
     @debug.trace
@@ -738,7 +738,8 @@ class DragDropTabBar(_BaseDragDropTabBar):
         all_tabs_left_edge = self.tabRect(0).left()
         total_width_of_all_tabs =  all_tabs_right_edge - all_tabs_left_edge
         min_scroll_offset = 0
-        max_scroll_offset = max(0, total_width_of_all_tabs - self.width() + 
+        max_scroll_offset = max(0, total_width_of_all_tabs - 
+                                   self.parent().width() + 
                                    2 * self.SCROLL_BUTTON_WIDTH + 
                                    2 * self.SCROLL_BUTTON_GAP)
         if self.scroll_offset <= min_scroll_offset:
@@ -755,8 +756,10 @@ class DragDropTabBar(_BaseDragDropTabBar):
                                           self.height() - 6)
         self.right_scrollbutton.resize(self.SCROLL_BUTTON_WIDTH,
                                        self.height() - 6)
-        self.left_scrollbutton.move(self.width() - 2*self.SCROLL_BUTTON_WIDTH, 3)
-        self.right_scrollbutton.move(self.width() - self.SCROLL_BUTTON_WIDTH, 3)
+        self.left_scrollbutton.move(self.parent().width() - 
+                                    2*self.SCROLL_BUTTON_WIDTH, 3)
+        self.right_scrollbutton.move(self.parent().width() - 
+                                     self.SCROLL_BUTTON_WIDTH, 3)
 
         if self.left_scrollbutton.isEnabled() or self.right_scrollbutton.isEnabled():
             self.left_scrollbutton.show()
@@ -815,7 +818,8 @@ class DragDropTabBar(_BaseDragDropTabBar):
         # Erase the region where the buttons need to be:
         if self.left_scrollbutton.isEnabled() or self.right_scrollbutton.isEnabled():
             rect = self.rect()
-            rect.moveLeft(self.width() - 2 * self.SCROLL_BUTTON_WIDTH - self.SCROLL_BUTTON_GAP)
+            rect.moveLeft(self.width() - 2 * self.SCROLL_BUTTON_WIDTH - 
+                          self.SCROLL_BUTTON_GAP)
             rect.moveBottom(rect.bottom() - 2)
             painter.eraseRect(rect)
         painter.end()
