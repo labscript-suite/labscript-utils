@@ -367,7 +367,8 @@ class DragDropTabBar(_BaseDragDropTabBar):
     limbo = None
 
     SCROLL_BUTTON_WIDTH = 15
-    SCROLL_DISTANCE = 80
+    FLUSH_GAP = 5
+    SCROLL_BUTTON_GAP = 2
 
     def __init__(self, parent, group_id):
         _BaseDragDropTabBar.__init__(self, parent)
@@ -382,7 +383,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
 
         self.animation = TabAnimation(self)
         self.tabMoved.connect(self.animation.on_tab_moved)
-        self.scroll_offset_pixels = 0
+        self.scroll_offset = 0
         self.left_scrollbutton = QToolButton(self)
         self.right_scrollbutton = QToolButton(self)
         self.left_scrollbutton.setArrowType(Qt.LeftArrow)
@@ -411,18 +412,29 @@ class DragDropTabBar(_BaseDragDropTabBar):
         self.update_scroll_button_state()
         self.update()
 
+    def _leftflush(self):
+        """The position a tab's left edge should be when it is otherwise' made
+        flush with the left of the tabBar"""
+        return self.FLUSH_GAP
+
+    def _rightflush(self):
+        """The position a tab's right edge should be when it is otherwise made
+        flush with the right edge of the tabBar. Includes space for the scroll
+        buttons"""
+        return (self.width() -2 * self.SCROLL_BUTTON_WIDTH - 
+                self.FLUSH_GAP - self.SCROLL_BUTTON_GAP)
+
     @debug.trace
     def ensure_visible(self, index):
         # Ensure the tab is visible if we're using scrollbuttons:
         if index == -1 or not self.uses_scrollbuttons:
             return
-        left_protruding_width = -self.tabRect(index).left() + 10
+        left_protruding_width = -self.tabRect(index).left() + self._leftflush()
         if left_protruding_width > 0:
-            self.scroll_offset_pixels -= left_protruding_width
-        right_protruding_width = (self.tabRect(index).right() - 
-                                  (self.width() - 2 * self.SCROLL_BUTTON_WIDTH) + 12)
+            self.scroll_offset -= left_protruding_width
+        right_protruding_width = self.tabRect(index).right() - self._rightflush()
         if right_protruding_width > 0:
-            self.scroll_offset_pixels += right_protruding_width
+            self.scroll_offset += right_protruding_width
         self.update_scroll_button_state()
         self.update()
 
@@ -602,14 +614,14 @@ class DragDropTabBar(_BaseDragDropTabBar):
     @debug.trace
     def tabRect(self, index):
         rect = _BaseDragDropTabBar.tabRect(self, index)
-        rect.translate(-self.scroll_offset_pixels, 0)
+        rect.translate(-self.scroll_offset, 0)
         return rect
 
     @debug.trace
     def tabAt(self, pos):
         for i in range(self.count()):
             if self.tabRect(i).contains(pos):
-             return i
+                return i
         return -1
 
     @debug.trace
@@ -623,6 +635,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
         if index == -1:
             return
         self.setCurrentIndex(index)
+        self.ensure_visible(index)
         self.drag_in_progress = True
         # Ensure we get all mouse events until the mouse is released:
         self.grabMouse()
@@ -726,14 +739,15 @@ class DragDropTabBar(_BaseDragDropTabBar):
         total_width_of_all_tabs =  all_tabs_right_edge - all_tabs_left_edge
         min_scroll_offset = 0
         max_scroll_offset = max(0, total_width_of_all_tabs - self.width() + 
-                                   2 * self.SCROLL_BUTTON_WIDTH + 2)
-        if self.scroll_offset_pixels <= min_scroll_offset:
-            self.scroll_offset_pixels = min_scroll_offset
+                                   2 * self.SCROLL_BUTTON_WIDTH + 
+                                   2 * self.SCROLL_BUTTON_GAP)
+        if self.scroll_offset <= min_scroll_offset:
+            self.scroll_offset = min_scroll_offset
             self.left_scrollbutton.setEnabled(False)
         else:
             self.left_scrollbutton.setEnabled(True)
-        if self.scroll_offset_pixels >= max_scroll_offset:
-            self.scroll_offset_pixels = max_scroll_offset
+        if self.scroll_offset >= max_scroll_offset:
+            self.scroll_offset = max_scroll_offset
             self.right_scrollbutton.setEnabled(False)
         else:
             self.right_scrollbutton.setEnabled(True)
@@ -754,9 +768,15 @@ class DragDropTabBar(_BaseDragDropTabBar):
     @debug.trace
     def on_scroll_button_clicked(self, button):
         if button is self.left_scrollbutton:
-            self.scroll_offset_pixels -= self.SCROLL_DISTANCE
+            for i in range(self.count() - 1, -1, -1):
+                if self.tabRect(i).left() < self._leftflush():
+                    self.ensure_visible(i)
+                    break
         elif button is self.right_scrollbutton:
-            self.scroll_offset_pixels += self.SCROLL_DISTANCE
+            for i in range(self.count()):
+                if self.tabRect(i).right() > self._rightflush():
+                    self.ensure_visible(i)
+                    break
         self.update_scroll_button_state()
         self.update()
 
@@ -774,7 +794,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
             # Other tabs are at their current animated position:
             xpos = self.animation.positions[index]
         tabrect = self.tabRect(index)
-        painter.translate(xpos - tabrect.left() - self.scroll_offset_pixels, 0)
+        painter.translate(xpos - tabrect.left() - self.scroll_offset, 0)
         self.initStyleOption(option, index)
         painter.drawControl(QStyle.CE_TabBarTab, option)
         painter.restore()
@@ -785,7 +805,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
         option = QStyleOptionTab()
         # Draw in reverse order so if there is overlap, tabs to the left are
         # on top:
-        for index in range(self.count() -1 , -1, -1):
+        for index in range(self.count() - 1, -1, -1):
             if self.currentIndex() == index:
                 # Draw the active tab last so it's on top:
                 continue
@@ -795,7 +815,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
         # Erase the region where the buttons need to be:
         if self.left_scrollbutton.isEnabled() or self.right_scrollbutton.isEnabled():
             rect = self.rect()
-            rect.moveLeft(self.width() - 2 * self.SCROLL_BUTTON_WIDTH)
+            rect.moveLeft(self.width() - 2 * self.SCROLL_BUTTON_WIDTH - self.SCROLL_BUTTON_GAP)
             rect.moveBottom(rect.bottom() - 2)
             painter.eraseRect(rect)
         painter.end()
