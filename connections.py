@@ -175,6 +175,7 @@ class ConnectionTable(object):
         return None
     
     def find_by_name(self,name):
+        name = _ensure_str(name)
         for device_name, connection in self.toplevel_children.items():
             if device_name == name:
                 return connection
@@ -338,6 +339,7 @@ class Connection(object):
         return None
 
     def find_by_name(self, name):
+        name = _ensure_str(name)
         for device_name, connection in self.child_list.items():
             if device_name == name:
                 return connection
