@@ -75,8 +75,8 @@ class DoubleImportDenier(object):
         name = fullname.split('.')[-1]
         try:
             fp, pathname, description = imp.find_module(name, path)
-        except ImportError:
-            if DEBUG: print('ImportError')
+        except Exception as e:
+            if DEBUG: print('Exception in imp.find_module ' + str(e))
             return None
         if pathname is not None:
             path = os.path.realpath(pathname)
