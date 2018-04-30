@@ -158,7 +158,6 @@ class DoubleImportDenier(object):
 _denier = None
 
 def enable():
-    import sys
     if '--allow-double-imports' in sys.argv:
         # Calls to enable/disable the double import denier are ignored if this
         # command line argument is present.
