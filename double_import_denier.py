@@ -158,6 +158,10 @@ class DoubleImportDenier(object):
 _denier = None
 
 def enable():
+    if '--allow-double-imports' in sys.argv:
+        # Calls to enable/disable the double import denier are ignored if this
+        # command line argument is present.
+        return
     global _denier
     if _denier is None:
         _denier = DoubleImportDenier()
@@ -172,6 +176,10 @@ def enable():
     _denier.enabled = True
 
 def disable():
+    if '--allow-double-imports' in sys.argv:
+        # Calls to enable/disable the double import denier are ignored if this
+        # command line argument is present.
+        return
     if not _denier.enabled:
         raise RuntimeError('not enabled')
     sys.meta_path.remove(_denier)
