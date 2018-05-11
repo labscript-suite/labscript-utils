@@ -25,6 +25,9 @@ from zprocess.locking import set_default_timeout
 
 from labscript_utils.shared_drive import path_to_agnostic
 from labscript_utils.labconfig import LabConfig
+from labscript_utils import PY2
+if PY2:
+    str = unicode
 
 if 'h5py' in sys.modules:
     raise ImportError('h5_lock must be imported prior to importing h5py')
@@ -119,7 +122,8 @@ def _patch_h5py_allow_unicode_list_attrs():
         if not isinstance(data, np.ndarray) and shape is None and dtype is None:
             data = np.asarray(data)
             if data.dtype.type == np.unicode_:
-                data = np.array(data, dtype=h5py.special_dtype(vlen=str))
+                dtype = h5py.special_dtype(vlen=str)
+                data = np.array(data, dtype=dtype)
         return orig_create(self, name, data, shape, dtype)
 
     h5py._hl.attrs.AttributeManager.create = create
