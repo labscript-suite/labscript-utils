@@ -14,21 +14,21 @@ from __future__ import division, unicode_literals, print_function, absolute_impo
 from labscript_utils import PY2
 if PY2:
     str = unicode
+    from inspect import getargspec as getfullargspec
+else:
+    from inspect import getfullargspec
 
 import threading
 import os
 import time
 import hashlib
-import inspect
 
-# Files with the following extensions will be watched via their MD5 hash
-# and we can therefore determine whether the file has been restored
-hashable_types = ['.py', '.txt', '.ini']
 
 def hash_bytestr_iter(bytesiter, hasher, ashexstr=True):
     for block in bytesiter:
         hasher.update(block)
     return (hasher.hexdigest() if ashexstr else hasher.digest())
+
 
 def file_as_blockiter(afile, blocksize=65536):
     with afile:
@@ -37,23 +37,52 @@ def file_as_blockiter(afile, blocksize=65536):
             yield block
             block = afile.read(blocksize)
 
+
 class FileWatcher(object):
-    def __init__(self, callback, files=None, folders=None, modified_info=None, **kwargs):
-        # To implement restoration events, callback should have args ['name', 'info', 'event']
-        # For backwards compatability, allow callback to have only the first two args
-        if len(inspect.getargspec(callback)[0]) > 2:
+    def __init__(self, callback, files=None, folders=None, modified_info=None,
+                 hashable_types=None, interval=1, **kwargs):
+        """
+        Detect modification, deletion, creation, or restoration of specific files
+        (and all files in specific folders).
+
+        callback -- elicited whenever file events are detected, requires at least
+            (name, info) arguments. Event specific callback requires 
+            (name, info, event) arguments, where event is on of:
+            'modified', 'deleted' (or None), 'created', 'restored', 'original'
+            The 'original' event corresponds to a state change that results in 
+            the original file info at instantiation.
+
+        Keyword arguments:
+        files -- List of specific files to watch.
+            A single file can be specified as a string (default None).
+        folders -- List of specific folders to watch.
+            A single folder can be specified as a string (default None).
+            If a file is created/deleted in/from any watched folder, it is added/
+            removed to/from the FileWatcher.files attribute.
+        modified_info -- File info to detect modification/restoration with.
+            If None (default), the initial modified info will be based on the 
+            first polling of files.
+        hashable_types -- File extensions for which MD5 checksum will be used to
+            detect modification/restoration with (default None). Files of any 
+            other type will be watched using their modified time. 
+            Restoration cannot be detected for types not in hashable_types.
+        interval -- Polling interval in seconds (default 1).
+        """
+        if len(getfullargspec(callback)[0]) > 2:
+            # For backwards compatability, allow callback to have only two args
             self.callback = callback
         else:
             self.callback = lambda name, info, event: callback(name, info)
         self.lock = threading.Lock()
-        
+
+        self.hashable_types = [] if hashable_types is None else hashable_types
         self.files = set()
         self.folders = set()
         if files:
             self.add_files(files)
         if folders:
             self.add_folders(folders)
-        
+
         # restore modified info
         if 'modified_times' in kwargs and modified_info is None:
             modified_info = kwargs['modified_times']
@@ -62,24 +91,25 @@ class FileWatcher(object):
         self.modified_info_original = modified_info.copy()
         self.modified_info = modified_info.copy()
         self.update_files(trigger_callback=False)
-        
+
         # remove entries in self.modified times that are not in files
         for name in self.modified_info.copy():
             if name not in self.files:
                 del self.modified_info[name]
-        
-        self.main = threading.Thread(target = self.mainloop)
+
+        self.main = threading.Thread(target=self.mainloop)
         self.main.daemon = True
         self.running = True
+        self.interval = interval
         self.main.start()
-        
+
     def mainloop(self):
         while self.running:
-            time.sleep(1)
+            time.sleep(self.interval)
             with self.lock:
                 self.update_files()
                 self.check()
-    
+
     def update_files(self, folders=None, trigger_callback=True):
         if folders is None:
             folders = self.folders
@@ -93,21 +123,25 @@ class FileWatcher(object):
                         if not path in self.files:
                             self.files.add(path)
                             if trigger_callback:
-                                self.callback(path, os.path.getmtime(path), 'created')
+                                self.callback(
+                                    path, os.path.getmtime(path), 'created')
             except OSError:
                 # Folder has been deleted. File deletion will still be
                 # detected, so we can ignore this.
                 continue
 
-    
     def check(self):
+        check_all = False
+        first_pass = True if not self.modified_info_original else False
+        files_to_forget = []
         for name in self.files:
             try:
-                if os.path.splitext(name)[-1] in hashable_types:
-                    modified_info = hash_bytestr_iter(file_as_blockiter(open(name, 'rb')), hashlib.md5())
+                if os.path.splitext(name)[-1] in self.hashable_types:
+                    modified_info = hash_bytestr_iter(
+                        file_as_blockiter(open(name, 'rb')), hashlib.md5())
                 else:
                     modified_info = os.path.getmtime(name)
-            except OSError:
+            except (OSError, IOError):
                 if not os.path.exists(name):
                     modified_info = None
                 else:
@@ -116,60 +150,82 @@ class FileWatcher(object):
                     # we'll skip the rest of the check for now, and leave it up to the next call of check()
                     # to catch any file modification
                     continue
-            original_modified_info = self.modified_info_original.setdefault(name, modified_info)
-            previous_modified_info = self.modified_info.setdefault(name, modified_info)
+            if first_pass:
+                original_modified_info = self.modified_info_original.setdefault(
+                    name, modified_info)
+            else:
+                if name in self.modified_info_original:
+                    original_modified_info = self.modified_info_original[name]
+                else:
+                    original_modified_info = None
+            previous_modified_info = self.modified_info.setdefault(
+                name, modified_info)
             self.modified_info[name] = modified_info
             if modified_info != previous_modified_info:
-                if modified_info == original_modified_info:
-                    self.callback(name, modified_info, 'restored')     
+                if modified_info == None:
+                    self.callback(name, modified_info, 'deleted')
+                    files_to_forget.append(name)
+                    self.modified_info.pop(name)
+                    check_all = True
+                elif modified_info == original_modified_info:
+                    self.callback(name, modified_info, 'restored')
+                    check_all = True
                 elif name in self.modified_info:
                     del self.modified_info[name]
                     self.callback(name, modified_info, 'modified')
-                                    
+        for name in files_to_forget:
+            self.files.remove(name)
+        if check_all and self.modified_info == self.modified_info_original:
+            self.callback('all', '', 'original')
+        if first_pass:
+            print(self.modified_info_original)
+
     def stop(self):
         self.running = False
-    
+
     def add_file(self, path):
         self.add_files(path)
-        
+
     def get_modified_info(self):
         with self.lock:
             times = self.modified_info.copy()
         return times
-        
+
     def add_folder(self, folder):
         self.add_folders(folder)
-        
-    def add_files(self,files):
+
+    def add_files(self, files):
         with self.lock:
-            if isinstance(files,str):
+            if isinstance(files, str):
                 self.files.add(files)
             else:
-               self.files = self.files.union(set(files)) 
-    
-    def add_folders(self,folders):
+                self.files = self.files.union(set(files))
+
+    def add_folders(self, folders):
         with self.lock:
-            if isinstance(folders,str):
+            if isinstance(folders, str):
                 self.folders.add(folders)
             else:
-               self.folders = self.folders.union(set(folders))
+                self.folders = self.folders.union(set(folders))
             self.update_files(trigger_callback=False)
-            
-   
+
+
 if __name__ == '__main__':
     # Example usage
-    
-    def callback(name, modified, event='modified'):
-        if modified is None:
+
+    def callback(name, modified, event=None):
+        if event == 'deleted' or modified is None:
             print(name, 'has been deleted')
-        # else:
-        #     print(name, 'was modified at', modified)
         elif event == 'modified':
             print(name, 'was modified at', modified)
         elif event == 'created':
-            print(name, 'was modified at', created)
-        else:
+            print(name, 'was created at', modified)
+        elif event == 'restored':
             print(name, 'was restored (hash {})'.format(modified))
+        elif event == 'original':
+            print('All files are in the original state.')
+        else:
+            print('Unknown event from filewatcher: {}'.format(event))
 
-    f = FileWatcher(callback, files='test.txt', folders='foobar')
-    
+    f = FileWatcher(callback, files='test.txt', folders='foobar',
+                    hashable_types=['.py', '.ini', '.txt'], interval=2)
