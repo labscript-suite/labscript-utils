@@ -25,6 +25,9 @@ from zprocess.locking import set_default_timeout
 
 from labscript_utils.shared_drive import path_to_agnostic
 from labscript_utils.labconfig import LabConfig
+from labscript_utils import PY2
+if PY2:
+    str = unicode
 
 if 'h5py' in sys.modules:
     raise ImportError('h5_lock must be imported prior to importing h5py')
@@ -107,7 +110,23 @@ connect_to_zlock_server()
 hack_locks_onto_h5py()
 
 
-# begin hack that makes strings fixed-length by default:
-#from labscript_utils.horrible_fixed_length_strings_hack import horribly_hack_fixed_length_strings
-#horribly_hack_fixed_length_strings()
-# end hack that makes strings fixed-length by default
+
+def _patch_h5py_allow_unicode_list_attrs():
+    """Monkeypatch to allow h5py to save lists of unicode strings as attributes.
+    Upstream pull request submitted: https://github.com/h5py/h5py/pull/1032"""
+    import functools
+    import numpy as np
+    orig_create = h5py._hl.attrs.AttributeManager.create
+    @functools.wraps(orig_create)
+    def create(self, name, data, shape=None, dtype=None):
+        if not isinstance(data, np.ndarray) and shape is None and dtype is None:
+            data = np.asarray(data)
+            if data.dtype.type == np.unicode_:
+                dtype = h5py.special_dtype(vlen=str)
+                data = np.array(data, dtype=dtype)
+        return orig_create(self, name, data, shape, dtype)
+
+    h5py._hl.attrs.AttributeManager.create = create
+
+_patch_h5py_allow_unicode_list_attrs()
+
