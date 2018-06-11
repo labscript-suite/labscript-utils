@@ -53,7 +53,10 @@ class ConnectionTable(object):
                 except Exception:
                     msg = 'could not open connection table dataset in %s' % h5file
                     if self.logger: self.logger.error(msg)
-                    raise_exception_in_thread(sys.exc_info())
+                    if exceptions_in_thread:
+                        raise_exception_in_thread(sys.exc_info())
+                    else:
+                        raise
                     return
 
                 self.raw_table = dataset[:]
@@ -72,7 +75,10 @@ class ConnectionTable(object):
                 except Exception:
                     msg = 'Could not parse connection table in %s' % h5file
                     if self.logger: self.logger.error(msg)
-                    raise_exception_in_thread(sys.exc_info())
+                    if exceptions_in_thread:
+                        raise_exception_in_thread(sys.exc_info())
+                    else:
+                        raise
 
         except Exception:
             msg = 'Could not open connection table file %s' % h5file
