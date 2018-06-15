@@ -31,8 +31,8 @@ def _ensure_str(s):
     return s.decode() if isinstance(s, bytes) else str(s)
 
 
-class ConnectionTable(object):    
-    def __init__(self, h5file, logging_prefix=None):
+class ConnectionTable(object):
+    def __init__(self, h5file, logging_prefix=None, exceptions_in_thread=False):
         """Object to represent a connection table. Set logging prefix if you
         desire logging. Log used will be <prefix>.ConnectionTable"""
         self.filepath = h5file
@@ -53,7 +53,10 @@ class ConnectionTable(object):
                 except Exception:
                     msg = 'could not open connection table dataset in %s' % h5file
                     if self.logger: self.logger.error(msg)
-                    raise_exception_in_thread(sys.exc_info())
+                    if exceptions_in_thread:
+                        raise_exception_in_thread(sys.exc_info())
+                    else:
+                        raise
                     return
 
                 self.raw_table = dataset[:]
@@ -72,12 +75,18 @@ class ConnectionTable(object):
                 except Exception:
                     msg = 'Could not parse connection table in %s' % h5file
                     if self.logger: self.logger.error(msg)
-                    raise_exception_in_thread(sys.exc_info())
+                    if exceptions_in_thread:
+                        raise_exception_in_thread(sys.exc_info())
+                    else:
+                        raise
 
         except Exception:
             msg = 'Could not open connection table file %s' % h5file
             if self.logger: self.logger.exception(msg)
-            raise_exception_in_thread(sys.exc_info())
+            if exceptions_in_thread:
+                raise_exception_in_thread(sys.exc_info())
+            else:
+                raise
 
     def assert_superset(self, other):
         # let's check that we're a superset of the connection table in "other"
