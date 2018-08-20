@@ -14,6 +14,7 @@ from __future__ import division, unicode_literals, print_function, absolute_impo
 
 import sys, os
 import logging, logging.handlers
+from concurrent_log_handler import ConcurrentRotatingFileHandler
 import __main__
 
 
@@ -41,9 +42,7 @@ def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.
 
     log_dir = os.path.dirname(os.path.realpath(main_path))
     log_path = os.path.join(log_dir, '%s.log' % program_name)
-    # TODO: Log rotation disabled for the time being, to be restored once multiprocess logging implemented.
-    # handler = logging.handlers.FileHandler(log_path, maxBytes=maxBytes, backupCount=backupCount)
-    handler = logging.FileHandler(log_path)
+    handler = ConcurrentRotatingFileHandler(log_path, maxBytes=maxBytes, backupCount=backupCount)
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s')
     handler.setFormatter(formatter)
     handler.setLevel(log_level)
