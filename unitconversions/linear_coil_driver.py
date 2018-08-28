@@ -21,6 +21,8 @@ class BidirectionalCoilDriver(UnitConversion):
     
     def __init__(self, calibration_parameters=None):
         # These parameters are loaded from a globals.h5 type file automatically
+        if calibration_parameters is None:
+            calibration_parameters = {}
         self.parameters = calibration_parameters
         
         # I[A] = slope * V[V] + shift
