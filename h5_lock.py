@@ -18,6 +18,7 @@ import socket
 import threading
 import subprocess
 import weakref
+from distutils.version import LooseVersion
 
 import zmq
 import zprocess.locking
@@ -35,14 +36,15 @@ if 'h5py' in sys.modules:
 import h5py
 
 DEFAULT_TIMEOUT = 45
+_server_supports_readwrite = False
 
-def NetworkOnlyLock(name):
-    return zprocess.locking.NetworkOnlyLock(path_to_agnostic(name))
-    
 def hack_locks_onto_h5py():
     def __init__(self, name, mode=None, driver=None, libver=None, **kwds):
         if not isinstance(name, h5py._objects.ObjectID):
-            self.zlock = zprocess.locking.Lock(path_to_agnostic(name))
+            kwargs = {}
+            if _server_supports_readwrite and mode == 'r':
+                kwargs['read_only'] = True
+            self.zlock = zprocess.locking.Lock(path_to_agnostic(name), **kwargs)
             self.zlock.acquire()
         try:
             _orig_init(self, name, mode, driver, libver, **kwds)
@@ -100,6 +102,13 @@ def connect_to_zlock_server():
             zprocess.locking.connect(host,port,timeout=15)
     else:
         zprocess.locking.connect(host, port)
+
+    # Check if the zlock server supports read-write locks:
+    global _server_supports_readwrite
+    if hasattr(zprocess.locking, 'get_protocol_version'):
+        version = zprocess.locking.get_protocol_version()
+        if LooseVersion(version) >= LooseVersion('1.1.0'):
+            _server_supports_readwrite = True
 
     # The user can call these functions to change the timeouts later if they
     # are not to their liking:
