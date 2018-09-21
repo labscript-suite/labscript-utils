@@ -14,8 +14,50 @@ from __future__ import division, unicode_literals, print_function, absolute_impo
 
 import sys, os
 import logging, logging.handlers
-from concurrent_log_handler import ConcurrentRotatingFileHandler
+import zmq
+from labscript_utils import check_version
+
+check_version('zprocess', '2.8.1', '3.0.0')
+import zprocess.zlog
+from zprocess import start_daemon
 import __main__
+
+
+_connected_to_zlog = False
+
+
+def ensure_connected_to_zlog(maxBytes, backupCount):
+    """Ensure we are connected to a zlog server. If one is not running, start one with
+    the given maxBytes and backupCount."""
+    global _connected_to_zlog
+    if _connected_to_zlog:
+        return
+    # setup connection with the zprocess.logging server on localhost
+    try:
+        # short connection timeout on localhost, don't want to waste time:
+        zprocess.zlog.connect(timeout=0.05)
+    except zmq.ZMQError:
+        # No zprocess.logging server running on localhost. Start one. It will run
+        # forever, even after this program exits. This is important for
+        # other programs which might be using it. I don't really consider
+        # this bad practice since the server is typically supposed to
+        # be running all the time:
+        start_daemon(
+            [
+                sys.executable,
+                '-m',
+                'zprocess.zlog',
+                '--cls',
+                'RotatingFileHandler',
+                '--maxBytes',
+                str(maxBytes),
+                '--backupCount',
+                str(backupCount),
+            ]
+        )
+        # Try again. Longer timeout this time, give it time to start up:
+        zprocess.zlog.connect(timeout=15)
+        _connected_to_zlog = True
 
 
 class LessThanFilter(logging.Filter):
@@ -27,6 +69,7 @@ class LessThanFilter(logging.Filter):
 
 
 def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.INFO, maxBytes=1024*1024*50, backupCount=1):
+    ensure_connected_to_zlog(maxBytes, backupCount)
     logger = logging.getLogger(program_name)
     # Clear any previously added handlers from the logger:
     for handler in logger.handlers[:]:
@@ -42,7 +85,7 @@ def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.
 
     log_dir = os.path.dirname(os.path.realpath(main_path))
     log_path = os.path.join(log_dir, '%s.log' % program_name)
-    handler = ConcurrentRotatingFileHandler(log_path, maxBytes=maxBytes, backupCount=backupCount)
+    handler = zprocess.zlog.ZMQLoggingHandler(log_path)
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s')
     handler.setFormatter(formatter)
     handler.setLevel(log_level)
