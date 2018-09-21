@@ -32,12 +32,12 @@ def ensure_connected_to_zlog(maxBytes, backupCount):
     global _connected_to_zlog
     if _connected_to_zlog:
         return
-    # setup connection with the zprocess.logging server on localhost
+    # setup connection with the zlog server on localhost
     try:
         # short connection timeout on localhost, don't want to waste time:
         zprocess.zlog.connect(timeout=0.05)
     except zmq.ZMQError:
-        # No zprocess.logging server running on localhost. Start one. It will run
+        # No zlog server running on localhost. Start one. It will run
         # forever, even after this program exits. This is important for
         # other programs which might be using it. I don't really consider
         # this bad practice since the server is typically supposed to
