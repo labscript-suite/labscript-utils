@@ -17,7 +17,7 @@ import logging, logging.handlers
 import zmq
 from labscript_utils import check_version
 
-check_version('zprocess', '2.8.3', '3.0.0')
+check_version('zprocess', '2.8.4', '3.0.0')
 import zprocess.zlog
 from zprocess import start_daemon
 import __main__
