@@ -128,5 +128,5 @@ def dedent(s):
             if any(not l or l.startswith(' ') for l in [line, previous_line]):
                 unwrapped_lines.append('\n' + line)
             else:
-                unwrapped_lines.append(line)
-    return ' '.join(unwrapped_lines)
+                unwrapped_lines.append(' ' + line)
+    return ''.join(unwrapped_lines)
