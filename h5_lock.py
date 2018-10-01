@@ -18,10 +18,15 @@ import socket
 import threading
 import subprocess
 import weakref
+from distutils.version import LooseVersion
 
 import zmq
 import zprocess.locking
 from zprocess.locking import set_default_timeout
+from labscript_utils import check_version
+
+check_version('zprocess', '2.2.0', '3.0.0')
+from zprocess import start_daemon
 
 from labscript_utils.shared_drive import path_to_agnostic
 from labscript_utils.labconfig import LabConfig
@@ -35,14 +40,15 @@ if 'h5py' in sys.modules:
 import h5py
 
 DEFAULT_TIMEOUT = 45
+_server_supports_readwrite = False
 
-def NetworkOnlyLock(name):
-    return zprocess.locking.NetworkOnlyLock(path_to_agnostic(name))
-    
 def hack_locks_onto_h5py():
     def __init__(self, name, mode=None, driver=None, libver=None, **kwds):
         if not isinstance(name, h5py._objects.ObjectID):
-            self.zlock = zprocess.locking.Lock(path_to_agnostic(name))
+            kwargs = {}
+            if _server_supports_readwrite and mode == 'r':
+                kwargs['read_only'] = True
+            self.zlock = zprocess.locking.Lock(path_to_agnostic(name), **kwargs)
             self.zlock.acquire()
         try:
             _orig_init(self, name, mode, driver, libver, **kwds)
@@ -82,24 +88,18 @@ def connect_to_zlock_server():
             # other programs which might be using it. I don't really consider
             # this bad practice since the server is typically supposed to
             # be running all the time:
-            if os.name == 'nt':
-                creationflags=0x00000008 # DETACHED_PROCESS from the win32 API
-                # Note that we must not remain in same working directory, or we will hold a lock
-                # on it that prevents it from being deleted.
-                subprocess.Popen([sys.executable,'-m','zprocess.locking'],
-                                 creationflags=creationflags, stdout=None, stderr=None,
-                                 close_fds=True, cwd=os.getenv('temp'))
-            else:
-                devnull = open(os.devnull,'w')
-                if not os.fork():
-                    os.setsid()
-                    subprocess.Popen([sys.executable,'-m','zprocess.locking'],
-                                     stdin=devnull, stdout=devnull, stderr=devnull, close_fds=True)
-                    os._exit(0)
+            start_daemon([sys.executable, '-m', 'zprocess.locking'])
             # Try again. Longer timeout this time, give it time to start up:
             zprocess.locking.connect(host,port,timeout=15)
     else:
         zprocess.locking.connect(host, port)
+
+    # Check if the zlock server supports read-write locks:
+    global _server_supports_readwrite
+    if hasattr(zprocess.locking, 'get_protocol_version'):
+        version = zprocess.locking.get_protocol_version()
+        if LooseVersion(version) >= LooseVersion('1.1.0'):
+            _server_supports_readwrite = True
 
     # The user can call these functions to change the timeouts later if they
     # are not to their liking:
