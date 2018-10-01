@@ -4,6 +4,7 @@ if PY2:
     str = unicode
 import sys
 import json
+from collections import Iterable, Mapping
 import numpy as np
 import h5py
 
@@ -21,6 +22,17 @@ if PY2:
     str = unicode
 
 
+def _check_dicts(o):
+    if isinstance(o, Mapping):
+        if not all(isinstance(k, (str, bytes)) for k in o.keys()):
+            raise TypeError("Cannot JSON encode dictionary with non-string keys")
+        for item in o.values():
+            _check_dicts(item)
+    elif isinstance(o, Iterable) and not isinstance(o, (str, bytes)):
+        for item in o:
+            _check_dicts(item)
+
+
 def is_json(value):
     if isinstance(value, bytes):
         return value[:len(JSON_IDENTIFIER)] == JSON_IDENTIFIER.encode('utf8')
@@ -30,6 +42,7 @@ def is_json(value):
 
 
 def serialise(value):
+    _check_dicts(value)
     json_string = json.dumps(value)
     return JSON_IDENTIFIER + json_string
 
