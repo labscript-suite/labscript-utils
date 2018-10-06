@@ -17,29 +17,6 @@ import importlib
 from labscript_utils import PY2
 from .UnitConversionBase import UnitConversion
 
-def _import_all():
-    """imports all unit conversion classes in module within this subpackage into this
-    module's globals. This is used only for backward compatibility with unit conversion
-    classes that were not specified with a fully qualified name"""
-    for filename in os.listdir(os.path.split(__file__)[0]):
-        if filename.endswith('.py') and filename != '__init__.py':
-            module = filename[:-3]
-            result = {}
-            import_line = 'from labscript_utils.unitconversions.%s import *'
-            exec(import_line % module, result, result)
-            for name, value in result.items():
-                globals()[name] = value
-                if isinstance(value, type) and issubclass(value, UnitConversion):
-                    # Also add the class to the globals dict under its full name. This
-                    # is a little odd, but ensures that if an unaware version of BLACS
-                    # is dealing with fully qualified class names, it will still find
-                    # them by looking them up in our globals dict. This is a backward
-                    # compatibility hack only and may be removed in future.
-                    fullname = 'labscript_utils.unitconversions.%s.%s' %(module, name)
-                    if PY2:
-                        fullname = fullname.encode('utf8')
-                    globals()[fullname] = value
-
 
 class _All(object):
     """Backward compatibility for importers importing * from here and expecting to be
@@ -47,13 +24,41 @@ class _All(object):
     don't want to import everything unless someone actually does this, so we replace
     __all__ with a custom object so we can detect when someone does an import * and
     only import all the classes if this occurs"""
-    items = None
-    @classmethod
-    def __getitem__(cls, ix):
-        if cls.items is None:
-            _import_all()
-            cls.items = list(globals().keys())
-        return cls.items[ix]
+
+    __all__ = None
+
+    def __getitem__(self, ix):
+        if self.__all__ is None:
+            self.__all__ = []
+            self._import_all()
+        return self.__all__[ix]
+
+    def _import_all(self):
+        """imports all unit conversion classes in module within this subpackage into
+        this module's globals. This is used only for backward compatibility with unit
+        conversion classes that were not specified with a fully qualified name"""
+        for filename in os.listdir(os.path.split(__file__)[0]):
+            if filename.endswith('.py') and filename != '__init__.py':
+                module = filename[:-3]
+                result = {}
+                import_line = 'from labscript_utils.unitconversions.%s import *'
+                exec(import_line % module, result, result)
+                for name, value in result.items():
+                    globals()[name] = value
+                    if isinstance(value, type) and issubclass(value, UnitConversion):
+                        self.__all__.append(name)
+                        # Also add the class to the globals dict under its full name.
+                        # This is a little odd, but ensures that if an unaware version
+                        # of BLACS is dealing with fully qualified class names, it will
+                        # still find them by looking them up in our globals dict. This
+                        # is a backward compatibility hack only and may be removed in
+                        # future.
+                        fullname = 'labscript_utils.unitconversions.%s.%s'
+                        fullname = fullname % (module, name)
+                        if PY2:
+                            fullname = fullname.encode('utf8')
+                        globals()[fullname] = value
+
 
 __all__ = _All()
 
@@ -67,7 +72,8 @@ def get_unit_conversion_class(fullname):
     if '.' not in fullname:
         # It's just a class name, no import path. Fall back to importing everything to
         # find it:
-        _import_all()
+        if __all__.__all__ is None:
+            __all__._import_all()
         return globals()[fullname]
     # Otherwise, import the module and return the class
     split = fullname.split('.')
