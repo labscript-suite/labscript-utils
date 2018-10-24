@@ -65,7 +65,7 @@ class DoubleImportDenier(object):
         self.tracebacks = {}
         UNKNOWN = ('<unknown: imported prior to double_import_denier.enable()>\n')
         for name, module in list(sys.modules.items()):
-            if hasattr(module, '__file__'):
+            if getattr(module, '__file__', None) is not None:
                 path = os.path.realpath(module.__file__)
                 self.names_by_filepath[path] = name
                 self.tracebacks[path] = [UNKNOWN, '']
@@ -193,6 +193,7 @@ if __name__ == '__main__':
     def test1():
         # Import numpy.linalg twice under different names:
         import numpy as np
+        np.linalg.__file__ = None
         # Add the numpy folder to the search path:
         sys.path.append(os.path.dirname(np.__file__))
         import linalg
