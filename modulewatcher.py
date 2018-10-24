@@ -86,10 +86,8 @@ class ModuleWatcher(object):
                         # the identity of sys.meta_path in case other code
                         # holds references to it, we clear all the items
                         # and insert those from the whitelist in order.
-                        while sys.meta_path:
-                            del sys.meta_path[0]
-                        for item in self.meta_whitelist:
-                            sys.meta_path.append(item)
+                        del sys.meta_path[:]
+                        sys.meta_path[:] = self.meta_whitelist
                     finally:
                         # We're done mucking around with the cached
                         # modules, normal imports in other threads
