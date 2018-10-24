@@ -26,6 +26,7 @@ class ModuleWatcher(object):
             
         # The whitelist is the list of names of currently loaded modules:
         self.whitelist = set(sys.modules)
+        self.meta_whitelist = list(sys.meta_path)
         self.modified_times = {}
         self.main = threading.Thread(target=self.mainloop)
         self.main.daemon = True
@@ -79,6 +80,16 @@ class ModuleWatcher(object):
                                     del self.modified_times[name]
                                 if self.debug:
                                     print("    " + name)
+                        # Replace sys.meta_path with the cached whitelist,
+                        # effectively removing all since-added entries from
+                        # it. However, since order matters and to preserve
+                        # the identity of sys.meta_path in case other code
+                        # holds references to it, we clear all the items
+                        # and insert those from the whitelist in order.
+                        while sys.meta_path:
+                            del sys.meta_path[0]
+                        for item in self.meta_whitelist:
+                            sys.meta_path.append(item)
                     finally:
                         # We're done mucking around with the cached
                         # modules, normal imports in other threads
