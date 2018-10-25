@@ -43,8 +43,13 @@ class ModuleWatcher(object):
         for name, module in sys.modules.copy().items():
             # Look only at the modules not in the the whitelist:
             if name not in self.whitelist and hasattr(module,'__file__'):
-                # Only consider modules which are .py files, no C extensions:
-                module_file = module.__file__.replace('.pyc', '.py')
+                # Only consider modules which are .py files, no C extensions or builtin
+                # modules:
+                if module.__file__ is None:
+                    continue
+                module_file = module.__file__
+                if module_file.endswith('.pyc'):
+                    module_file = os.path.splitext(module_file)[0] + '.py'
                 if not module_file.endswith('.py') or not os.path.exists(module_file):
                     continue
                 # Check and store the modified time of the .py file:
