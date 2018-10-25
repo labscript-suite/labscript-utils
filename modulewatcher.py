@@ -87,11 +87,9 @@ class ModuleWatcher(object):
                                     print("    " + name)
                         # Replace sys.meta_path with the cached whitelist,
                         # effectively removing all since-added entries from
-                        # it. However, since order matters and to preserve
-                        # the identity of sys.meta_path in case other code
-                        # holds references to it, we clear all the items
-                        # and insert those from the whitelist in order.
-                        del sys.meta_path[:]
+                        # it. Replacement is done in-place in case other code
+                        # holds references to sys.meta_path, and to preserve
+                        # order, since order is relevant.
                         sys.meta_path[:] = self.meta_whitelist
                     finally:
                         # We're done mucking around with the cached
