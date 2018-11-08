@@ -16,6 +16,7 @@ import sys
 import os
 import socket
 import subprocess
+import errno
 
 from labscript_utils import PY2
 if PY2:
@@ -51,6 +52,17 @@ else:
     hostname = socket.gethostname()
 default_config_path = os.path.join(config_prefix,'%s.ini'%hostname)
 
+
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+
+
 class LabConfig(configparser.SafeConfigParser):
     NoOptionError = configparser.NoOptionError
     NoSectionError = configparser.NoSectionError
@@ -67,9 +79,8 @@ class LabConfig(configparser.SafeConfigParser):
             for option in options:
                 self.file_format += "%s = <value>\n"%option
 
-        # If the folder doesn't exist, create it
-        if not os.path.exists(os.path.dirname(self.config_path)):
-            os.mkdir(os.path.dirname(self.config_path))
+        # Ensure the folder exists:
+        mkdir_p(os.path.dirname(self.config_path))
 
         # If the file doesn't exist, create it
         if not os.path.exists(self.config_path):
