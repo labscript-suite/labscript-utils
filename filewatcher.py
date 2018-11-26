@@ -75,7 +75,7 @@ class FileWatcher(object):
             self.callback = lambda name, info, event: callback(name, info)
         self.lock = threading.Lock()
 
-        self.hashable_types = [] if hashable_types is None else hashable_types
+        self.hashable_types = [] if hashable_types is None else [x.lower() for x in hashable_types]
         self.files = set()
         self.folders = set()
         if files:
@@ -83,7 +83,7 @@ class FileWatcher(object):
         if folders:
             self.add_folders(folders)
 
-        # restore modified info
+        # Restore modified_info if modified_times is provided as a keyword argument
         if 'modified_times' in kwargs and modified_info is None:
             modified_info = kwargs['modified_times']
         elif modified_info is None:
@@ -92,7 +92,7 @@ class FileWatcher(object):
         self.modified_info = modified_info.copy()
         self.update_files(trigger_callback=False)
 
-        # remove entries in self.modified times that are not in files
+        # Remove keys in self.modified_info that are not in the files watchlist
         for name in self.modified_info.copy():
             if name not in self.files:
                 del self.modified_info[name]
@@ -110,14 +110,18 @@ class FileWatcher(object):
                 self.update_files()
                 self.check()
 
-    def update_files(self, folders=None, trigger_callback=True):
+    def update_files(self, folders=None, trigger_callback=True, recursive=True):
+        """Refresh the watchlist of files (FileWatcher.files) by checking the folders kwarg
+        or Filewatcher.folders if this is not specified.
+        """
         if folders is None:
             folders = self.folders
         for folder in folders:
             try:
                 for name in os.listdir(folder):
                     path = os.path.join(folder, name)
-                    if os.path.isdir(path):
+                    # Recurse into subdirectories
+                    if recursive and os.path.isdir(path):
                         self.update_files([path], trigger_callback)
                     else:
                         if not path in self.files:
@@ -136,12 +140,15 @@ class FileWatcher(object):
         files_to_forget = []
         for name in self.files:
             try:
-                if os.path.splitext(name)[-1] in self.hashable_types:
+                # If extension is a hashable type, use hash for modified_info
+                if os.path.splitext(name)[-1].lower() in self.hashable_types:
                     modified_info = hash_bytestr_iter(
                         file_as_blockiter(open(name, 'rb')), hashlib.md5())
+                # Otherwise use last modified time for modified_info
                 else:
                     modified_info = os.path.getmtime(name)
             except (OSError, IOError):
+                # If the file does not exist, set modified_info to None
                 if not os.path.exists(name):
                     modified_info = None
                 else:
@@ -161,7 +168,7 @@ class FileWatcher(object):
             previous_modified_info = self.modified_info.setdefault(
                 name, modified_info)
             self.modified_info[name] = modified_info
-            if modified_info != previous_modified_info:
+            if modified_info != previous_modified_info and not first_pass:
                 if modified_info == None:
                     self.callback(name, modified_info, 'deleted')
                     files_to_forget.append(name)
@@ -217,9 +224,9 @@ if __name__ == '__main__':
         if event == 'deleted' or modified is None:
             print(name, 'has been deleted')
         elif event == 'modified':
-            print(name, 'was modified at', modified)
+            print(name, 'was modified: ', modified)
         elif event == 'created':
-            print(name, 'was created at', modified)
+            print(name, 'was created at ', modified)
         elif event == 'restored':
             print(name, 'was restored (hash {})'.format(modified))
         elif event == 'original':
@@ -227,5 +234,13 @@ if __name__ == '__main__':
         else:
             print('Unknown event from filewatcher: {}'.format(event))
 
-    f = FileWatcher(callback, files='test.txt', folders='foobar',
+    test_file = 'filewatcher_test.txt'
+    test_folder = 'foobar'
+    if not os.path.exists(test_folder):
+        os.mkdir(test_folder)
+        print(f'Created folder {test_folder}')
+    if not os.path.exists(test_file):
+        with open(test_file, 'w') as f:
+            print(f'Created file {test_file}')
+    f = FileWatcher(callback, files=test_file, folders=test_folder,
                     hashable_types=['.py', '.ini', '.txt'], interval=2)
