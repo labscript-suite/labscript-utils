@@ -86,7 +86,7 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
                 del self.indents[widget]
                 label_text = self.model.headerData(logical_index, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
                 # Compatibility with both API types:
-                if isinstance(label_text, QtCore.QVariant):
+                if hasattr(QtCore, 'QVariant') and isinstance(label_text, QtCore.QVariant):
                     if label_text.isNull():
                         return
                     else:
@@ -180,7 +180,7 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
                     return
                 label_text = self.model.headerData(logical_index, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
                 # Compatibility with both API types:
-                if isinstance(label_text, QtCore.QVariant):
+                if hasattr(QtCore, 'QVariant') and isinstance(label_text, QtCore.QVariant):
                     if not label_text.isNull():
                         label_text = label_text.toString()
                     else:
