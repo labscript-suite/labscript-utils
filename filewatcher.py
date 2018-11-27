@@ -234,13 +234,14 @@ if __name__ == '__main__':
         else:
             print('Unknown event from filewatcher: {}'.format(event))
 
-    test_file = 'filewatcher_test.txt'
-    test_folder = 'foobar'
-    if not os.path.exists(test_folder):
-        os.mkdir(test_folder)
-        print(f'Created folder {test_folder}')
-    if not os.path.exists(test_file):
-        with open(test_file, 'w') as f:
-            print(f'Created file {test_file}')
-    f = FileWatcher(callback, files=test_file, folders=test_folder,
+    test_files = ['filewatcher_test.txt', 'foo/bar.txt']
+    test_folder = 'foo'
+    for path in test_files:
+        folder, _ = os.path.split(path)
+        if not os.path.exists(path):
+            if folder and not os.path.exists(folder):
+                os.makedirs(folder)
+            with open(path, 'w') as f:
+                print('Created file {}'.format(path))
+    f = FileWatcher(callback, files=test_files[0], folders=test_folder,
                     hashable_types=['.py', '.ini', '.txt'], interval=2)
