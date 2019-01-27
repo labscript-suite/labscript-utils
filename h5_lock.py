@@ -38,6 +38,9 @@ if 'h5py' in sys.modules:
     raise ImportError('h5_lock must be imported prior to importing h5py')
         
 import h5py
+# This module used to contain a monkeypatch to work around an issue now fixed in h5py.
+# Depend on the fix since we no longer have the monkeypatch.
+check_version('h5py', '2.9', '3')
 
 DEFAULT_TIMEOUT = 45
 _server_supports_readwrite = False
@@ -108,25 +111,3 @@ def connect_to_zlock_server():
 
 connect_to_zlock_server()
 hack_locks_onto_h5py()
-
-
-
-def _patch_h5py_allow_unicode_list_attrs():
-    """Monkeypatch to allow h5py to save lists of unicode strings as attributes.
-    Upstream pull request submitted: https://github.com/h5py/h5py/pull/1032"""
-    import functools
-    import numpy as np
-    orig_create = h5py._hl.attrs.AttributeManager.create
-    @functools.wraps(orig_create)
-    def create(self, name, data, shape=None, dtype=None):
-        if not isinstance(data, np.ndarray) and shape is None and dtype is None:
-            data = np.asarray(data)
-            if data.dtype.type == np.unicode_:
-                dtype = h5py.special_dtype(vlen=str)
-                data = np.array(data, dtype=dtype)
-        return orig_create(self, name, data, shape, dtype)
-
-    h5py._hl.attrs.AttributeManager.create = create
-
-_patch_h5py_allow_unicode_list_attrs()
-
