@@ -12,7 +12,7 @@
 #####################################################################
 from __future__ import division, unicode_literals, print_function, absolute_import
 
-__version__ = '2.9.1'
+__version__ = '2.10.0'
 
 
 import sys
