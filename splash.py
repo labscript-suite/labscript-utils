@@ -18,7 +18,7 @@ from qtutils.qt import QtWidgets, QtCore, QtGui
 Qt = QtCore.Qt
 
 
-class Splash(QtWidgets.QWidget):
+class Splash(QtWidgets.QFrame):
     w = 250
     h = 230
     imwidth = 150
@@ -31,7 +31,7 @@ class Splash(QtWidgets.QWidget):
         self.qapplication = QtWidgets.QApplication.instance()
         if self.qapplication is None:
             self.qapplication = QtWidgets.QApplication(sys.argv)
-        QtWidgets.QWidget.__init__(self)
+        QtWidgets.QFrame.__init__(self)
         self.icon = QtGui.QPixmap()
         self.icon.load(imagepath)
         if self.icon.isNull():
@@ -40,10 +40,13 @@ class Splash(QtWidgets.QWidget):
             self.imwidth, self.imheight, Qt.KeepAspectRatio, Qt.SmoothTransformation
         )
         self.text = 'Loading'
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.Tool)
+        self.setWindowFlags(Qt.SplashScreen)
         self.setWindowOpacity(self.alpha)
         self.label = QtWidgets.QLabel(self.text)
         self.setStyleSheet("background-color: %s; font-size: 10pt" % self.BG)
+        # Frame not necessary on macos, and looks ugly.
+        if sys.platform != 'darwin':
+            self.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.label.setWordWrap(True)
         self.label.setAlignment(Qt.AlignCenter)
         self.resize(self.w, self.h)
@@ -62,14 +65,14 @@ class Splash(QtWidgets.QWidget):
         self._first_paint_complete = False
 
     def paintEvent(self, event):
-        result = QtWidgets.QWidget.paintEvent(self, event)
+        result = QtWidgets.QFrame.paintEvent(self, event)
         if not self._first_paint_complete:
             self._first_paint_complete = True
             self.qapplication.quit()
         return result
 
     def show(self):
-        QtWidgets.QWidget.show(self)
+        QtWidgets.QFrame.show(self)
         self.update_text(self.text)
 
     def update_text(self, text):
