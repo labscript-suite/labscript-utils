@@ -30,16 +30,14 @@ class OutputBox(qtutils.outputbox.OutputBox):
     labconfig."""
 
     def __init__(self, container, scrollback_lines=1000):
-        config = get_config()
-        if config['listen_localhost_only']:
-            bind_address = 'tcp://127.0.0.1'
-        else:
-            bind_address = 'tcp://0.0.0.0'
         context = Context.instance()
+        # Since we are using our Context, which is a subclass of
+        # zprocess.security.SecureContext, we can listen on public interfaces. Insecure
+        # messages arriving from external interfaces will be disacarded
         qtutils.outputbox.OutputBox.__init__(
             self,
             container=container,
             scrollback_lines=scrollback_lines,
             zmq_context=context,
-            bind_address=bind_address,
+            bind_address='tcp://0.0.0.0',
         )

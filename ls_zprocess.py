@@ -25,7 +25,7 @@ import zprocess.zlock
 import zprocess.remote
 
 from labscript_utils import check_version
-check_version('zprocess', '2.11.2', '3.0.0')
+check_version('zprocess', '2.11.3', '3.0.0')
 
 """This module is a number of wrappers around zprocess objects that configures them with
 the settings in LabConfig with regard to security, and the host and port of the zlock
@@ -79,12 +79,6 @@ def get_config():
     except (labconfig.NoOptionError, labconfig.NoSectionError):
         # Default will be set to False once the security rollout is complete:
         config['allow_insecure'] = True
-    try:
-        config['listen_localhost_only'] = labconfig.get(
-            'security', 'listen_localhost_only'
-        )
-    except (labconfig.NoOptionError, labconfig.NoSectionError):
-        config['listen_localhost_only'] = False
     try:
         config['logging_maxBytes'] = int(labconfig.get('logging', 'maxBytes'))
     except (labconfig.NoOptionError, labconfig.NoSectionError):
@@ -140,7 +134,13 @@ class ZMQServer(zprocess.ZMQServer):
     """A ZMQServer configured with security settings from labconfig"""
 
     def __init__(
-        self, port=None, dtype='pyobj', pull_only=False, timeout_interval=None, **kwargs
+        self,
+        port=None,
+        dtype='pyobj',
+        pull_only=False,
+        bind_address='tcp://0.0.0.0',
+        timeout_interval=None,
+        **kwargs
     ):
         # There are ways to process args and exclude the keyword arguments we disallow
         # without having to include the whole function signature above, but they are
@@ -150,15 +150,11 @@ class ZMQServer(zprocess.ZMQServer):
             labscript_utils.zprocess.ZMQServer"""
 
         # Error if these args are provided, since we provide them:
-        for kwarg in ['shared_secret', 'bind_address', 'allow_insecure']:
+        for kwarg in ['shared_secret', 'allow_insecure']:
             if kwarg in kwargs:
                 raise ValueError(dedent(msg.format(kwarg)))
 
         config = get_config()
-        if config['listen_localhost_only']:
-            bind_address = 'tcp://127.0.0.1'
-        else:
-            bind_address = 'tcp://0.0.0.0'
         shared_secret = config['shared_secret']
         allow_insecure = config['allow_insecure']
 

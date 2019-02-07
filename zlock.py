@@ -44,8 +44,6 @@ def main():
         'zprocess.zlock',
         '--port',
         config['zlock_port'],
-        '--bind-address',
-        '127.0.0.1' if config['listen_localhost_only'] else '0.0.0.0',
     ]
     if config['shared_secret_file'] is not None:
         cmd += ['--shared-secret-file', config['shared_secret_file']]

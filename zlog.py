@@ -36,8 +36,6 @@ def main():
         'zprocess.zlog',
         '--port',
         str(config['zlog_port']),
-        '--bind-address',
-        '127.0.0.1' if config['listen_localhost_only'] else '0.0.0.0',
         '--cls',
         'RotatingFileHandler',
         '--maxBytes',
