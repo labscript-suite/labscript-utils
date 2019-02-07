@@ -130,6 +130,3 @@ def dedent(s):
             else:
                 unwrapped_lines.append(' ' + line)
     return ''.join(unwrapped_lines)
-
-# Required for h5_lock, setup_logging, zlock, zlog and remote:
-check_version('zprocess', '2.11.0', '3.0.0')

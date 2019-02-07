@@ -24,6 +24,8 @@ import zprocess.zlog
 import zprocess.zlock
 import zprocess.remote
 
+from labscript_utils import check_version
+check_version('zprocess', '2.11.2', '3.0.0')
 
 """This module is a number of wrappers around zprocess objects that configures them with
 the settings in LabConfig with regard to security, and the host and port of the zlock
@@ -200,9 +202,15 @@ class Context(SecureContext):
     labconfig, substitutable for a zmq.Context. Can be instantiated to get a unique
     context, or call the .instance() classmethod to possibly get an already-existing
     one. Only use the latter if you do not indent to terminate the context."""
-    def __init__(self, io_threads=1):
+    def __init__(self, io_threads=1, shared_secret=None):
         config = get_config()
-        SecureContext.__init__(
+        # Allow shared_secret only if it matches what we expect. This is because
+        # zprocess SecureContext.instance() will call our __init__ method with the
+        # shared secret whether we like it or not, so let's cooperate with that.
+        if shared_secret is not None and shared_secret != config['shared_secret']:
+            msg = "shared_secret must be None or match labconfig"
+            raise ValueError(msg)
+        SecureContext.__init__( 
             self, io_threads=io_threads, shared_secret=config['shared_secret']
         )
 
