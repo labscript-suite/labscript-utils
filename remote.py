@@ -42,6 +42,7 @@ def main():
         'zprocess.remote',
         '--port',
         str(config['zprocess_remote_port']),
+        '-tui'
     ]
     if config['shared_secret_file'] is not None:
         cmd += ['--shared-secret-file', config['shared_secret_file']]
@@ -49,7 +50,7 @@ def main():
         cmd += ['--allow-insecure']
 
     # Replace the current process with the call to zprocess.remote:
-    execv(sys.executable, cmd + sys.argv[1:])
+    execv(sys.executable, cmd)
 
 
 if __name__ == '__main__':
