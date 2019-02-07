@@ -17,6 +17,7 @@ if PY2:
 
 import zprocess
 import zprocess.process_tree
+from zprocess.security import SecureContext
 from labscript_utils.labconfig import LabConfig
 from labscript_utils import dedent
 import zprocess.zlog
@@ -192,6 +193,29 @@ class ZMQClient(zprocess.ZMQClient):
             allow_insecure=config['allow_insecure'],
         )
         return cls._instance
+
+
+class Context(SecureContext):
+    """Subclass of zprocess.security.SecureContext configured with settings from
+    labconfig, substitutable for a zmq.Context. Can be instantiated to get a unique
+    context, or call the .instance() classmethod to possibly get an already-existing
+    one. Only use the latter if you do not indent to terminate the context."""
+    def __init__(self, io_threads=1):
+        config = get_config()
+        SecureContext.__init__(
+            self, io_threads=io_threads, shared_secret=config['shared_secret']
+        )
+
+    @classmethod
+    def instance(cls):
+        config = get_config()
+        # Super required to call unbound class method of parent class:
+        return super(Context, cls).instance(shared_secret=config['shared_secret'])
+
+    def socket(self, *args, **kwargs):
+        config = get_config()
+        kwargs['allow_insecure'] = config['allow_insecure']
+        return SecureContext.socket(self, *args, **kwargs)
 
 
 def Lock(*args, **kwargs):

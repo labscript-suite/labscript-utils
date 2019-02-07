@@ -17,11 +17,11 @@ if PY2:
 
 from labscript_utils import check_version
 
-check_version('qtutils', '2.2.4', '3')
+check_version('qtutils', '2.2.3', '3')
 
 import qtutils.outputbox
 
-from labscript_utils.ls_zprocess import get_config
+from labscript_utils.ls_zprocess import get_config, Context
 
 class OutputBox(qtutils.outputbox.OutputBox):
     """A subclass of qtutils.OutputBox configured with security from labconfig.
@@ -30,16 +30,15 @@ class OutputBox(qtutils.outputbox.OutputBox):
 
     def __init__(self, container, scrollback_lines=1000):
         config = get_config()
-
         if config['listen_localhost_only']:
             bind_address='tcp://127.0.0.1'
         else:
             bind_address='tcp://0.0.0.0'
+        context = Context.instance()
         qtutils.outputbox.OutputBox.__init__(
             self,
             container=container,
             scrollback_lines=scrollback_lines,
+            zmq_context=context,
             bind_address=bind_address, 
-            shared_secret=config['shared_secret'],
-            allow_insecure=config['allow_insecure']
         )
