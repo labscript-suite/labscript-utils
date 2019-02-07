@@ -34,10 +34,16 @@ To use zprocess with LabConfig configuration, use the convenience functions defi
 the bottom of this module.
 """
 
+_cached_config = None
 
 def get_config():
     """Get relevant options from LabConfig, substituting defaults where appropriate and
     return as a dict"""
+    global _cached_config
+    # Cache the config so it is not loaded multiple times per process:
+    if _cached_config is not None:
+        return _cached_config
+
     labconfig = LabConfig()
     config = {}
     try:
@@ -84,6 +90,7 @@ def get_config():
         config['logging_backupCount'] = int(labconfig.get('logging', 'backupCount'))
     except (labconfig.NoOptionError, labconfig.NoSectionError):
         config['logging_backupCount'] = 1
+    _cached_config = config
     return config
 
 
