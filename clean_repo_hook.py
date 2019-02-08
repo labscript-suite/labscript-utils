@@ -34,6 +34,8 @@ expecting them to contain plugins. We delete empty directories too.
 
 import os
 import sys
+import shutil
+
 PY2 = sys.version_info.major == 2
 if PY2:
     str = unicode
@@ -127,7 +129,7 @@ def clean_pyc_files_and_empty_dirs(ui, repo, hooktype, **kwargs):
                 # Do not recurse into hidden directories:
                 subfolders.remove(subfolder)
         if folder in empty_folders:
-            os.rmdir(folder)
+            shutil.rmtree(folder)
             n_dirs += 1
     print("cleaned %d .pyc files and %d empty_folders" % (n_files, n_dirs))
 
