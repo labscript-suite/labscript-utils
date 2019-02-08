@@ -51,10 +51,7 @@ HOOK = 'python:%s:clean_pyc_files_and_empty_dirs' % THIS_FILE
 
 def _ensure_update_hook_repo(repo_path):
     """Add the update hook to the hgrc of the specifc repo. Do nothing if the path is
-    not a repo. Do nothing if there is already an update hook, unless it looks like this
-    hook but with a different filepath, in which case update it (the user may have moved
-    their labscript suite install dir on disk, though this is unlikely). Do nothing if
-    we do not have write access to the hgrc file."""
+    not a repo. Do nothing if we do not have write access to the hgrc file."""
     dot_hg = os.path.join(repo_path, '.hg')
     if not os.path.isdir(dot_hg):
         # No repo here.
@@ -65,10 +62,7 @@ def _ensure_update_hook_repo(repo_path):
         config.read(hgrc)
     if not config.has_section('hooks'):
         config.add_section('hooks')
-    if not config.has_option('hooks', 'update'):
-        config.set('hooks', 'update', HOOK)
-    elif 'clean_pyc_files_and_empty_dirs' in config.get('hooks', 'update'):
-        config.set('hooks', 'update', HOOK)
+    config.set('hooks', 'update.clean_repo', HOOK)
     try:
         with open(hgrc, 'w') as f:
             config.write(f)
