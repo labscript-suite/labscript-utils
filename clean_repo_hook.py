@@ -131,5 +131,5 @@ def clean_pyc_files_and_empty_dirs(ui, repo, hooktype, **kwargs):
         if folder in empty_folders:
             shutil.rmtree(folder)
             n_dirs += 1
-    print("cleaned %d .pyc files and %d empty_folders" % (n_files, n_dirs))
+    print("cleaned %d .pyc file(s) and %d empty folder(s)" % (n_files, n_dirs))
 
