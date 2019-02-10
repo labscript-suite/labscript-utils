@@ -214,3 +214,4 @@ if __name__ == '__main__':
     if 'install' in sys.argv:
         # Install the hook to the repo at current directory.
         install_hook(os.getcwd())
+        print('installed hook to repo %s' % os.path.abspath(os.getcwd()))
