@@ -57,21 +57,39 @@ if PY2:
 else:
     from configparser import ConfigParser
 
+# This file: to be copied to the .hg directory when installing the hook:
 THIS_FILE = os.path.abspath(__file__)
+
+# Path to copy this file to:
 PYTHON_HOOK_PATH = os.path.join('.hg', 'clean_repo_hook.py')
+
+# Name of the hook in the .hgrc file:
 HOOK_NAME = 'update.clean_repo'
 
+# Contents of the bash script that the hook first runs on unix.
+# The bash script simply runs the python script using the system python:
 BASH_HOOK = "#!/bin/sh\npython '{}'\n".format(PYTHON_HOOK_PATH)
 
+# List of interpreters that the labscript suite has been registered with, so that the
+# batch file on Windows can find a Python interpreter with which to run the hook:
+PYTHONS_FILE = os.path.join('.hg', 'clean_repo_hook.pythons')
+
+# Contents of the batch file that the hook first runs on Windows. The batch file reads
+# the file LIST_OF_INTERPRETERS_NAME which is a list of Python interpreters it might be
+# able to use to run the python script. It runs the first one that exists, and if none
+# exist, prints a warning and exits.
 BAT_HOOK = """@echo off
-if exist "{python}" (
-    "{python}" "{hook}"
-) else (
-    echo {hook_name} hook: "Python interpreter {python} not found; skipping.
-    echo     Reinstall hook to reactivate. This will happen automatically when
-    echo     registering the labscript suite install with a new Python environment.
+for /F "tokens=*" %%i in ({pythons}) do (
+    if exist "%%i" (
+        "%%i" "{hook}"
+        exit 0
+    )
 )
-""".format(python=sys.executable, hook=PYTHON_HOOK_PATH, hook_name=HOOK_NAME)
+echo {hook_name} hook: No Python interpreter found; skipping. Register the
+echo    labscript suite installation with a Python environment to reactivate hook.
+""".format(
+    pythons=PYTHONS_FILE, hook=PYTHON_HOOK_PATH, hook_name=HOOK_NAME
+)
 
 
 if os.name == 'nt':
@@ -89,6 +107,29 @@ def _chmod_plus_x(path):
     subprocess.run(['chmod', '+x', path])
 
 
+def _save_interpreters(repo_path):
+    """Add sys.executable to PYTHONS_FILE, creating it if it exists,
+    and removing any interpreters from it that don't exist anymore"""
+    pythons_file = os.path.join(repo_path, PYTHONS_FILE)
+    if os.path.exists(pythons_file):
+        with open(pythons_file) as f:
+            pythons = f.read().splitlines()
+    else:
+        pythons = []
+
+    # Add ourself:
+    pythons.append(sys.executable)
+    # Make unique:
+    pythons = list(set(pythons))
+    # Remove non-existing interpreters:
+    for python in pythons:
+        if not os.path.exists(python):
+            pythons.remove(python)
+    # Save:
+    with open(pythons_file, 'w') as f:
+        f.write('\n'.join(pythons))
+
+
 def install_hook(repo_path):
     """Add the update hook to the hgrc of the given repo. On Windows, the hook will
     include the path to the current Python interpreter, and so the hook will stop
@@ -98,6 +139,7 @@ def install_hook(repo_path):
     dot_hg = os.path.join(repo_path, '.hg')
     if not os.path.isdir(dot_hg):
         raise ValueError('no hg repository here')
+
     hgrc = os.path.join(dot_hg, 'hgrc')
     config = ConfigParser()
     if os.path.exists(hgrc):
@@ -114,14 +156,16 @@ def install_hook(repo_path):
     # Give it execute permissions if necessary:
     _chmod_plus_x(shell_hook_path)
     # Copy this script into the hgrc folder
-    shutil.copy(THIS_FILE, dot_hg)
+    shutil.copy(THIS_FILE, os.path.join(repo_path, PYTHON_HOOK_PATH))
+    # Save the Python interpreter so that the hook can use it on Windows:
+    if os.name == 'nt':
+        _save_interpreters(repo_path)
 
 
 def clean_pyc_files_and_empty_dirs(repo_path):
     """Delete all .pyc files and empty folders within non-hidden directories inside a hg
     repository."""
-
-    # Make sure we're not running outside a hg repository:
+    repo_path = os.path.abspath(repo_path)
     if not os.path.exists(os.path.join(repo_path, '.hg')):
         raise ValueError('no hg repository here')
 
@@ -166,3 +210,6 @@ if __name__ == '__main__':
     if os.getenv('HG_HOOKNAME', None) == HOOK_NAME:
         # We are running as a hg hook. Do the cleaning:
         clean_pyc_files_and_empty_dirs(os.getcwd())
+    if 'install' in sys.argv:
+        # Install the hook to the repo at current directory.
+        install_hook(os.getcwd())
