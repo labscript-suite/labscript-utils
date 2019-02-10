@@ -17,18 +17,6 @@ This module contains a mercurial hook to delete all .pyc files and empty folders
 non-hidden directories inside a hg repository, as well as a function to add the hook to
 the hgrc of the labscript repositories.
 
-The hook can be installed by running install_hook(repo_path). This will write a .sh or
-.bat file within th .hg directory of the repo, copy this script to the .hg directory as
-well, and add a hook to the hgrc file there. The hook will run the .bat or .sh file,
-which in turn will run the python script. This indirection is due to the fact that on
-windows, we won't have a Python interpreter in our PATH, and so the batch script will
-look up in the labscript suite install directory what the path to a Python interpreter
-is, so that it can execute the script. And on non-windows we just keep the structure the
-same with a .sh file for consistency. Whilst mercurual can run python-based hooks within
-its own interpreter, these must either be in the PYTHONPATH or specified with an
-absolute path, which is too fragile. So we do this indirection to make sure it will keep
-working no matter how the repo is moved around.
-
 When using mercurial to upgrade and downgrade labscript suite repositories, untracked
 .pyc files from one revision may remain after updating to a different revision. This is
 usually not a problem since Python will just regenerate them. However it can be a
@@ -43,6 +31,23 @@ The labscript suite is not such an application, so we delete these errant .pyc f
 
 Application behaviour may also differ based on the presence of directories, such as
 expecting them to contain plugins. We delete empty directories too.
+
+The hook can be installed by calling install_hook(repo_path), or by calling this script with:
+
+    python -m labscript_utils.clean_repo_hook install
+
+From within a mercurial repository. This will write a .sh or .bat file within the .hg
+directory of the repo, copy this script to the .hg directory as well, and add a hook to
+the hgrc file there. The hook will run the .bat or .sh file, which in turn will run the
+python script. This indirection is due to the fact that on Windows, we won't have a
+Python interpreter in our PATH, and so the batch script will look up in yet another file
+what the path to a Python interpreter is, so that it can execute the script. And on
+non-windows we just keep the structure the same with a .sh file for consistency. Whilst
+mercurual can run python-based hooks within its own interpreter, these must either be in
+the PYTHONPATH or specified with an absolute path, which is too fragile given that the
+repository may move on disk, and we don't want to permenently set PYTHONPATH or add a
+file somewhere else in the filesystem. So we do this indirection to make sure it will
+keep working no matter how the repo is moved around.
 """
 
 import os
