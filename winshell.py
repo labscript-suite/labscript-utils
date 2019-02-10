@@ -12,16 +12,17 @@ for path in sys.path:
 else:
     labscript_installation = '<not_installed>'
 
-# Including the install directory in the below AppId strings ensures they are unique
-# to the install. If they are not, then installing to one directory, uninstalling,
-# and reinstalling to another makes the Windows AppId API behave unpredictably.
-# Shortcuts don't work, and icons are broken.
-# This if of particular importance when developing on the same machine as you are
-# deploying to.
-appids = {'runmanager': 'Monashbec.Labscript.Runmanager.%s'%labscript_installation,
-         'runviewer': 'Monashbec.Labscript.Runviewer.%s'%labscript_installation,
-         'blacs': 'Monashbec.Labscript.Blacs.%s'%labscript_installation,
-         'lyse': 'Monashbec.Labscript.Lyse.%s'%labscript_installation}
+# Including the install directory and python interpreter in the below AppId strings
+# ensures they are unique to the install location and any conda env or virtualenv. If
+# they were not, then installing to one directory, uninstalling, and reinstalling to
+# another would make the Windows AppId API behave unpredictably. Shortcuts don't work,
+# and icons are broken. This if of particular importance when developing on the same
+# machine as you are deploying to.
+_INSTALL = '%s.%s' % (labscript_installation, sys.executable)
+appids = {'runmanager': 'Monashbec.Labscript.Runmanager.%s'%_INSTALL,
+         'runviewer': 'Monashbec.Labscript.Runviewer.%s'%_INSTALL,
+         'blacs': 'Monashbec.Labscript.Blacs.%s'%_INSTALL,
+         'lyse': 'Monashbec.Labscript.Lyse.%s'%_INSTALL}
 
 app_descriptions = {'runmanager': 'runmanager - the labscript suite',
                    'runviewer': 'runviewer - the labscript suite',
