@@ -130,8 +130,3 @@ def dedent(s):
             else:
                 unwrapped_lines.append(' ' + line)
     return ''.join(unwrapped_lines)
-
-# Ensure the labscript suite repos have an update hook to delete stale .pyc files and
-# empty folders when switching revisions:
-from labscript_utils.clean_repo_hook import ensure_update_hook
-ensure_update_hook(labscript_suite_install_dir)

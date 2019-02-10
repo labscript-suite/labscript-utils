@@ -11,10 +11,23 @@
 #                                                                   #
 #####################################################################
 from __future__ import print_function, unicode_literals, division, absolute_import
+
 """
 This module contains a mercurial hook to delete all .pyc files and empty folders within
 non-hidden directories inside a hg repository, as well as a function to add the hook to
 the hgrc of the labscript repositories.
+
+The hook can be installed by running install_hook(repo_path). This will write a .sh or
+.bat file within th .hg directory of the repo, copy this script to the .hg directory as
+well, and add a hook to the hgrc file there. The hook will run the .bat or .sh file,
+which in turn will run the python script. This indirection is due to the fact that on
+windows, we won't have a Python interpreter in our PATH, and so the batch script will
+look up in the labscript suite install directory what the path to a Python interpreter
+is, so that it can execute the script. And on non-windows we just keep the structure the
+same with a .sh file for consistency. Whilst mercurual can run python-based hooks within
+its own interpreter, these must either be in the PYTHONPATH or specified with an
+absolute path, which is too fragile. So we do this indirection to make sure it will keep
+working no matter how the repo is moved around.
 
 When using mercurial to upgrade and downgrade labscript suite repositories, untracked
 .pyc files from one revision may remain after updating to a different revision. This is
@@ -35,6 +48,7 @@ expecting them to contain plugins. We delete empty directories too.
 import os
 import sys
 import shutil
+import subprocess
 
 PY2 = sys.version_info.major == 2
 if PY2:
@@ -43,60 +57,80 @@ if PY2:
 else:
     from configparser import ConfigParser
 
-REPOS = ['runmanager', 'runviewer', 'blacs', 'labscript', 'lyse', 'labscript_utils']
-
 THIS_FILE = os.path.abspath(__file__)
-HOOK = 'python:%s:clean_pyc_files_and_empty_dirs' % THIS_FILE
+PYTHON_HOOK_PATH = os.path.join('.hg', 'clean_repo_hook.py')
+HOOK_NAME = 'update.clean_repo'
+
+BASH_HOOK = "#!/bin/sh\npython '{}'\n".format(PYTHON_HOOK_PATH)
+
+BAT_HOOK = """@echo off
+if exist "{python}" (
+    "{python}" "{hook}"
+) else (
+    echo {hook_name} hook: "Python interpreter {python} not found; skipping.
+    echo     Reinstall hook to reactivate. This will happen automatically when
+    echo     registering the labscript suite install with a new Python environment.
+)
+""".format(python=sys.executable, hook=PYTHON_HOOK_PATH, hook_name=HOOK_NAME)
 
 
-def _ensure_update_hook_repo(repo_path):
-    """Add the update hook to the hgrc of the specifc repo. Do nothing if the path is
-    not a repo. Do nothing if we do not have write access to the hgrc file."""
+if os.name == 'nt':
+    SHELL_HOOK = BAT_HOOK
+    SHELL_HOOK_PATH = os.path.join('.hg', 'clean_repo_hook.bat')
+else:
+    SHELL_HOOK = BASH_HOOK
+    SHELL_HOOK_PATH = os.path.join('.hg', 'clean_repo_hook.sh')
+
+
+def _chmod_plus_x(path):
+    if os.name == 'nt':
+        return
+    # This is so much simpler than the os module calls neccesary to do the same:
+    subprocess.run(['chmod', '+x', path])
+
+
+def install_hook(repo_path):
+    """Add the update hook to the hgrc of the given repo. On Windows, the hook will
+    include the path to the current Python interpreter, and so the hook will stop
+    working if Python is uninstalled, and will print a warning instead. Call this
+    function again to reinstall the hook for a new Python interpreter."""
+    repo_path = os.path.abspath(repo_path)
     dot_hg = os.path.join(repo_path, '.hg')
     if not os.path.isdir(dot_hg):
-        # No repo here.
-        return
+        raise ValueError('no hg repository here')
     hgrc = os.path.join(dot_hg, 'hgrc')
     config = ConfigParser()
     if os.path.exists(hgrc):
         config.read(hgrc)
     if not config.has_section('hooks'):
         config.add_section('hooks')
-    config.set('hooks', 'update.clean_repo', HOOK)
-    try:
-        with open(hgrc, 'w') as f:
-            config.write(f)
-    except (OSError, IOError):
-        # Do nothing if we can't write the config file
-        pass
+    config.set('hooks', HOOK_NAME, SHELL_HOOK_PATH)
+    with open(hgrc, 'w') as f:
+        config.write(f)
+    shell_hook_path = os.path.join(repo_path, SHELL_HOOK_PATH)
+    # Write the shell script to the .hg folder:
+    with open(shell_hook_path, 'w') as f:
+        f.write(SHELL_HOOK)
+    # Give it execute permissions if necessary:
+    _chmod_plus_x(shell_hook_path)
+    # Copy this script into the hgrc folder
+    shutil.copy(THIS_FILE, dot_hg)
 
 
-def ensure_update_hook(labscript_suite_install_dir):
-    """Ensure the mercurial repositories for labscript applications within the given
-    labscript suite install dir have a mercurial hook to run clean_pyc_files upon
-    updating"""
-
-    # Do nothing if it doesn't look like we're running from within a regular install:
-    if labscript_suite_install_dir is None:
-        return
-    if not THIS_FILE.startswith(labscript_suite_install_dir):
-        return
-
-    for repo in REPOS:
-        repo_path = os.path.join(labscript_suite_install_dir, repo)
-        _ensure_update_hook_repo(repo_path)
-
-
-def clean_pyc_files_and_empty_dirs(ui, repo, hooktype, **kwargs):
+def clean_pyc_files_and_empty_dirs(repo_path):
     """Delete all .pyc files and empty folders within non-hidden directories inside a hg
     repository."""
 
+    # Make sure we're not running outside a hg repository:
+    if not os.path.exists(os.path.join(repo_path, '.hg')):
+        raise ValueError('no hg repository here')
+
     # First pass, breadth first, to delete .pyc files without entering hidden
     # directories:
-    print("labscript_utils.clean_repo_hook: ", end='')
+    print("%s hook: " % HOOK_NAME, end='')
     n_files = 0
     n_dirs = 0
-    for folder, subfolders, files in os.walk(repo.root, topdown=True):
+    for folder, subfolders, files in os.walk(os.getcwd(), topdown=True):
         for subfolder in subfolders[:]:
             if subfolder.startswith('.'):
                 # Do not recurse into hidden directories:
@@ -110,14 +144,14 @@ def clean_pyc_files_and_empty_dirs(ui, repo, hooktype, **kwargs):
     # Second pass, depth-first, to find empty folders. This will find results in hidden
     # folders, which we don't want to delete, so we don't delete them quite yet:
     empty_folders = []
-    for folder, subfolders, files in os.walk(repo.root, topdown=False):
+    for folder, subfolders, files in os.walk(repo_path, topdown=False):
         if all(f in empty_folders for f in subfolders) and not files:
             # Folder is either empty, or contains only a tree of empty dirs:
             empty_folders.append(folder)
 
     # Third pass, breadth-first again, to delete empty folders found in the previous
     # pass, but without recursing into hidden folders.
-    for folder, subfolders, files in os.walk(repo.root, topdown=True):
+    for folder, subfolders, files in os.walk(repo_path, topdown=True):
         for subfolder in subfolders[:]:
             if subfolder.startswith('.'):
                 # Do not recurse into hidden directories:
@@ -127,3 +161,8 @@ def clean_pyc_files_and_empty_dirs(ui, repo, hooktype, **kwargs):
             n_dirs += 1
     print("cleaned %d .pyc file(s) and %d empty folder(s)" % (n_files, n_dirs))
 
+
+if __name__ == '__main__':
+    if os.getenv('HG_HOOKNAME', None) == HOOK_NAME:
+        # We are running as a hg hook. Do the cleaning:
+        clean_pyc_files_and_empty_dirs(os.getcwd())
