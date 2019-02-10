@@ -85,8 +85,9 @@ for /F "tokens=*" %%i in ({pythons}) do (
         exit 0
     )
 )
-echo {hook_name} hook: No Python interpreter found; skipping. Register the
-echo    labscript suite installation with a Python environment to reactivate hook.
+echo {hook_name} hook: No Python interpreter found; skipping.
+echo    Run 'python -m labscript_utils.clean_repo_hook install'
+echo    in the repository's root directory to reinstall the hook.
 """.format(
     pythons=PYTHONS_FILE, hook=PYTHON_HOOK_PATH, hook_name=HOOK_NAME
 )
