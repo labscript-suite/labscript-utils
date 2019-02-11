@@ -2,10 +2,8 @@ from __future__ import division, unicode_literals, print_function, absolute_impo
 
 import os
 import sys
-import subprocess
-
-this_folder = os.path.realpath(os.path.dirname(__file__))
-Win7AppId = os.path.join(this_folder, 'Win7AppId1.1.exe')
+if sys.version_info.major == 2:
+    str = unicode
 
 for path in sys.path:
     if os.path.exists(os.path.join(path, '.is_labscript_suite_install_dir')):
@@ -14,16 +12,17 @@ for path in sys.path:
 else:
     labscript_installation = '<not_installed>'
 
-# Including the install directory in the below AppId strings ensures they are unique
-# to the install. If they are not, then installing to one directory, uninstalling,
-# and reinstalling to another makes the Windows AppId API behave unpredictably.
-# Shortcuts don't work, and icons are broken.
-# This if of particular importance when developing on the same machine as you are
-# deploying to.
-appids = {'runmanager': 'Monashbec.Labscript.Runmanager.%s'%labscript_installation,
-         'runviewer': 'Monashbec.Labscript.Runviewer.%s'%labscript_installation,
-         'blacs': 'Monashbec.Labscript.Blacs.%s'%labscript_installation,
-         'lyse': 'Monashbec.Labscript.Lyse.%s'%labscript_installation}
+# Including the install directory and python interpreter in the below AppId strings
+# ensures they are unique to the install location and any conda env or virtualenv. If
+# they were not, then installing to one directory, uninstalling, and reinstalling to
+# another would make the Windows AppId API behave unpredictably. Shortcuts don't work,
+# and icons are broken. This if of particular importance when developing on the same
+# machine as you are deploying to.
+_INSTALL = '%s.%s' % (labscript_installation, sys.executable)
+appids = {'runmanager': 'Monashbec.Labscript.Runmanager.%s'%_INSTALL,
+         'runviewer': 'Monashbec.Labscript.Runviewer.%s'%_INSTALL,
+         'blacs': 'Monashbec.Labscript.Blacs.%s'%_INSTALL,
+         'lyse': 'Monashbec.Labscript.Lyse.%s'%_INSTALL}
 
 app_descriptions = {'runmanager': 'runmanager - the labscript suite',
                    'runviewer': 'runviewer - the labscript suite',
@@ -31,8 +30,10 @@ app_descriptions = {'runmanager': 'runmanager - the labscript suite',
                    'lyse': 'lyse - the labscript suite'}
 
 def make_shortcut(path, target, arguments, working_directory, icon_path, description, appid):
-    import sys, os
+    from win32com.shell import shellcon
     from win32com.client import Dispatch
+    from win32com.propsys import propsys, pscon
+    import pythoncom
     shell = Dispatch('WScript.Shell')
     shortcut = shell.CreateShortcut(path)
     shortcut.TargetPath = target
@@ -41,14 +42,16 @@ def make_shortcut(path, target, arguments, working_directory, icon_path, descrip
     shortcut.IconLocation = icon_path
     shortcut.Description = description
     shortcut.save()
-    # The normal windows API calls don't seem to be able to set the appid of the shortcut.
-    # The required API calls are either absent or not wrapped by pywin32. So we use this
-    # command line utility that does it in C++:
-    child = subprocess.Popen([Win7AppId, path, appid],
-                             stdout = subprocess.PIPE, stderr = subprocess.PIPE)
-    stdout, stderr = child.communicate()
-    if child.returncode != 0:
-        raise OSError('Failed to set UserModelAppId of shortcut.\n' + stdout + stderr)
+
+    store = propsys.SHGetPropertyStoreFromParsingName(
+        path, None, shellcon.GPS_READWRITE, propsys.IID_IPropertyStore
+    )
+    store.SetValue(
+        pscon.PKEY_AppUserModel_ID,
+        propsys.PROPVARIANTType(str(appid), pythoncom.VT_LPWSTR),
+    )
+    store.Commit()
+
 
 def set_appusermodel(window_id, appid, icon_path, relaunch_command, relaunch_display_name):
     from win32com.propsys import propsys, pscon
@@ -70,7 +73,6 @@ def remove_from_start_menu(name):
     """Removes given .lnk file from the start menu.
     If entry not present, does nothing."""
     from win32com.client import Dispatch
-    import shutil
     name = os.path.basename(name)
     objShell = Dispatch("WScript.Shell")
     start_menu_programs = objShell.SpecialFolders("Programs")
