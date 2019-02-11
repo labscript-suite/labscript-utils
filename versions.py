@@ -88,7 +88,7 @@ def _get_metadata_version(project_name, import_path):
                 msg = ERR_BROKEN_INSTALL.format(package=project_name, path=import_path)
                 raise BrokenInstall(msg)
             if dists:
-                return dists[0]
+                return dists[0].version
 
 
 def _get_literal_version(filename):
@@ -102,25 +102,19 @@ def _get_literal_version(filename):
             tokens = list(tokenize.generate_tokens(f.readline))
         except tokenize.TokenError:
             tokens = []
-        for i, token in enumerate(tokens):
+        for i, token in enumerate(tokens[:-2]):
             token_type, token_str, _, _, _ = token
             if token_type == tokenize.NAME and token_str == '__version__':
-                try:
-                    next_token = tokens[i + 1]
-                except IndexError:
-                    continue
-                if next_token[0] != tokenize.OP or next_token[1] != '=':
-                    continue
-                try:
-                    next_token = tokens[i + 2]
-                except IndexError:
-                    continue
-                try:
-                    version = ast.literal_eval(next_token[1])
-                    if version is not None:
-                        return version
-                except (SyntaxError, ValueError):
-                    continue
+                next_token_type, next_token_str, _, _, _ = tokens[i + 1]
+                if next_token_type == tokenize.OP and next_token_str == '=':
+                    next_next_token_type, next_next_token_str, _, _, _ = tokens[i + 2]
+                    if next_next_token_type == tokenize.STRING:
+                        try:
+                            version = ast.literal_eval(next_next_token_str)
+                            if version is not None:
+                                return version
+                        except (SyntaxError, ValueError):
+                            continue
 
 
 def get_version(import_name, project_name=None):
