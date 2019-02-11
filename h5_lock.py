@@ -12,24 +12,18 @@
 #####################################################################
 from __future__ import division, unicode_literals, print_function, absolute_import
 
-import os
 import sys
-import socket
-import threading
-import subprocess
-import weakref
+from socket import gethostbyname
 from distutils.version import LooseVersion
 
 import zmq
-import zprocess.locking
-from zprocess.locking import set_default_timeout
+from labscript_utils.ls_zprocess import Lock, ProcessTree 
+
 from labscript_utils import check_version
 
-check_version('zprocess', '2.2.0', '3.0.0')
 from zprocess import start_daemon
 
 from labscript_utils.shared_drive import path_to_agnostic
-from labscript_utils.labconfig import LabConfig
 from labscript_utils import PY2
 if PY2:
     str = unicode
@@ -51,7 +45,7 @@ def hack_locks_onto_h5py():
             kwargs = {}
             if _server_supports_readwrite and mode == 'r':
                 kwargs['read_only'] = True
-            self.zlock = zprocess.locking.Lock(path_to_agnostic(name), **kwargs)
+            self.zlock = Lock(path_to_agnostic(name), **kwargs)
             self.zlock.acquire()
         try:
             _orig_init(self, name, mode, driver, libver, **kwds)
@@ -76,37 +70,35 @@ def hack_locks_onto_h5py():
     h5py.File.close = close 
 
 def connect_to_zlock_server():
-    # setup connection with the zprocess.locking server, depending on labconfig settings: 
-    config = LabConfig(required_params={'ports':['zlock'],'servers':['zlock']})
-    host = config.get('servers','zlock')
-    port = config.get('ports','zlock')
-    if socket.gethostbyname(host) == socket.gethostbyname('localhost'):
+    # Ensure we are connected to a zlock server, and start one if one is supposed
+    # to be running on localhost but is not.
+    client = ProcessTree.instance().zlock_client
+    if gethostbyname(client.host) == gethostbyname('localhost'):
         try:
             # short connection timeout if localhost, don't want to
             # waste time:
-            zprocess.locking.connect(host,port,timeout=0.05)
+            client.ping(timeout=0.05)
         except zmq.ZMQError:
-            # No zprocess.locking server running on localhost. Start one. It will run
-            # forever, even after this program exits. This is important for
-            # other programs which might be using it. I don't really consider
-            # this bad practice since the server is typically supposed to
-            # be running all the time:
-            start_daemon([sys.executable, '-m', 'zprocess.locking'])
+            # No zlock server running on localhost. Start one. It will run forever, even
+            # after this program exits. This is important for other programs which might
+            # be using it. I don't really consider this bad practice since the server is
+            # typically supposed to be running all the time:
+            start_daemon([sys.executable, '-m', 'labscript_utils.zlock'])
             # Try again. Longer timeout this time, give it time to start up:
-            zprocess.locking.connect(host,port,timeout=15)
+            client.ping(timeout=15)
     else:
-        zprocess.locking.connect(host, port)
+        client.ping()
 
     # Check if the zlock server supports read-write locks:
     global _server_supports_readwrite
-    if hasattr(zprocess.locking, 'get_protocol_version'):
-        version = zprocess.locking.get_protocol_version()
+    if hasattr(client, 'get_protocol_version'):
+        version = client.get_protocol_version()
         if LooseVersion(version) >= LooseVersion('1.1.0'):
             _server_supports_readwrite = True
 
     # The user can call these functions to change the timeouts later if they
     # are not to their liking:
-    set_default_timeout(DEFAULT_TIMEOUT)
+    client.set_default_timeout(DEFAULT_TIMEOUT)
 
 
 connect_to_zlock_server()
