@@ -13,7 +13,6 @@
 from __future__ import print_function, unicode_literals, absolute_import, division
 import sys
 import os
-import pkg_resources
 import importlib
 import tokenize
 import ast
@@ -21,9 +20,18 @@ from distutils.version import LooseVersion
 
 PY2 = sys.version_info.major == 2
 if PY2:
-    import imp
-
     str = unicode
+    import imp
+    from imp import acquire_lock, release_lock, find_module
+else:
+    from _imp import acquire_lock, release_lock
+
+try:
+    # This will be in the standard library in Python 3.8:
+    from importlib.metadata import distribution, PackageNotFoundError
+except ImportError:
+    # This is the backport of the Python 3.8 stdlib module,
+    from importlib_metadata import distribution, PackageNotFoundError
 
 
 class NotFound(object):
@@ -34,7 +42,7 @@ class NoVersionInfo(object):
     pass
 
 
-class VersionException(Exception):
+class VersionException(RuntimeError):
     pass
 
 
@@ -42,7 +50,7 @@ def _get_import_path(import_name):
     """Get which entry in sys.path a module would be imported from, without importing
     it."""
     if PY2:
-        _, location, _ = imp.find_module(import_name)
+        _, location, _ = find_module(import_name)
         return os.path.dirname(location)
     spec = importlib.util.find_spec(import_name)
     if spec is None:
@@ -60,12 +68,24 @@ def _get_import_path(import_name):
         return os.path.dirname(location)
 
 
-def _get_pkg_resources_version(project_name, import_path):
-    """Return the pkg_resources version for a package with the given project name
-    located at the given import path, or None if there is no such package."""
-    for pkg in pkg_resources.working_set:
-        if pkg.project_name == project_name and pkg.location == import_path:
-            return pkg.version
+def _get_metadata_version(project_name, import_path):
+    """Return the metadata version for a package with the given project name located at
+    the given import path, or None if there is no such package."""
+    try:
+        # This is just a trick to make the searcher only search in the given path. We
+        # acquire the import lock for thread-safety. Would be nice if distribution()
+        # took a path argument.
+        acquire_lock()
+        orig_sys_path = sys.path
+        sys.path = [import_path]
+        dist = distribution(project_name)
+    except PackageNotFoundError:
+        return None
+    finally:
+        sys.path = orig_sys_path
+        release_lock()
+    dist_location = os.path.dirname(dist._path)
+    return dist.version
 
 
 def _get_literal_version(filename):
@@ -122,7 +142,7 @@ def get_version(import_name, project_name=None):
     except ImportError:
         return NotFound
     # Check if pkg_resources knows about this module:
-    version = _get_pkg_resources_version(project_name, import_path)
+    version = _get_metadata_version(project_name, import_path)
     if version is not None:
         return version
     # Check if it has a version literal defined in a __version__.py file:
