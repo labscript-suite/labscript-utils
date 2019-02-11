@@ -45,6 +45,16 @@ class VersionException(RuntimeError):
     pass
 
 
+class BrokenInstall(RuntimeError):
+    pass
+
+
+ERR_BROKEN_INSTALL = """Multiple metadata files for {package} found in {path}; cannot
+reliably get version information. This indicates a previous version of the package was
+not properly removed. You may want to uninstall the package, manually delete remaining
+metadata files/folders, then reinstall the package.""".replace('\n', ' ')
+
+
 def _get_import_path(import_name):
     """Get which entry in sys.path a module would be imported from, without importing
     it."""
@@ -73,9 +83,12 @@ def _get_metadata_version(project_name, import_path):
     for finder in sys.meta_path:
         if  hasattr(finder, 'find_distributions'):
             dists = finder.find_distributions(name=project_name, path=[import_path])
-            dist = next(dists, None)
-            if dist is not None:
-                return dist.version
+            dists = list(dists)
+            if len(dists) > 1:
+                msg = ERR_BROKEN_INSTALL.format(package=project_name, path=import_path)
+                raise BrokenInstall(msg)
+            if dists:
+                return dists[0]
 
 
 def _get_literal_version(filename):
