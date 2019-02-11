@@ -84,7 +84,6 @@ def _get_metadata_version(project_name, import_path):
     finally:
         sys.path = orig_sys_path
         release_lock()
-    dist_location = os.path.dirname(dist._path)
     return dist.version
 
 
