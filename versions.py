@@ -22,16 +22,15 @@ PY2 = sys.version_info.major == 2
 if PY2:
     str = unicode
     import imp
-    from imp import acquire_lock, release_lock, find_module
-else:
-    from _imp import acquire_lock, release_lock
 
+# The following import looks pointless, but is required for its side effects. Finders
+# are added to sys.meta_path that we use:
 try:
     # This will be in the standard library in Python 3.8:
-    from importlib.metadata import distribution, PackageNotFoundError
+    import importlib.metadata
 except ImportError:
     # This is the backport of the Python 3.8 stdlib module,
-    from importlib_metadata import distribution, PackageNotFoundError
+    import importlib_metadata
 
 
 class NotFound(object):
@@ -50,7 +49,7 @@ def _get_import_path(import_name):
     """Get which entry in sys.path a module would be imported from, without importing
     it."""
     if PY2:
-        _, location, _ = find_module(import_name)
+        _, location, _ = imp.find_module(import_name)
         return os.path.dirname(location)
     spec = importlib.util.find_spec(import_name)
     if spec is None:
@@ -71,20 +70,12 @@ def _get_import_path(import_name):
 def _get_metadata_version(project_name, import_path):
     """Return the metadata version for a package with the given project name located at
     the given import path, or None if there is no such package."""
-    try:
-        # This is just a trick to make the searcher only search in the given path. We
-        # acquire the import lock for thread-safety. Would be nice if distribution()
-        # took a path argument.
-        acquire_lock()
-        orig_sys_path = sys.path
-        sys.path = [import_path]
-        dist = distribution(project_name)
-    except PackageNotFoundError:
-        return None
-    finally:
-        sys.path = orig_sys_path
-        release_lock()
-    return dist.version
+    for finder in sys.meta_path:
+        if  hasattr(finder, 'find_distributions'):
+            dists = finder.find_distributions(name=project_name, path=[import_path])
+            dist = next(dists, None)
+            if dist is not None:
+                return dist.version
 
 
 def _get_literal_version(filename):
@@ -198,3 +189,4 @@ if __name__ == '__main__':
     assert get_version('plsgtbg') == NotFound
     assert type(get_version('labscript_utils')) in [str, bytes]
     assert type(get_version('numpy')) in [str, bytes]
+    assert type(get_version('serial', 'pyserial')) in [str, bytes]
