@@ -28,10 +28,6 @@ for path in sys.path:
 else:
     labscript_suite_install_dir = None
 
-# Enforce that the same file can't be imported under multiple names, to help
-# prevent subtle bugs:
-import labscript_utils.double_import_denier
-labscript_utils.double_import_denier.enable()
 
 class VersionException(Exception):
     pass
@@ -130,3 +126,18 @@ def dedent(s):
             else:
                 unwrapped_lines.append(' ' + line)
     return ''.join(unwrapped_lines)
+
+
+# Enforce that the same file can't be imported under multiple names, to help
+# prevent subtle bugs:
+import labscript_utils.double_import_denier
+labscript_utils.double_import_denier.enable()
+
+
+# Disable the 'quick edit' feature of Windows' cmd.exe, which causes console applicatons
+# to freeze if their console windows are merely clicked on. This causes all kinds of
+# headaches, so we disable it in all labscript programs:
+check_version('zprocess', '2.10.0', '3.0')
+import zprocess
+zprocess.disable_quick_edit()
+
