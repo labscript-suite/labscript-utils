@@ -25,7 +25,7 @@ import zprocess.zlock
 import zprocess.remote
 
 from labscript_utils import check_version
-check_version('zprocess', '2.11.3', '3.0.0')
+check_version('zprocess', '2.11.7', '3.0.0')
 
 """This module is a number of wrappers around zprocess objects that configures them with
 the settings in LabConfig with regard to security, and the host and port of the zlock
