@@ -83,7 +83,9 @@ def connect_to_zlock_server():
             # after this program exits. This is important for other programs which might
             # be using it. I don't really consider this bad practice since the server is
             # typically supposed to be running all the time:
-            start_daemon([sys.executable, '-m', 'labscript_utils.zlock'])
+            start_daemon(
+                [sys.executable, '-m', 'labscript_utils.zlock', '--daemon']
+            )
             # Try again. Longer timeout this time, give it time to start up:
             client.ping(timeout=15)
     else:
