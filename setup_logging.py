@@ -47,7 +47,9 @@ def ensure_connected_to_zlog():
             # after this program exits. This is important for other programs which might
             # be using it. I don't really consider this bad practice since the server is
             # typically supposed to be running all the time:
-            start_daemon([sys.executable, '-m', 'labscript_utils.zlog'])
+            start_daemon(
+                [sys.executable, '-m', 'labscript_utils.zlog', '--daemon']
+            )
             # Try again. Longer timeout this time, give it time to start up:
             client.ping(timeout=15)
     else:

@@ -21,10 +21,13 @@ import sys
 from os import execv
 from socket import gethostbyname
 from labscript_utils.ls_zprocess import get_config
+from zprocess import start_daemon
 
 """Script to run a zlock server configured according to LabConfig. Run with:
 
-    python -m labscript_utils.zlock
+    python -m labscript_utils.zlock [--daemon]
+
+if --daemon is specified, the zlock server will be started in the background.
 """
 
 
@@ -50,8 +53,10 @@ def main():
     if config['allow_insecure']:
         cmd += ['--allow-insecure']
 
-    # Replace the current process with the call to zlock:
-    execv(sys.executable, cmd)
+    if '--daemon' in sys.argv:
+        start_daemon(cmd)
+    else:
+        execv(sys.executable, cmd)
 
 
 if __name__ == '__main__':
