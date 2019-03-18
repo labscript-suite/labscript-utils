@@ -15,6 +15,11 @@ from labscript_utils import PY2
 if PY2:
     str = unicode
 
+import sys
+from socket import gethostbyname
+from distutils.version import LooseVersion
+import zmq
+
 import zprocess
 import zprocess.process_tree
 from zprocess.security import SecureContext
@@ -223,6 +228,9 @@ class Context(SecureContext):
 
 
 def Lock(*args, **kwargs):
+    if 'read_only' in kwargs and not _zlock_server_supports_readwrite:
+        # Ignore read_only argument if the server does not support it:
+        del kwargs['read_only']
     return ProcessTree.instance().lock(*args, **kwargs)
 
 
@@ -270,3 +278,72 @@ def RemoteProcessClient(host):
     config = get_config()
     port = config['zprocess_remote_port']
     return ProcessTree.instance().remote_process_client(host, port)
+
+
+ZLOCK_DEFAULT_TIMEOUT = 45
+_zlock_server_supports_readwrite = False
+
+def connect_to_zlock_server():
+    # Ensure we are connected to a zlock server, and start one if one is supposed
+    # to be running on localhost but is not.
+    client = ProcessTree.instance().zlock_client
+    if gethostbyname(client.host) == gethostbyname('localhost'):
+        try:
+            # short connection timeout if localhost, don't want to
+            # waste time:
+            client.ping(timeout=0.05)
+        except zmq.ZMQError:
+            # No zlock server running on localhost. Start one. It will run forever, even
+            # after this program exits. This is important for other programs which might
+            # be using it. I don't really consider this bad practice since the server is
+            # typically supposed to be running all the time:
+            zprocess.start_daemon(
+                [sys.executable, '-m', 'labscript_utils.zlock', '--daemon']
+            )
+            # Try again. Longer timeout this time, give it time to start up:
+            client.ping(timeout=15)
+    else:
+        client.ping()
+
+    # Check if the zlock server supports read-write locks:
+    global _zlock_server_supports_readwrite
+    if hasattr(client, 'get_protocol_version'):
+        version = client.get_protocol_version()
+        if LooseVersion(version) >= LooseVersion('1.1.0'):
+            _zlock_server_supports_readwrite = True
+
+    # The user can call these functions to change the timeouts later if they
+    # are not to their liking:
+    client.set_default_timeout(ZLOCK_DEFAULT_TIMEOUT)
+
+
+_connected_to_zlog = False
+
+
+def ensure_connected_to_zlog():
+    """Ensure we are connected to a zlog server. If one is not running and we are the
+    top-level process, start a zlog server configured according to LabConfig."""
+    global _connected_to_zlog
+    if _connected_to_zlog:
+        return
+    # setup connection with the zlog server:
+    client = ProcessTree.instance().zlog_client
+    if gethostbyname(client.host) == gethostbyname('localhost'):
+        try:
+            # short connection timeout if localhost, don't want to
+            # waste time:
+            client.ping(timeout=0.05)
+        except zmq.ZMQError:
+            # No zlog server running on localhost. Start one. It will run forever, even
+            # after this program exits. This is important for other programs which might
+            # be using it. I don't really consider this bad practice since the server is
+            # typically supposed to be running all the time:
+            zprocess.start_daemon(
+                [sys.executable, '-m', 'labscript_utils.zlog', '--daemon']
+            )
+            # Try again. Longer timeout this time, give it time to start up:
+            client.ping(timeout=15)
+    else:
+        client.ping()
+    _connected_to_zlog = True
+

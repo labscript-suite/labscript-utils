@@ -16,45 +16,10 @@ if PY2:
     str = unicode
 
 import sys, os
-from socket import gethostbyname
 import logging, logging.handlers
-import zmq
-from labscript_utils.ls_zprocess import Handler, ProcessTree 
+from labscript_utils.ls_zprocess import Handler, ensure_connected_to_zlog
 
-import zprocess.zlog
-from zprocess import start_daemon
 import __main__
-
-
-_connected_to_zlog = False
-
-
-def ensure_connected_to_zlog():
-    """Ensure we are connected to a zlog server. If one is not running and we are the
-    top-level process, start a zlog server configured according to LabConfig."""
-    global _connected_to_zlog
-    if _connected_to_zlog:
-        return
-    # setup connection with the zlog server:
-    client = ProcessTree.instance().zlog_client
-    if gethostbyname(client.host) == gethostbyname('localhost'):
-        try:
-            # short connection timeout if localhost, don't want to
-            # waste time:
-            client.ping(timeout=0.05)
-        except zmq.ZMQError:
-            # No zlog server running on localhost. Start one. It will run forever, even
-            # after this program exits. This is important for other programs which might
-            # be using it. I don't really consider this bad practice since the server is
-            # typically supposed to be running all the time:
-            start_daemon(
-                [sys.executable, '-m', 'labscript_utils.zlog', '--daemon']
-            )
-            # Try again. Longer timeout this time, give it time to start up:
-            client.ping(timeout=15)
-    else:
-        client.ping()
-    _connected_to_zlog = True
 
 
 class LessThanFilter(logging.Filter):
