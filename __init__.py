@@ -29,6 +29,22 @@ else:
     labscript_suite_install_dir = None
 
 
+def import_or_reload(modulename):
+    """
+    Behaves like 'import modulename' would, excepts forces the imported 
+    script to be rerun
+    """
+    # see if the proposed module is already loaded
+    # if so, we will need to re-run the code contained in it
+    import importlib
+    if not PY2:
+        reload = importlib.reload
+    if modulename in sys.modules.keys():
+        reload(sys.modules[modulename])
+        return sys.modules[modulename]
+    module = importlib.import_module(modulename)
+    return module
+
 class VersionException(Exception):
     pass
 
