@@ -133,11 +133,14 @@ def dedent(s):
 import labscript_utils.double_import_denier
 labscript_utils.double_import_denier.enable()
 
-
-# Disable the 'quick edit' feature of Windows' cmd.exe, which causes console applicatons
-# to freeze if their console windows are merely clicked on. This causes all kinds of
-# headaches, so we disable it in all labscript programs:
-check_version('zprocess', '2.10.0', '3.0')
-import zprocess
-zprocess.disable_quick_edit()
-
+try:
+    # If zprocess is new enough, disable the 'quick edit' feature of Windows' cmd.exe,
+    # which causes console applicatons to freeze if their console windows are merely
+    # clicked on. This causes all kinds of headaches, so we disable it in all labscript
+    # programs:
+    import zprocess
+    if hasattr(zprocess, 'disable_quick_edit'):
+        # Feature is present in zprocess > 2.10.0, but if not present we just ignore.
+        zprocess.disable_quick_edit()
+except ImportError:
+    pass
