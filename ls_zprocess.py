@@ -21,7 +21,7 @@ from distutils.version import LooseVersion
 import zmq
 
 from labscript_utils import check_version
-check_version('zprocess', '2.11.7', '3.0.0')
+check_version('zprocess', '2.12.0', '3.0.0')
 
 import zprocess
 import zprocess.process_tree
@@ -275,9 +275,10 @@ def zmq_push_raw(*args, **kwargs):
     return ZMQClient.instance().push_raw(*args, **kwargs)
 
 
-def RemoteProcessClient(host):
-    config = get_config()
-    port = config['zprocess_remote_port']
+def RemoteProcessClient(host, port=None):
+    if port is None:
+        config = get_config()
+        port = config['zprocess_remote_port']
     return ProcessTree.instance().remote_process_client(host, port)
 
 
