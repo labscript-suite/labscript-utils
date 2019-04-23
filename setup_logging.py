@@ -50,8 +50,12 @@ def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.
 
     log_dir = os.path.dirname(os.path.realpath(main_path))
     log_path = os.path.join(log_dir, '%s.log' % program_name)
-    # Add a network logging handler from zprocess:
-    handler = Handler(log_path)
+    # Add a network logging handler from zprocess. Pass in the name of the program so
+    # that if we are a subprocess, the handler will be configured to use the same
+    # filepath as our parent process. In this way the zlog server won't create multipl
+    # log files with unrelated paths just because the program has a different install
+    # location on different computers that are part of the same process tree.
+    handler = Handler(log_path, name=program_name)
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s')
     handler.setFormatter(formatter)
     handler.setLevel(log_level)
