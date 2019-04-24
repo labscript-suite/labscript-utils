@@ -18,7 +18,7 @@ if PY2:
     str = unicode
 
 import sys
-from os import execv
+import subprocess
 from labscript_utils.ls_zprocess import get_config
 from zprocess import start_daemon
 
@@ -50,8 +50,7 @@ def main():
         cmd.remove('-tui')
         start_daemon(cmd)
     else:
-        execv(sys.executable, cmd)
-
+        subprocess.call(cmd)
 
 if __name__ == '__main__':
     main()
