@@ -17,12 +17,7 @@ import os
 import socket
 import subprocess
 import errno
-
-from labscript_utils import PY2
-if PY2:
-    import ConfigParser as configparser
-else:
-    import configparser
+import configparser
 
 from labscript_utils import labscript_suite_install_dir
 # Look for a 'labconfig' folder in the labscript install directory:
@@ -62,8 +57,15 @@ def mkdir_p(path):
         else:
             raise
 
+class EnvInterpolation(configparser.BasicInterpolation):
+    """Interpolation which expands environment variables in values,
+    by post-filtering BasicInterpolation.before_get()"""
 
-class LabConfig(configparser.SafeConfigParser):
+    def before_get(self, *args):
+        value = super(EnvInterpolation, self).before_get(*args)
+        return os.path.expandvars(value)
+
+class LabConfig(configparser.ConfigParser):
     NoOptionError = configparser.NoOptionError
     NoSectionError = configparser.NoSectionError
 
@@ -88,7 +90,7 @@ class LabConfig(configparser.SafeConfigParser):
                 f.write(self.file_format)
 
         # Load the config file
-        configparser.SafeConfigParser.__init__(self,defaults)
+        configparser.ConfigParser.__init__(self, defaults=defaults, interpolation=EnvInterpolation())
         self.read(config_path) #read all files in the config path if it is a list (self.config_path only contains one string)
 
         try:
@@ -106,23 +108,23 @@ class LabConfig(configparser.SafeConfigParser):
     def add_section(self,section):
         # Create the group if it doesn't exist
         if not section.lower() == 'default' and not self.has_section(section):
-            configparser.SafeConfigParser.add_section(self, section)
+            configparser.ConfigParser.add_section(self, section)
 
     # Overwrite the set method so that it adds the section if it doesn't exist,
     # and immediately saves the data to the file (to avoid data loss on program crash)
     def set(self, section, option, value):
         self.add_section(section)
-        configparser.SafeConfigParser.set(self,section,option,value)
+        configparser.ConfigParser.set(self,section,option,value)
         self.save()
 
     # Overwrite the remove section function so that it immediately saves the change to disk
     def remove_section(self,section):
-        configparser.SafeConfigParser.remove_section(self,section)
+        configparser.ConfigParser.remove_section(self,section)
         self.save()
 
     # Overwrite the remove option function so that it immediately saves the change to disk
     def remove_option(self,section,option):
-        configparser.SafeConfigParser.remove_option(self,section,option)
+        configparser.ConfigParser.remove_option(self,section,option)
         self.save()
 
     # Provide a convenience method to save the contents of the ConfigParser to disk
