@@ -58,9 +58,11 @@ def mkdir_p(path):
             raise
 
 class EnvInterpolation(configparser.BasicInterpolation):
-    """Interpolation which expands environment variables in values."""
+    """Interpolation which expands environment variables in values,
+    by post-filtering BasicInterpolation.before_get()"""
 
-    def before_get(self, parser, section, option, value, defaults):
+    def before_get(self, *args):
+        value = super(EnvInterpolation, self).before_get(*args)
         return os.path.expandvars(value)
 
 class LabConfig(configparser.ConfigParser):
