@@ -81,16 +81,16 @@ def get_config():
         config['shared_secret'] = open(shared_secret_file).read().strip()
         config['shared_secret_file'] = shared_secret_file
     try:
-        config['allow_insecure'] = labconfig.get('security', 'allow_insecure')
+        config['allow_insecure'] = labconfig.getboolean('security', 'allow_insecure')
     except (labconfig.NoOptionError, labconfig.NoSectionError):
         # Default will be set to False once the security rollout is complete:
         config['allow_insecure'] = True
     try:
-        config['logging_maxBytes'] = int(labconfig.get('logging', 'maxBytes'))
+        config['logging_maxBytes'] = labconfig.getint('logging', 'maxBytes')
     except (labconfig.NoOptionError, labconfig.NoSectionError):
         config['logging_maxBytes'] = 1024 * 1024 * 50
     try:
-        config['logging_backupCount'] = int(labconfig.get('logging', 'backupCount'))
+        config['logging_backupCount'] = labconfig.getint('logging', 'backupCount')
     except (labconfig.NoOptionError, labconfig.NoSectionError):
         config['logging_backupCount'] = 1
     _cached_config = config
