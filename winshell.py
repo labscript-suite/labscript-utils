@@ -2,6 +2,7 @@ from __future__ import division, unicode_literals, print_function, absolute_impo
 
 import os
 import sys
+import shutil
 if sys.version_info.major == 2:
     str = unicode
 
@@ -29,11 +30,22 @@ app_descriptions = {'runmanager': 'runmanager - the labscript suite',
                    'blacs': 'blacs - the labscript suite',
                    'lyse': 'lyse - the labscript suite'}
 
-def make_shortcut(path, target, arguments, working_directory, icon_path, description, appid):
+if os.name == 'nt':
     from win32com.shell import shellcon
     from win32com.client import Dispatch
     from win32com.propsys import propsys, pscon
     import pythoncom
+    WINDOWS = True
+else:
+    WINDOWS = False
+
+def _check_windows():
+    if not WINDOWS:
+        msg = "winshell functions are Windows only"
+        raise RuntimeError(msg)
+
+def make_shortcut(path, target, arguments, working_directory, icon_path, description, appid):
+    _check_windows()
     shell = Dispatch('WScript.Shell')
     shortcut = shell.CreateShortcut(path)
     shortcut.TargetPath = target
@@ -54,7 +66,7 @@ def make_shortcut(path, target, arguments, working_directory, icon_path, descrip
 
 
 def set_appusermodel(window_id, appid, icon_path, relaunch_command, relaunch_display_name):
-    from win32com.propsys import propsys, pscon
+    _check_windows()
     store = propsys.SHGetPropertyStoreForWindow(window_id, propsys.IID_IPropertyStore)
     id = store.GetValue(pscon.PKEY_AppUserModel_ID)
     store.SetValue(pscon.PKEY_AppUserModel_ID, propsys.PROPVARIANTType(appid))
@@ -63,8 +75,7 @@ def set_appusermodel(window_id, appid, icon_path, relaunch_command, relaunch_dis
     store.SetValue(pscon.PKEY_AppUserModel_RelaunchIconResource, propsys.PROPVARIANTType(icon_path))
 
 def add_to_start_menu(shortcut):
-    from win32com.client import Dispatch
-    import shutil
+    _check_windows()
     objShell = Dispatch("WScript.Shell")
     start_menu_programs = objShell.SpecialFolders("Programs")
     shutil.copy(shortcut, start_menu_programs)
@@ -72,7 +83,7 @@ def add_to_start_menu(shortcut):
 def remove_from_start_menu(name):
     """Removes given .lnk file from the start menu.
     If entry not present, does nothing."""
-    from win32com.client import Dispatch
+    _check_windows()
     name = os.path.basename(name)
     objShell = Dispatch("WScript.Shell")
     start_menu_programs = objShell.SpecialFolders("Programs")
