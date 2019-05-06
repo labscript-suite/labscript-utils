@@ -18,7 +18,7 @@ if PY2:
     str = unicode
 
 import sys
-from os import execv
+import subprocess
 from socket import gethostbyname
 from labscript_utils.ls_zprocess import get_config
 from zprocess import start_daemon
@@ -50,13 +50,18 @@ def main():
     ]
     if config['shared_secret_file'] is not None:
         cmd += ['--shared-secret-file', config['shared_secret_file']]
-    if config['allow_insecure']:
+    elif config['allow_insecure']:
         cmd += ['--allow-insecure']
+    else:
+        cmd += ['--no-allow-insecure']
 
     if '--daemon' in sys.argv:
         start_daemon(cmd)
     else:
-        execv(sys.executable, cmd)
+        try:
+            subprocess.call(cmd)
+        except KeyboardInterrupt:
+            pass
 
 
 if __name__ == '__main__':

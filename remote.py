@@ -18,15 +18,17 @@ if PY2:
     str = unicode
 
 import sys
-from os import execv
+import subprocess
 from labscript_utils.ls_zprocess import get_config
 from zprocess import start_daemon
 
 """Script to run a zprocess.remote server configured according to LabConfig. Run with:
 
-    python -m labscript_utils.remote [--daemon]
+    python -m labscript_utils.remote [--daemon] [--no-tui]
 
-if --daemon is specified, the server will be started in the background.
+if --daemon is specified, the server will be started in the background. If --no-tui is
+specified, the server will run with ordinary terminal output instead of with the
+interactive text-based user interface (TUI).
 """
 
 
@@ -39,19 +41,23 @@ def main():
         'zprocess.remote',
         '--port',
         str(config['zprocess_remote_port']),
-        '-tui'
     ]
     if config['shared_secret_file'] is not None:
         cmd += ['--shared-secret-file', config['shared_secret_file']]
-    if config['allow_insecure']:
+    elif config['allow_insecure']:
         cmd += ['--allow-insecure']
+    else:
+        cmd += ['--no-allow-insecure']
 
     if '--daemon' in sys.argv:
-        cmd.remove('-tui')
         start_daemon(cmd)
     else:
-        execv(sys.executable, cmd)
-
+        if '--no-tui' not in sys.argv:
+            cmd += ['-tui']
+        try:
+            subprocess.call(cmd)
+        except KeyboardInterrupt:
+            pass
 
 if __name__ == '__main__':
     main()
