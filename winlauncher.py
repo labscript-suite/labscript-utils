@@ -39,18 +39,19 @@ parser.add_argument(
     help='Arguments to pass to target Python script',
 )
 
-
+CREATE_NO_WINDOW = 1 << 27
 args = parser.parse_args()
 prefix = args.prefix
 popen_kwargs = {}
+
 if args.prefix is not None:
-    # This bit copied from cwp.py from the menuinst project. We're not using that script
-    # because we do not want to do an os.chdir into the documents folder as it does, and
-    # we also need to set the CONDA_DEFAULT_ENV environment variable since our programs
-    # need to know the name of the environment they're in, and not just the prefix.
-    # Using our own launcher also allows us to swap out pythonw.exe for python.exe
-    # without creating a visible console, which otherwise requires yet another layer of
-    # subprocesses to achieve.
+    # Environment manipulation copied from cwp.py from the menuinst project. We're not
+    # using that script because we do not want to do an os.chdir into the documents
+    # folder as it does, and we also need to set the CONDA_DEFAULT_ENV environment
+    # variable since our programs need to know the name of the environment they're in,
+    # and not just the prefix. Using our own launcher also allows us to swap out
+    # pythonw.exe for python.exe without creating a visible console, which otherwise
+    # requires yet another layer of subprocesses to achieve.
     new_paths = pathsep.join([prefix,
                          join(prefix, "Library", "mingw-w64", "bin"),
                          join(prefix, "Library", "usr", "bin"),
@@ -62,12 +63,9 @@ if args.prefix is not None:
     env['CONDA_DEFAULT_ENV'] = args.name
     python = 'python'
     popen_kwargs['env'] = env
+    popen_kwargs['creationflags'] = CREATE_NO_WINDOW
 elif 'pythonw.exe' in sys.executable.lower():
-    # Run the target command using python.exe, not pythonw.exe, but add CREATE_NO_WINDOW
-    # to the creationflags so that there is no visible console window. However, standard
-    # input and output streams will still exist 
     python = join(dirname(sys.executable), 'python.exe')
-    CREATE_NO_WINDOW = 1 << 27
     popen_kwargs['creationflags'] = CREATE_NO_WINDOW
 else:
     python = sys.executable
