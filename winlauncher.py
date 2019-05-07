@@ -44,7 +44,7 @@ args = parser.parse_args()
 prefix = args.prefix
 popen_kwargs = {}
 
-if args.prefix is not None:
+if prefix is not None:
     # Environment manipulation copied from cwp.py from the menuinst project. We're not
     # using that script because we do not want to do an os.chdir into the documents
     # folder as it does, and we also need to set the CONDA_DEFAULT_ENV environment

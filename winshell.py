@@ -29,24 +29,25 @@ def launcher_name(appname):
     return name
 
 def launch_command(appname):
-    """Return target, arguments for launching the given app. Includes hoop-jumping for
-    conda environments"""
+    """Return target and arguments for launching the given app. Result is wrapped in a
+    launcher script, winluncher.py, which runs the app in the current conda environment,
+    if any.
+    """
     target = sys.executable.lower()
     if not target.endswith('w.exe'):
         target = target.lower().replace('.exe', 'w.exe')
 
     # Wrap the command in call to our launcher script:
-
     WINLAUNCHER = os.path.join(
             labscript_installation, 'labscript_utils', 'winlauncher.py'
         )
-
     args = [WINLAUNCHER]
 
-    if os.getenv('CONDA_DEFAULT_ENV') is not None:
+    CONDA_PREFIX = os.getenv('CONDA_PREFIX')
+    CONDA_DEFAULT_ENV = os.getenv('CONDA_DEFAULT_ENV')
+    if CONDA_PREFIX is not None and CONDA_DEFAULT_ENV is not None:
         # Tell the launcher script to configure the given conda environment:
-        args += ['-n', os.getenv('CONDA_DEFAULT_ENV'), '-p', os.getenv('CONDA_PREFIX')]
-
+        args += ['-n', CONDA_DEFAULT_ENV, '-p', CONDA_PREFIX]
 
     # Add the actual path to the __main__ script of the app:
     args += [os.path.join(labscript_installation, appname, '__main__.py')]
@@ -56,7 +57,6 @@ def launch_command(appname):
     arglist = ' '.join(['"%s"' % arg for arg in args])
 
     return target, arglist
-
 
 
 # Including the install directory and python interpreter in the below AppId strings
