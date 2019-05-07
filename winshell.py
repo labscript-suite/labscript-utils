@@ -97,7 +97,7 @@ def make_shortcut(appname):
     target, args = launch_command(appname)
     shortcut.TargetPath = target
     shortcut.Arguments = args
-    shortcut.WorkingDirectory = '"%s "' % app_dir
+    shortcut.WorkingDirectory = '"%s"' % app_dir
     shortcut.IconLocation = os.path.join(app_dir, appname + '.ico')
     shortcut.Description = app_descriptions[appname]
     shortcut.save()
