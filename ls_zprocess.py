@@ -185,6 +185,14 @@ class ZMQClient(zprocess.ZMQClient):
 
     _instance = None
 
+    def __init__(self):
+        config = get_config()
+        shared_secret = config['shared_secret']
+        allow_insecure = config['allow_insecure']
+        zprocess.ZMQClient.__init__(
+            self, shared_secret=shared_secret, allow_insecure=allow_insecure
+        )
+
     @classmethod
     def instance(cls):
         # Return previously initialised singleton:
