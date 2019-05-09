@@ -196,16 +196,11 @@ class ZMQClient(zprocess.ZMQClient):
     @classmethod
     def instance(cls):
         # Return previously initialised singleton:
-        if cls._instance is not None:
-            return cls._instance
-        # Otherwise, create that singleton and return it:
-        config = get_config()
-        cls._instance = cls(
-            shared_secret=config['shared_secret'],
-            allow_insecure=config['allow_insecure'],
-        )
+        if cls._instance is None:
+            # Create singleton:
+            cls._instance = cls()
         return cls._instance
-
+        
 
 class Context(SecureContext):
     """Subclass of zprocess.security.SecureContext configured with settings from
