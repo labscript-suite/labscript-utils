@@ -66,7 +66,7 @@ class ModuleWatcher(object):
     def check(self):
         unload_required = False
         # Look through currently loaded modules:
-        for name, module in sys.modules.items():
+        for name, module in sys.modules.copy().items():
             # Look only at the modules not in the the whitelist:
             if name not in self.whitelist:
                 # Only consider modules which have a non-None __file__ attribute, are
@@ -85,7 +85,7 @@ class ModuleWatcher(object):
                     continue
                 if any(module_file.startswith(s + os.path.sep) for s in PKGDIRS):
                     # Whitelist modules in package install directories:
-                    self.whitelist.add(module)
+                    self.whitelist.add(name)
                     continue
                 # Check and store the modified time of the .py file:
                 modified_time = os.path.getmtime(module_file)
@@ -110,20 +110,20 @@ class ModuleWatcher(object):
             for name in sorted(self.whitelist):
                 print("    " + name)
             print("\nModuleWatcher: modules unloaded:")
-            for name in sorted(sys.modules):
-                if name not in self.whitelist:
-                    # This unloads a module. This is slightly more general than
-                    # reload(module), but has the same caveats regarding existing
-                    # references. This also means that any exception in the import will
-                    # occur later, once the module is (re)imported, rather than now
-                    # where catching the exception would have to be handled differently.
-                    del sys.modules[name]
-                    if name in self.modified_times:
-                        del self.modified_times[name]
-                    if self.debug:
-                        print("    " + name)
-            # Replace sys.meta_path with the cached whitelist, effectively removing all
-            # since-added entries from it. Replacement is done in-place in case other
-            # code holds references to sys.meta_path, and to preserve order, since order
-            # is relevant.
-            sys.meta_path[:] = self.meta_whitelist
+        for name in sorted(sys.modules):
+            if name not in self.whitelist:
+                # This unloads a module. This is slightly more general than
+                # reload(module), but has the same caveats regarding existing
+                # references. This also means that any exception in the import will
+                # occur later, once the module is (re)imported, rather than now
+                # where catching the exception would have to be handled differently.
+                del sys.modules[name]
+                if name in self.modified_times:
+                    del self.modified_times[name]
+                if self.debug:
+                    print("    " + name)
+        # Replace sys.meta_path with the cached whitelist, effectively removing all
+        # since-added entries from it. Replacement is done in-place in case other
+        # code holds references to sys.meta_path, and to preserve order, since order
+        # is relevant.
+        sys.meta_path[:] = self.meta_whitelist
