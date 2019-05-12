@@ -185,19 +185,22 @@ class ZMQClient(zprocess.ZMQClient):
 
     _instance = None
 
+    def __init__(self):
+        config = get_config()
+        shared_secret = config['shared_secret']
+        allow_insecure = config['allow_insecure']
+        zprocess.ZMQClient.__init__(
+            self, shared_secret=shared_secret, allow_insecure=allow_insecure
+        )
+
     @classmethod
     def instance(cls):
         # Return previously initialised singleton:
-        if cls._instance is not None:
-            return cls._instance
-        # Otherwise, create that singleton and return it:
-        config = get_config()
-        cls._instance = cls(
-            shared_secret=config['shared_secret'],
-            allow_insecure=config['allow_insecure'],
-        )
+        if cls._instance is None:
+            # Create singleton:
+            cls._instance = cls()
         return cls._instance
-
+        
 
 class Context(SecureContext):
     """Subclass of zprocess.security.SecureContext configured with settings from
