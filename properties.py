@@ -70,11 +70,18 @@ def is_json(value):
     return False
 
 
+def _default(o):
+    # Workaround for https://bugs.python.org/issue24313
+    if isinstance(o, np.integer):
+        return int(o)
+    raise TypeError
+
+
 def serialise(value):
     _check_dicts(value)
     if not PY2:
         value = _encode_bytestrings(value)
-    json_string = json.dumps(value)
+    json_string = json.dumps(value, default=_default)
     return JSON_IDENTIFIER + json_string
 
 
