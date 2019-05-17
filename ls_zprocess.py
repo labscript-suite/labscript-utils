@@ -21,7 +21,7 @@ from distutils.version import LooseVersion
 import zmq
 
 from labscript_utils import check_version
-check_version('zprocess', '2.13.0', '3.0.0')
+check_version('zprocess', '2.15.0', '3.0.0')
 
 import zprocess
 import zprocess.process_tree
@@ -31,6 +31,7 @@ from labscript_utils import dedent
 import zprocess.zlog
 import zprocess.zlock
 import zprocess.remote
+from zprocess import KillLock
 
 
 """This module is a number of wrappers around zprocess objects that configures them with
