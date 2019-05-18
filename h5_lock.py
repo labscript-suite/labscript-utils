@@ -14,7 +14,7 @@ from __future__ import division, unicode_literals, print_function, absolute_impo
 
 import sys
 
-from labscript_utils.ls_zprocess import Lock, connect_to_zlock_server, KillLock
+from labscript_utils.ls_zprocess import Lock, connect_to_zlock_server, kill_lock
 
 from labscript_utils import check_version
 
@@ -38,7 +38,7 @@ def hack_locks_onto_h5py():
             if mode == 'r':
                 kwargs['read_only'] = True
             # Do not terminate upon SIGTERM while the file is open:
-            self.kill_lock = KillLock()
+            self.kill_lock = kill_lock
             self.kill_lock.acquire()
             # Ask other zlock users not to open the file while we have it open:
             self.zlock = Lock(path_to_agnostic(name), **kwargs)

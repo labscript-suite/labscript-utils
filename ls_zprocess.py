@@ -44,6 +44,8 @@ To use zprocess with LabConfig configuration, use the convenience functions defi
 the bottom of this module.
 """
 
+kill_lock = KillLock()
+
 _cached_config = None
 
 def get_config():
