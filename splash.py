@@ -12,9 +12,23 @@
 #####################################################################
 
 import sys
-import os
+from labscript_utils import dedent
 
-from qtutils.qt import QtWidgets, QtCore, QtGui
+try:
+    from qtutils.qt import QtWidgets, QtCore, QtGui
+except ImportError as e:
+    if 'DLL load failed' in str(e):
+        msg = """Failed to load Qt DLL. This can be caused by application shortcuts
+            not being configured to activate conda environments. Try running the
+            following from within the activated conda environment to fix the shortcuts:
+
+                python -m labscript_utils.winshell --fix-shortcuts.
+
+            You may then need to unpin and re-pin any shortcuts pinned to the
+            taskbar."""
+        raise ImportError(dedent(msg))
+    raise
+    
 Qt = QtCore.Qt
 
 

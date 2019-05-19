@@ -168,3 +168,25 @@ def remove_from_start_menu(name):
     if name in os.listdir(start_menu_programs):
         os.unlink(os.path.join(start_menu_programs, name))
 
+
+def fix_shortcuts():
+    """Delete and remake labscript suite application shortcuts and start-menu entries.
+    This can help fix issues caused by old shortcuts not interacting well with newer
+    anaconda installations."""
+    _check_windows()
+    print("Remaking labscript suite application shortcuts...")
+    for name in sorted(os.listdir(labscript_installation)):
+        if name.lower().endswith('.lnk'):
+            print("deleting shortcut:", name)
+            remove_from_start_menu(name)
+            os.unlink(os.path.join(labscript_installation, name))
+    for appname in sorted(APPS):
+        print("creating shortcut:", launcher_name(appname))
+        shortcut_path = make_shortcut(appname)
+        add_to_start_menu(shortcut_path)
+    print("done")
+
+
+if __name__ == '__main__':
+    if '--fix-shortcuts' in sys.argv:
+        fix_shortcuts()
