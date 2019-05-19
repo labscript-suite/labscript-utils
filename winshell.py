@@ -125,8 +125,19 @@ def set_appusermodel(
     """Set the appID details for the window, configuring how it appears in the taskbar
     and its pinning/relaunching behaviour. If appid, icon_path, relaunch_command or
     relaunch_display_name are None, they will be inferred from the appname, which must
-    not be None if the other arguments are not provided."""
+    not be None if the other arguments are not provided. If the appid matches one of our
+    known apps, then the other arguments will be ignored, as if appname was passed in
+    and all other arguments were None. This is so that we can fix faulty relaunch
+    commands being produced by older versions of the apps whilst accepting how they call
+    us, without crashing, for backwards compatibility."""
     _check_windows()
+
+    if appid is not None:
+        for known_appname, known_appid in appids.items():
+            if appid == known_appid:
+                appname = known_appname
+                appid = icon_path = relaunch_command = relaunch_display_name = None
+
     if appid is None:
         appid = appids[appname]
     if icon_path is None:
