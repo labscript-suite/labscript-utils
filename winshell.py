@@ -125,8 +125,19 @@ def set_appusermodel(
     """Set the appID details for the window, configuring how it appears in the taskbar
     and its pinning/relaunching behaviour. If appid, icon_path, relaunch_command or
     relaunch_display_name are None, they will be inferred from the appname, which must
-    not be None if the other arguments are not provided."""
+    not be None if the other arguments are not provided. If the appid matches one of our
+    known apps, then the other arguments will be ignored, as if appname was passed in
+    and all other arguments were None. This is so that we can fix faulty relaunch
+    commands being produced by older versions of the apps whilst accepting how they call
+    us, without crashing, for backwards compatibility."""
     _check_windows()
+
+    if appid is not None:
+        for known_appname, known_appid in appids.items():
+            if appid == known_appid:
+                appname = known_appname
+                appid = icon_path = relaunch_command = relaunch_display_name = None
+
     if appid is None:
         appid = appids[appname]
     if icon_path is None:
@@ -168,3 +179,25 @@ def remove_from_start_menu(name):
     if name in os.listdir(start_menu_programs):
         os.unlink(os.path.join(start_menu_programs, name))
 
+
+def fix_shortcuts():
+    """Delete and remake labscript suite application shortcuts and start-menu entries.
+    This can help fix issues caused by old shortcuts not interacting well with newer
+    anaconda installations."""
+    _check_windows()
+    print("Remaking labscript suite application shortcuts...")
+    for name in sorted(os.listdir(labscript_installation)):
+        if name.lower().endswith('.lnk'):
+            print("deleting shortcut:", name)
+            remove_from_start_menu(name)
+            os.unlink(os.path.join(labscript_installation, name))
+    for appname in sorted(APPS):
+        print("creating shortcut:", launcher_name(appname))
+        shortcut_path = make_shortcut(appname)
+        add_to_start_menu(shortcut_path)
+    print("done")
+
+
+if __name__ == '__main__':
+    if '--fix-shortcuts' in sys.argv:
+        fix_shortcuts()
