@@ -37,7 +37,7 @@ class BrowseButton(QPushButton):
         supported_images = "Image files ("
         
         for format in QImageReader.supportedImageFormats():
-            supported_images += "*.%s "%format
+            supported_images += "*.%s " % format.data().decode()
             
         supported_images = supported_images [:-1]
         supported_images += ")"
@@ -151,7 +151,7 @@ class ImageOutput(QWidget):
         self._Image = None
         
         # the base64encoded value
-        self._value = str("")
+        self._value = ""
         
         # The image item to be added to the scene
         self._pixmap_item = None
@@ -216,11 +216,13 @@ class ImageOutput(QWidget):
         
     @property
     def value(self):
-        return str(self._value)
+        return self._value
         
     @value.setter
     def value(self, value):
-        decoded_image = base64.b64decode(str(value))
+        if isinstance(value, bytes):
+            value = value.decode()
+        decoded_image = base64.b64decode(value)
         pixmap = QPixmap()
         pixmap.loadFromData(decoded_image, flags=Qt.AvoidDither | Qt.ThresholdAlphaDither | Qt.ThresholdDither)
         # print decoded_image
@@ -228,7 +230,7 @@ class ImageOutput(QWidget):
             QMessageBox.warning(self, "Failed to load image", 'The image size was incorrect. It must be %dx%d pixels.'%(self.image_size.width(), self.image_size.height()), QMessageBox.Ok, QMessageBox.Ok)
             return
         
-        self._value = str(value)
+        self._value = value
         pixmap_item = QGraphicsPixmapItem(pixmap)
         
         if self._pixmap_item is not None:
