@@ -4,13 +4,18 @@ if PY2:
     str = unicode
 import sys
 import json
-from collections import Iterable, Mapping
+from base64 import b64encode, b64decode
+if PY2:    
+    from collections import Iterable, Mapping
+else:
+    from collections.abc import Iterable, Mapping
 import numpy as np
 import h5py
 
 vlenstring = h5py.special_dtype(vlen=str)
 
 JSON_IDENTIFIER = 'Content-Type: application/json '
+BASE64_IDENTIFIER = 'Content-Transfer-Encoding: base64 '
 
 VALID_PROPERTY_LOCATIONS = {
     "connection_table_properties",
@@ -33,6 +38,30 @@ def _check_dicts(o):
             _check_dicts(item)
 
 
+def _encode_bytestrings(o):
+    """Encode all bytestring values (not keys) to base64 with a prefix"""
+    if isinstance(o, Mapping):
+        return {key: _encode_bytestrings(value) for key, value in o.items()}
+    elif isinstance(o, Iterable) and not isinstance(o, (str, bytes)):
+        return list([_encode_bytestrings(value) for value in o])
+    elif isinstance(o, bytes):
+        return BASE64_IDENTIFIER + str(b64encode(o).decode())
+    else:
+        return o
+
+
+def _decode_bytestrings(o):
+    """Decode all base64-encoded values (not keys) to bytestrings"""
+    if isinstance(o, Mapping):
+        return {key: _decode_bytestrings(value) for key, value in o.items()}
+    elif isinstance(o, Iterable) and not isinstance(o, (str, bytes)):
+        return list([_decode_bytestrings(value) for value in o])
+    elif isinstance(o, str) and o.startswith(BASE64_IDENTIFIER):
+        return b64decode(o[len(BASE64_IDENTIFIER):])
+    else:
+        return o
+
+
 def is_json(value):
     if isinstance(value, bytes):
         return value[:len(JSON_IDENTIFIER)] == JSON_IDENTIFIER.encode('utf8')
@@ -41,15 +70,24 @@ def is_json(value):
     return False
 
 
+def _default(o):
+    # Workaround for https://bugs.python.org/issue24313
+    if isinstance(o, np.integer):
+        return int(o)
+    raise TypeError
+
+
 def serialise(value):
     _check_dicts(value)
-    json_string = json.dumps(value)
+    if not PY2:
+        value = _encode_bytestrings(value)
+    json_string = json.dumps(value, default=_default)
     return JSON_IDENTIFIER + json_string
 
 
 def deserialise(value):
     assert is_json(value)
-    return json.loads(value[len(JSON_IDENTIFIER):])
+    return _decode_bytestrings(json.loads(value[len(JSON_IDENTIFIER):]))
 
 
 def set_device_properties(h5_file, device_name, properties):

@@ -12,7 +12,7 @@
 #####################################################################
 from __future__ import division, unicode_literals, print_function, absolute_import
 
-__version__ = '2.10.0'
+__version__ = '2.13.2'
 
 
 import sys
@@ -28,10 +28,22 @@ for path in sys.path:
 else:
     labscript_suite_install_dir = None
 
-# Enforce that the same file can't be imported under multiple names, to help
-# prevent subtle bugs:
-import labscript_utils.double_import_denier
-labscript_utils.double_import_denier.enable()
+
+def import_or_reload(modulename):
+    """
+    Behaves like 'import modulename' would, excepts forces the imported 
+    script to be rerun
+    """
+    # see if the proposed module is already loaded
+    # if so, we will need to re-run the code contained in it
+    import importlib
+    if not PY2:
+        reload = importlib.reload
+    if modulename in sys.modules.keys():
+        reload(sys.modules[modulename])
+        return sys.modules[modulename]
+    module = importlib.import_module(modulename)
+    return module
 
 
 from labscript_utils.versions import get_version, VersionException, check_version
@@ -74,3 +86,21 @@ def dedent(s):
             else:
                 unwrapped_lines.append(' ' + line)
     return ''.join(unwrapped_lines)
+
+
+# Enforce that the same file can't be imported under multiple names, to help
+# prevent subtle bugs:
+import labscript_utils.double_import_denier
+labscript_utils.double_import_denier.enable()
+
+try:
+    # If zprocess is new enough, disable the 'quick edit' feature of Windows' cmd.exe,
+    # which causes console applicatons to freeze if their console windows are merely
+    # clicked on. This causes all kinds of headaches, so we disable it in all labscript
+    # programs:
+    import zprocess
+    if hasattr(zprocess, 'disable_quick_edit'):
+        # Feature is present in zprocess > 2.10.0, but if not present we just ignore.
+        zprocess.disable_quick_edit()
+except ImportError:
+    pass
