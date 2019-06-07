@@ -119,12 +119,12 @@ def _get_literal_version(filename):
 
 def get_version(import_name, project_name=None):
     """Try very hard to get the version of a package without importing it. First find
-    where it would be imported from, without importing it. Then look for a pkg_resources
-    entry in the same import path with the given project name (note: this is not always
-    the same as the import name, it is the name for example you would ask pip to
-    install). If that is found, return the version info from it. Otherwise look for a
-    __version__.py file in the package directory, or a __version__ = <version>
-    literal defined in the package sournce (without executing it).
+    where it would be imported from, without importing it. Then look for metadata in the
+    same import path with the given project name (note: this is not always the same as
+    the import name, it is the name for example you would ask pip to install). If that
+    is found, return the version info from it. Otherwise look for a __version__.py file
+    in the package directory, or a __version__ = <version> literal defined in the
+    package sournce (without executing it).
 
     Return NotFound if the package cannot be found, and NoVersionInfo if the version
     cannot be obtained in the above way, or if it was found but was None."""
@@ -184,11 +184,16 @@ def check_version(module_name, at_least, less_than, version=None, project_name=N
     at_least_version, less_than_version, installed_version = [
         LooseVersion(v) for v in [at_least, less_than, version]
     ]
+
     if not at_least_version <= installed_version < less_than_version:
-        msg = '{module_name} {version} found. {at_least} <= {module_name} < {less_than} required.'.format(
-            **locals()
+        msg = (
+            '{module_name} {version} found. '
+            + '{at_least} <= {module_name} < {less_than} required.'
         )
-        raise VersionException(msg)
+        raise VersionException(msg.format(**locals()))
+
+
+check_version('importlib_metadata', '0.17', '2.0')
 
 
 if __name__ == '__main__':
