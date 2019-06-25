@@ -111,7 +111,16 @@ def set_attributes(group, attributes):
 def get_attributes(group):
     """Return attributes of a HDF5 group as a dict, deserialising any that have been
     encoded as JSON"""
-    return{k: deserialise(v) if is_json(v) else v for k, v in group.attrs.items()}
+    return {k: deserialise(v) if is_json(v) else v for k, v in group.attrs.items()}
+
+
+def get_attribute(group, name):
+    """Return the attribute of the given name from the given HDF5 group, deserialising
+    it if it has been encoded as JSON"""
+    value = group.attrs[name]
+    if is_json(value):
+        return deserialise(value)
+    return value
 
 
 def set_device_properties(h5_file, device_name, properties):
