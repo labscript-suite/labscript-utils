@@ -90,33 +90,45 @@ def deserialise(value):
     return _decode_bytestrings(json.loads(value[len(JSON_IDENTIFIER):]))
 
 
-def set_device_properties(h5_file, device_name, properties):
-    gp = h5_file['devices/' + device_name]
-    for key, val in properties.items():
+def set_attributes(group, attributes):
+    """Add attributes to a HDF5 group, serialising them to JSON if they do not map to
+    native HDF5 datatypes"""
+    for key, val in attributes.items():
         try:
             # Workaround for h5py not supporting None but not raising a TypeError:
             if val is None:
                 raise TypeError('has no native HDF5 equivalent')
-            gp.attrs[key] = val
+            group.attrs[key] = val
         except TypeError as e:
             # If type not supported by HDF5, store as JSON
             if 'has no native HDF5 equivalent' in str(e):
                 json_string = serialise(val)
-                gp.attrs[key] = json_string
+                group.attrs[key] = json_string
             else:
                 raise
 
 
+def get_attributes(group):
+    """Return attributes of a HDF5 group as a dict, deserialising any that have been
+    encoded as JSON"""
+    return {k: deserialise(v) if is_json(v) else v for k, v in group.attrs.items()}
+
+
+def get_attribute(group, name):
+    """Return the attribute of the given name from the given HDF5 group, deserialising
+    it if it has been encoded as JSON"""
+    value = group.attrs[name]
+    if is_json(value):
+        return deserialise(value)
+    return value
+
+
+def set_device_properties(h5_file, device_name, properties):
+    set_attributes(h5_file['devices/' + device_name], properties)
+
+
 def _get_device_properties(h5_file, device_name):
-    gp = h5_file['devices/' + device_name]
-    properties = {}
-    for key, val in gp.attrs.items():
-        # Deserialize values if stored as JSON
-        if is_json(val):
-            properties[key] = deserialise(val)
-        else:
-            properties[key] = val
-    return properties
+    return get_attributes(h5_file['devices/' + device_name])
 
 
 def _get_con_table_properties(h5_file, device_name):
