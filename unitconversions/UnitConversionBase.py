@@ -34,9 +34,9 @@ class _MultiplicativeConversion(object):
 
     def __call__(self, value):
         if self.to_base:
-            return self.unprefixed_method(value) * self.factor
+            return self.unprefixed_method(value * self.factor)
         else:
-            return self.unprefixed_method(value / self.factor)
+            return self.unprefixed_method(value) / self.factor
 
 
 def vectorise(method):
