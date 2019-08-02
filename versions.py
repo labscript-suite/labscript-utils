@@ -192,7 +192,17 @@ def check_version(module_name, at_least, less_than, version=None, project_name=N
         )
         raise VersionException(msg.format(**locals()))
 
+# Check the version of the importlib_metatata package we have imported, so that we know
+# we can actually use it to check versions. Trust importlib_metadata.__version__ for
+# now, to avoid using importlib_metadata itself until we know it is new enough:
+check_version(
+    'importlib_metadata', '0.17', '2.0', version=importlib_metadata.__version__
+)
 
+# Now that we know we have a new enough version of importlib_metadata imported, confirm
+# that result using importlib_metadata itself. This will detect broken installations
+# (where the metadata does not agree with the imported package, or if the same package
+# is installed multiple times to different paths) whereas the above check will not.
 check_version('importlib_metadata', '0.17', '2.0')
 
 
