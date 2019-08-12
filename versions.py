@@ -23,14 +23,37 @@ if PY2:
     str = unicode
     import imp
 
-# The following import looks pointless, but is required for its side effects. Finders
-# are added to sys.meta_path that we use:
-try:
-    # This will be in the standard library in Python 3.8:
-    import importlib.metadata
-except ImportError:
-    # This is the backport of the Python 3.8 stdlib module,
-    import importlib_metadata
+
+# Lazy import so that labscript applications' excepthook is present before we
+# raise errors about not having a new enough importlib_metadata.
+importlib_metadata = None
+
+
+def _initialise():
+    global importlib_metadata
+    if importlib_metadata is not None:
+        return
+    # The following import looks pointless, but is required for its side effects. Finders
+    # are added to sys.meta_path that we use:
+    try:
+        # This will be in the standard library in Python 3.8:
+        import importlib.metadata as importlib_metadata
+    except ImportError:
+        # This is the backport of the Python 3.8 stdlib module,
+        import importlib_metadata
+
+    # Check the version of the importlib_metatata package we have imported, so that we know
+    # we can actually use it to check versions. Trust importlib_metadata.__version__ for
+    # now, to avoid using importlib_metadata itself until we know it is new enough:
+    check_version(
+        'importlib_metadata', '0.17', '2.0', version=importlib_metadata.__version__
+    )
+
+    # Now that we know we have a new enough version of importlib_metadata imported, confirm
+    # that result using importlib_metadata itself. This will detect broken installations
+    # (where the metadata does not agree with the imported package, or if the same package
+    # is installed multiple times to different paths) whereas the above check will not.
+    check_version('importlib_metadata', '0.17', '2.0')
 
 
 class NotFound(object):
@@ -128,6 +151,7 @@ def get_version(import_name, project_name=None):
 
     Return NotFound if the package cannot be found, and NoVersionInfo if the version
     cannot be obtained in the above way, or if it was found but was None."""
+    _initialise()
     if project_name is None:
         project_name = import_name
     if '.' in import_name:
@@ -170,6 +194,7 @@ def check_version(module_name, at_least, less_than, version=None, project_name=N
     module_name='serial' and project_name='pyserial'. You can also pass in a version
     string yourself, in which case no inspection of packages will take place.
     """
+    _initialise()
     if version is None:
         version = get_version(module_name, project_name)
 
@@ -191,9 +216,6 @@ def check_version(module_name, at_least, less_than, version=None, project_name=N
             + '{at_least} <= {module_name} < {less_than} required.'
         )
         raise VersionException(msg.format(**locals()))
-
-
-check_version('importlib_metadata', '0.17', '2.0')
 
 
 if __name__ == '__main__':
