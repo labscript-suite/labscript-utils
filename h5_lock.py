@@ -26,13 +26,11 @@ if PY2:
     str = unicode
 
 if 'h5py' in sys.modules:
-    tb = traceback.format_stack()
     import labscript_utils.double_import_denier
     import h5py
     denier = labscript_utils.double_import_denier._denier
     if denier is not None and denier.enabled:
-        tb = denier.tracebacks[os.path.dirname(h5py.__file__)]
-        tb = denier._format_tb(tb)
+        tb = denier._format_tb(denier.tracebacks[os.path.dirname(h5py.__file__)])
         msg = """Error importing h5_lock: h5py has already been imported. h5_lock must
             be imported before any code imports h5py. The above traceback shows where
             h5_lock was imported, and the below traceback shows where h5py was imported
