@@ -67,6 +67,10 @@ class DoubleImportDenier(object):
         for name, module in list(sys.modules.items()):
             if getattr(module, '__file__', None) is not None:
                 path = os.path.realpath(module.__file__)
+                if os.path.splitext(os.path.basename(path))[0] == '__init__':
+                    # Import path for __init__.py is actually the folder they're in, so
+                    # use that instead
+                    path = os.path.dirname(path)
                 self.names_by_filepath[path] = name
                 self.tracebacks[path] = [UNKNOWN, '']
 
