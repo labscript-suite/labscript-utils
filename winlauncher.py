@@ -5,14 +5,15 @@ import subprocess
 import argparse
 
 parser = argparse.ArgumentParser(
-    description="""A launcher for running Python apps on Windows, potentially in conda
-        environments. This script can be run with either pythonw.exe or python.exe, but
-        in the former case it will launch the app using python.exe with a hidden console
-        window. This prevents a number of issues with using pythonw.exe, but without
-        having to show a console window. If using a conda environment, then any python
-        interpreter may be used to invoke this script, and the 'python' command from
-        within the environment will be used to run the target python script. If not
-        using a conda environment, the python interpreter used to invoke this script
+    description="""A launcher for running Python scripts/apps on Windows, potentially in
+        conda environments. This script can be run with either pythonw.exe or
+        python.exe, but in the former case it will launch the app using python.exe with
+        a hidden console window. This prevents a number of issues with using
+        pythonw.exe, but without having to show a console window. If using a conda
+        environment, then any python interpreter may be used to invoke this script, and
+        the 'python' command from within the environment will be used to run the target
+        python script. If not using a conda environment, the python interpreter used to
+        invoke this script (or the corresponding python.exe if pythonw.exe was used)
         will be used to invoke the target script."""
 )
 
@@ -29,14 +30,23 @@ parser.add_argument(
     type=str,
     help="""Prefix of the conda environment, if any.""",
 )
-parser.add_argument('script', type=str, help='Python script to run')
+
+parser.add_argument(
+    'script',
+    type=str,
+    help="""Python script to run. Note: if you wish to do something other than run a
+        script by its filepath, you may pass '--' in place of this argument, then all
+        subsequent arguments will be passed to the Python interpreter verbatim. This can
+        be used for example to run a module as __main__ using the '-m' flag, i.e.
+        winshell.py <other arguments> -- -m <module>""",
+)
 
 parser.add_argument(
     'args',
     metavar='args',
     type=str,
     nargs=argparse.REMAINDER,
-    help='Arguments to pass to target Python script',
+    help='Arguments to pass to target Python script or interpreter',
 )
 
 CREATE_NO_WINDOW = 1 << 27
