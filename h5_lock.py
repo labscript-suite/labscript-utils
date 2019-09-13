@@ -13,10 +13,12 @@
 from __future__ import division, unicode_literals, print_function, absolute_import
 
 import sys
+import os
+import traceback
 
 from labscript_utils.ls_zprocess import Lock, connect_to_zlock_server, kill_lock
 
-from labscript_utils import check_version
+from labscript_utils import check_version, dedent
 
 from labscript_utils.shared_drive import path_to_agnostic
 from labscript_utils import PY2
@@ -24,7 +26,21 @@ if PY2:
     str = unicode
 
 if 'h5py' in sys.modules:
-    raise ImportError('h5_lock must be imported prior to importing h5py')
+    import labscript_utils.double_import_denier
+    import h5py
+    denier = labscript_utils.double_import_denier._denier
+    if denier is not None and denier.enabled:
+        tb = denier._format_tb(denier.tracebacks[os.path.dirname(h5py.__file__)])
+        msg = """Error importing h5_lock: h5py has already been imported. h5_lock must
+            be imported before any code imports h5py. The above traceback shows where
+            h5_lock was imported, and the below traceback shows where h5py was imported
+            prior."""
+        msg = dedent(msg)
+        msg += "\n\nTraceback (h5py import):\n"
+        msg += "------------\n%s------------" % tb
+        raise ImportError(msg)
+    else:
+        raise ImportError('h5_lock must be imported prior to importing h5py')
         
 import h5py
 # This module used to contain a monkeypatch to work around an issue now fixed in h5py.

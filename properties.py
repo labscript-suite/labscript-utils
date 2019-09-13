@@ -10,9 +10,7 @@ if PY2:
 else:
     from collections.abc import Iterable, Mapping
 import numpy as np
-import h5py
 
-vlenstring = h5py.special_dtype(vlen=str)
 
 JSON_IDENTIFIER = 'Content-Type: application/json '
 BASE64_IDENTIFIER = 'Content-Transfer-Encoding: base64 '
@@ -132,6 +130,7 @@ def _get_device_properties(h5_file, device_name):
 
 
 def _get_con_table_properties(h5_file, device_name):
+    import h5py
     dataset = h5_file['connection table']
 
     # Compare with the name in the connection table
@@ -139,7 +138,7 @@ def _get_con_table_properties(h5_file, device_name):
     namecol_dtype = dataset['name'].dtype
     if namecol_dtype.type is np.bytes_:
         device_name = device_name.encode('utf8')
-    elif namecol_dtype is vlenstring:
+    elif namecol_dtype is h5py.special_dtype(vlen=str):
         pass
     else:
         raise TypeError(namecol_dtype)
@@ -150,6 +149,7 @@ def _get_con_table_properties(h5_file, device_name):
 
 
 def _get_unit_conversion_parameters(h5_file, device_name):
+    import h5py
     dataset = h5_file['connection table']
 
     # Compare with the name in the connection table
@@ -157,7 +157,7 @@ def _get_unit_conversion_parameters(h5_file, device_name):
     namecol_dtype = dataset['name'].dtype
     if namecol_dtype.type is np.bytes_:
         device_name = device_name.encode('utf8')
-    elif namecol_dtype is vlenstring:
+    elif namecol_dtype is h5py.special_dtype(vlen=str):
         pass
     else:
         raise TypeError(namecol_dtype)
