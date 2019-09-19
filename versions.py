@@ -103,9 +103,18 @@ def _get_import_path(import_name):
 def _get_metadata_version(project_name, import_path):
     """Return the metadata version for a package with the given project name located at
     the given import path, or None if there is no such package."""
+    
     for finder in sys.meta_path:
-        if  hasattr(finder, 'find_distributions'):
-            dists = finder.find_distributions(name=project_name, path=[import_path])
+        if hasattr(finder, 'find_distributions'):
+            if LooseVersion(importlib_metadata.__version__) >= LooseVersion('0.21'):
+                context = importlib_metadata.DistributionFinder.Context(
+                    name=project_name, path=[import_path]
+                )
+                dists = finder.find_distributions(context)
+            else:
+                # TODO: once importlib_metadata >=0.21 is in anaconda repositories, depend
+                # on it and remove this backward compatibility:
+                dists = finder.find_distributions(name=project_name, path=[import_path])
             dists = list(dists)
             if len(dists) > 1:
                 msg = ERR_BROKEN_INSTALL.format(package=project_name, path=import_path)
