@@ -23,8 +23,8 @@ from qtutils.qt.QtWidgets import *
 
 
 class EnumOutput(QWidget):
-    def __init__(self, hardware_name, connection_name='-', display_name=None, horizontal_alignment=False):
-        QWidget.__init__(self)
+    def __init__(self, hardware_name, connection_name='-', display_name=None, horizontal_alignment=False, parent=None):
+        QWidget.__init__(self,parent)
         
         self._connection_name = connection_name
         self._hardware_name = hardware_name
