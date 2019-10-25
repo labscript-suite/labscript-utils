@@ -88,8 +88,8 @@ class EnumOutput(QWidget):
     def get_EO(self):
         return self._EO
     
-    def set_options(self,options):
-        self._combobox.addItems(sorted(options))
+    def set_combobox_model(self,model):
+        self._combobox.setModel(model)
 
     def connect_value_change(self,func):
         self._value_changed_function = func
@@ -105,18 +105,24 @@ class EnumOutput(QWidget):
     @selected_option.setter
     def selected_option(self,option):
         if option != self.selected_option:
-            item = self._combobox.model().findItems(option)
-            if item:
-                model_index = self._combobox.model().indexFromItem(item[0]).row()
-        self._combobox.setCurrentIndex(model_index)
+            #item = self._combobox.model().findItems(option)
+            model_index = self._combobox.findText(option)
+            if model_index != -1:
+                #model_index = self._combobox.model().indexFromItem(item[0]).row()
+                self._combobox.setCurrentIndex(model_index)
 
     @property
     def selected_index(self):
-        return self._combobox.currentIndex()
+        return self._combobox.currentData(Qt.UserRole)
 
     @selected_index.setter
     def selected_index(self,index):
-        self._combobox.setCurrentIndex(index)
+        if index != self.selected_index:
+            model_index = self._combobox.findData(index,Qt.UserRole)
+            if model_index != -1:
+                self._combobox.setCurrentIndex(model_index)
+            else:
+                raise RuntimeError(f'Index {index} not found!')
 
     def block_combobox_signals(self):
         return self._combobox.blockSignals(True)
@@ -163,7 +169,7 @@ class EnumOutput(QWidget):
         self._lock_action.setText("Lock")
         if self._EO is not None and notify_eo:
             self._EO.unlock()
-        
+
     
 # A simple test!
 if __name__ == '__main__':
@@ -173,12 +179,22 @@ if __name__ == '__main__':
     window = QWidget()
     layout = QVBoxLayout(window)
 
-    test_options = {'option 1':0,'option 2':1}
+    test_options = {'option 1':{'index':0,'tooltip':"Option 1 Description"},
+                    'option 2':{'index':1,'tooltip':"Option 2 Description"},
+                    'option 3':2}
+    test_model = QStandardItemModel()
+    for key,val in test_options.items():
+        item = QStandardItem(key)
+        if type(val) != dict:
+            item.setData(val,Qt.UserRole)
+        else:
+            item.setData(val['index'],Qt.UserRole)
+            item.setData(val['tooltip'],Qt.ToolTipRole)
+        test_model.appendRow(item)
     combobox = EnumOutput('Enumerate',display_name='Test Name',
                             horizontal_alignment=True)        
-
     layout.addWidget(combobox)
-    combobox.set_options(test_options)
+    combobox.set_combobox_model(test_model)
     
     window.show()
     
