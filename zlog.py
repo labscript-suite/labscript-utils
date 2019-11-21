@@ -20,6 +20,7 @@ if PY2:
 import sys
 import subprocess
 from labscript_utils.ls_zprocess import get_config
+from labscript_utils.setup_logging import LOG_PATH
 from zprocess import start_daemon
 
 """Script to run a zlog server configured according to LabConfig. Run with:
@@ -45,6 +46,8 @@ def main():
         str(config['logging_maxBytes']),
         '--backupCount',
         str(config['logging_backupCount']),
+        '-l',
+        LOG_PATH,
     ]
     if config['shared_secret_file'] is not None:
         cmd += ['--shared-secret-file', config['shared_secret_file']]
