@@ -68,10 +68,11 @@ appids = {
 app_descriptions = {app: launcher_name(app).replace('.lnk', '') for app in APPS}
 
 if os.name == 'nt':
-    from win32com.shell import shellcon
+    from win32com.shell import shell, shellcon
     from win32com.client import Dispatch
     from win32com.propsys import propsys, pscon
     import pythoncom
+    objShell = Dispatch('WScript.Shell')
     WINDOWS = True
 else:
     WINDOWS = False
@@ -86,8 +87,7 @@ def make_shortcut(appname):
     _check_windows()
     shortcut_path = os.path.join(labscript_suite_profile, launcher_name(appname))
     app_dir = os.path.join(_get_import_path(appname), appname)
-    shell = Dispatch('WScript.Shell')
-    shortcut = shell.CreateShortcut(shortcut_path)
+    shortcut = objShell.CreateShortcut(shortcut_path)
     target, args = launch_command(appname)
     shortcut.TargetPath = target
     shortcut.Arguments = args
@@ -159,20 +159,42 @@ def set_appusermodel(
 
 def add_to_start_menu(shortcut):
     _check_windows()
-    objShell = Dispatch("WScript.Shell")
     start_menu_programs = objShell.SpecialFolders("Programs")
     shutil.copy(shortcut, start_menu_programs)
 
+def is_in_start_menu(name):
+    """Whether an item with the same basename as the given name is in the start menu"""
+    _check_windows()
+    start_menu_programs = objShell.SpecialFolders("Programs")
+    return os.path.basename(name) in os.listdir(start_menu_programs)
+
 def remove_from_start_menu(name):
-    """Removes given .lnk file from the start menu.
-    If entry not present, does nothing."""
+    """Removes given .lnk file from the start menu. If entry not present, does
+    nothing."""
     _check_windows()
     name = os.path.basename(name)
-    objShell = Dispatch("WScript.Shell")
     start_menu_programs = objShell.SpecialFolders("Programs")
-    if name in os.listdir(start_menu_programs):
+    try:
         os.unlink(os.path.join(start_menu_programs, name))
+    except OSError:
+        pass
 
+def update_if_pinned(shortcut):
+    """If a shortcut with the same name is pinned to the taskbar, delete it and replace
+    it with the given shortcut"""
+    basename = os.path.basename(shortcut)
+    appdata = shell.SHGetFolderPath(0, shellcon.CSIDL_APPDATA, None, 0)
+    taskbar_pinned_dir = os.path.join(
+        appdata,
+        'Microsoft',
+        'Internet Explorer',
+        'Quick Launch',
+        'User Pinned',
+        'TaskBar',
+    )
+    if basename in os.listdir(taskbar_pinned_dir):
+        os.unlink(os.path.join(taskbar_pinned_dir, basename))
+        shutil.copy(shortcut, taskbar_pinned_dir)
 
 def fix_shortcuts():
     """Delete and remake labscript suite application shortcuts and start-menu entries.
@@ -181,7 +203,12 @@ def fix_shortcuts():
     _check_windows()
     print("Remaking labscript suite application shortcuts...")
     for name in sorted(os.listdir(labscript_suite_profile)):
-        if name.lower().endswith('.lnk'):
+        name = name.lower()
+        if (
+            name.endswith('.lnk')
+            and is_in_start_menu(name)
+            and any(appname in name for appname in APPS)
+        ):
             print("deleting shortcut:", name)
             remove_from_start_menu(name)
             os.unlink(os.path.join(labscript_suite_profile, name))
@@ -189,6 +216,7 @@ def fix_shortcuts():
         print("creating shortcut:", launcher_name(appname))
         shortcut_path = make_shortcut(appname)
         add_to_start_menu(shortcut_path)
+        update_if_pinned(shortcut_path)
     print("done")
 
 
