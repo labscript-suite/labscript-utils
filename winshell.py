@@ -6,12 +6,8 @@ import shutil
 if sys.version_info.major == 2:
     str = unicode
 
-for path in sys.path:
-    if os.path.exists(os.path.join(path, '.is_labscript_suite_install_dir')):
-        labscript_installation = os.path.abspath(path)
-        break
-else:
-    labscript_installation = '<not_installed>'
+from labscript_utils import labscript_suite_profile, labscript_utils_dir
+from labscript_utils.versions import _get_import_path
 
 APPS = ['runmanager', 'runviewer', 'blacs', 'lyse']
 
@@ -38,9 +34,7 @@ def launch_command(appname):
         target = target.lower().replace('.exe', 'w.exe')
 
     # Wrap the command in call to our launcher script:
-    WINLAUNCHER = os.path.join(
-            labscript_installation, 'labscript_utils', 'winlauncher.py'
-        )
+    WINLAUNCHER = os.path.join(labscript_utils_dir, 'winlauncher.py')
     args = [WINLAUNCHER]
 
     CONDA_PREFIX = os.getenv('CONDA_PREFIX')
@@ -50,7 +44,7 @@ def launch_command(appname):
         args += ['-n', CONDA_DEFAULT_ENV, '-p', CONDA_PREFIX]
 
     # Add the actual path to the __main__ script of the app:
-    args += [os.path.join(labscript_installation, appname, '__main__.py')]
+    args += [os.path.join(_get_import_path(appname), appname, '__main__.py')]
 
     # Quote for spaces etc in the target and args list:
     target = '"%s"' % target
@@ -59,13 +53,13 @@ def launch_command(appname):
     return target, arglist
 
 
-# Including the install directory and python interpreter in the below AppId strings
-# ensures they are unique to the install location and any conda env or virtualenv. If
-# they were not, then installing to one directory, uninstalling, and reinstalling to
-# another would make the Windows AppId API behave unpredictably. Shortcuts don't work,
-# and icons are broken. This if of particular importance when developing on the same
-# machine as you are deploying to.
-_INSTALL = '%s.%s' % (labscript_installation, sys.executable)
+# Including the profile directory and python interpreter in the below AppId strings
+# ensures they are unique to the profile location and any conda env or virtualenv. If
+# they were not, then switching or creating new labscript suite profile directories
+# could make the Windows AppId API behave unpredictably. Shortcuts don't work, and icons
+# are broken. This if of particular importance when developing on the same machine as
+# you are deploying to.
+_INSTALL = '%s.%s' % (labscript_suite_profile, sys.executable)
 appids = {
     app: 'Monashbec.Labscript.%s.%s' % (app.capitalize(), _INSTALL) for app in APPS
 }
@@ -89,15 +83,15 @@ def _check_windows():
 
 def make_shortcut(appname):
     """Create a shortcut file in the labscript suite install dir for the given app"""
-    shortcut_path = os.path.join(labscript_installation, launcher_name(appname))
-    app_dir = os.path.join(labscript_installation, appname)
     _check_windows()
+    shortcut_path = os.path.join(labscript_suite_profile, launcher_name(appname))
+    app_dir = os.path.join(_get_import_path(appname), appname)
     shell = Dispatch('WScript.Shell')
     shortcut = shell.CreateShortcut(shortcut_path)
     target, args = launch_command(appname)
     shortcut.TargetPath = target
     shortcut.Arguments = args
-    shortcut.WorkingDirectory = '"%s"' % app_dir
+    shortcut.WorkingDirectory = labscript_suite_profile
     shortcut.IconLocation = os.path.join(app_dir, appname + '.ico')
     shortcut.Description = app_descriptions[appname]
     shortcut.save()
@@ -141,7 +135,7 @@ def set_appusermodel(
     if appid is None:
         appid = appids[appname]
     if icon_path is None:
-        icon_path = os.path.join(labscript_installation, appname, appname + '.ico')
+        icon_path = os.path.join(_get_import_path(appname), appname + '.ico')
     if relaunch_command is None:
         target, args = launch_command(appname)
         relaunch_command = ' '.join([target, args])
@@ -186,11 +180,11 @@ def fix_shortcuts():
     anaconda installations."""
     _check_windows()
     print("Remaking labscript suite application shortcuts...")
-    for name in sorted(os.listdir(labscript_installation)):
+    for name in sorted(os.listdir(labscript_suite_profile)):
         if name.lower().endswith('.lnk'):
             print("deleting shortcut:", name)
             remove_from_start_menu(name)
-            os.unlink(os.path.join(labscript_installation, name))
+            os.unlink(os.path.join(labscript_suite_profile, name))
     for appname in sorted(APPS):
         print("creating shortcut:", launcher_name(appname))
         shortcut_path = make_shortcut(appname)
