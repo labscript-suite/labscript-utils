@@ -62,7 +62,12 @@ def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.
     old_log_dir = os.path.dirname(os.path.realpath(main_path))
     for fname in os.listdir(old_log_dir):
         if fname.startswith('%s.log' % program_name):
-            os.rename(os.path.join(old_log_dir, fname), os.path.join(LOG_PATH, fname))
+            try:
+                os.rename(
+                    os.path.join(old_log_dir, fname), os.path.join(LOG_PATH, fname)
+                )
+            except OSError:
+                pass
     # End of migration-only code
 
     # Add a network logging handler from zprocess. Pass in the name of the program so
