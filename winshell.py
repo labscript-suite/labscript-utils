@@ -91,7 +91,7 @@ def make_shortcut(appname):
     target, args = launch_command(appname)
     shortcut.TargetPath = target
     shortcut.Arguments = args
-    shortcut.WorkingDirectory = labscript_suite_profile
+    shortcut.WorkingDirectory = os.path.join(labscript_suite_profile, 'userlib')
     shortcut.IconLocation = os.path.join(app_dir, appname + '.ico')
     shortcut.Description = app_descriptions[appname]
     shortcut.save()
@@ -193,6 +193,7 @@ def update_if_pinned(shortcut):
         'TaskBar',
     )
     if basename in os.listdir(taskbar_pinned_dir):
+        print("Updating pinned shortcut %s" % basename)
         os.unlink(os.path.join(taskbar_pinned_dir, basename))
         shutil.copy(shortcut, taskbar_pinned_dir)
 
