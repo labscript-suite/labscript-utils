@@ -24,20 +24,6 @@ import time
 import hashlib
 
 
-def hash_bytestr_iter(bytesiter, hasher, ashexstr=True):
-    for block in bytesiter:
-        hasher.update(block)
-    return (hasher.hexdigest() if ashexstr else hasher.digest())
-
-
-def file_as_blockiter(afile, blocksize=65536):
-    with afile:
-        block = afile.read(blocksize)
-        while len(block) > 0:
-            yield block
-            block = afile.read(blocksize)
-
-
 class FileWatcher(object):
     def __init__(self, callback, files=None, folders=None, modified_info=None,
                  hashable_types=None, interval=1, **kwargs):
@@ -142,8 +128,8 @@ class FileWatcher(object):
             try:
                 # If extension is a hashable type, use hash for modified_info
                 if os.path.splitext(name)[-1].lower() in self.hashable_types:
-                    modified_info = hash_bytestr_iter(
-                        file_as_blockiter(open(name, 'rb')), hashlib.md5())
+                    with open(name, 'rb') as f:
+                        modified_info = hashlib.md5(f.read()).hexdigest()
                 # Otherwise use last modified time for modified_info
                 else:
                     modified_info = os.path.getmtime(name)
