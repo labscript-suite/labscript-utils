@@ -36,24 +36,26 @@ def _initialise():
     # The following import looks pointless, but is required for its side effects. Finders
     # are added to sys.meta_path that we use:
     try:
-        # This will be in the standard library in Python 3.8:
+        # Standard library in Python 3.8+
         import importlib.metadata as importlib_metadata
     except ImportError:
-        # This is the backport of the Python 3.8 stdlib module,
+        # The backport of the Python 3.8 stdlib module,
         import importlib_metadata
 
-    # Check the version of the importlib_metatata package we have imported, so that we know
-    # we can actually use it to check versions. Trust importlib_metadata.__version__ for
-    # now, to avoid using importlib_metadata itself until we know it is new enough:
-    check_version(
-        'importlib_metadata', '0.17', '2.0', version=importlib_metadata.__version__
-    )
+        # Check the version of the importlib_metatata package we have imported, so that
+        # we know we can actually use it to check versions. Trust
+        # importlib_metadata.__version__ for now, to avoid using importlib_metadata
+        # itself until we know it is new enough:
+        check_version(
+            'importlib_metadata', '0.23', '2.0', version=importlib_metadata.__version__
+        )
 
-    # Now that we know we have a new enough version of importlib_metadata imported, confirm
-    # that result using importlib_metadata itself. This will detect broken installations
-    # (where the metadata does not agree with the imported package, or if the same package
-    # is installed multiple times to different paths) whereas the above check will not.
-    check_version('importlib_metadata', '0.17', '2.0')
+        # Now that we know we have a new enough version of importlib_metadata imported,
+        # confirm that result using importlib_metadata itself. This will detect broken
+        # installations (where the metadata does not agree with the imported package, or
+        # if the same package is installed multiple times to different paths) whereas
+        # the above check will not.
+        check_version('importlib_metadata', '0.23', '2.0')
 
 
 class NotFound(object):
@@ -106,15 +108,10 @@ def _get_metadata_version(project_name, import_path):
     
     for finder in sys.meta_path:
         if hasattr(finder, 'find_distributions'):
-            if LooseVersion(importlib_metadata.__version__) >= LooseVersion('0.21'):
-                context = importlib_metadata.DistributionFinder.Context(
-                    name=project_name, path=[import_path]
-                )
-                dists = finder.find_distributions(context)
-            else:
-                # TODO: once importlib_metadata >=0.21 is in anaconda repositories, depend
-                # on it and remove this backward compatibility:
-                dists = finder.find_distributions(name=project_name, path=[import_path])
+            context = importlib_metadata.DistributionFinder.Context(
+                name=project_name, path=[import_path]
+            )
+            dists = finder.find_distributions(context)
             dists = list(dists)
             if len(dists) > 1:
                 msg = ERR_BROKEN_INSTALL.format(package=project_name, path=import_path)
