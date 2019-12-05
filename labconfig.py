@@ -19,10 +19,10 @@ import subprocess
 import errno
 import configparser
 
-from labscript_utils import labscript_suite_install_dir
+from labscript_utils import labscript_suite_profile
 # Look for a 'labconfig' folder in the labscript install directory:
-if labscript_suite_install_dir is not None:
-    config_prefix = os.path.join(labscript_suite_install_dir, 'labconfig')
+if labscript_suite_profile is not None:
+    config_prefix = os.path.join(labscript_suite_profile, 'labconfig')
 else:
     # No labscript install directory found? Revert to system defaults
     if os.name == 'nt':
@@ -34,7 +34,7 @@ else:
 
 if not os.path.exists(config_prefix):
     message = (r"Couldn't find labconfig folder. Please ensure it exists. " +
-               r"If the labscript suite is installed, labconfig must be <labscript_suite_install_dir>/labconfig/. " +
+               r"If the labscript suite is installed, labconfig must be <labscript_suite_profile>/labconfig/. " +
                r"If the labscript suite is not installed, then C:\labconfig\ is checked on Windows, " +
                r" and $HOME/labconfig/ then /etc/labconfig/ checked on unix.")
     raise IOError(message)

@@ -22,10 +22,7 @@ except ImportError as e:
             not being configured to activate conda environments. Try running the
             following from within the activated conda environment to fix the shortcuts:
 
-                python -m labscript_utils.winshell --fix-shortcuts.
-
-            You may then need to unpin and re-pin any shortcuts pinned to the
-            taskbar."""
+                python -m labscript_utils.winshell --fix-shortcuts."""
         raise ImportError(dedent(msg))
     raise
     

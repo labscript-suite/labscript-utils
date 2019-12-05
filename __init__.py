@@ -12,7 +12,7 @@
 #####################################################################
 from __future__ import division, unicode_literals, print_function, absolute_import
 
-__version__ = '2.14.1'
+__version__ = '2.15.0'
 
 
 import sys
@@ -21,12 +21,24 @@ import traceback
 
 PY2 = sys.version_info[0] == 2
 
-for path in sys.path:
-    if os.path.exists(os.path.join(path, '.is_labscript_suite_install_dir')):
-        labscript_suite_install_dir = path
-        break
-else:
-    labscript_suite_install_dir = None
+def _get_labscript_suite_profile():
+    """Find the labscript suite profile directory based on the fact that its userlib
+    should be in sys.path, and it should contain a file called 'labscript_suite_profile'
+    (or '.is_labscript_suite_install_dir' for old installations). Return it, or None if
+    not found."""
+    for path in sys.path:
+        parent, base = os.path.split(path)
+        if base == 'userlib' and (
+            os.path.exists(os.path.join(parent, '.labscript_suite_profile'))
+            or os.path.exists(os.path.join(parent, '.is_labscript_suite_install_dir'))
+        ):
+            return parent
+
+# labscript_suite_install_dir alias for backward compatibility:
+labscript_suite_profile = labscript_suite_install_dir =_get_labscript_suite_profile()
+
+# This folder
+labscript_utils_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 def import_or_reload(modulename):
