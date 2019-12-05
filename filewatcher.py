@@ -143,6 +143,10 @@ class FileWatcher(object):
                 with open(name, 'rb') as f:
                     return hashlib.md5(f.read()).hexdigest()
             # Otherwise use last modified time for modified_info
+            elif os.path.isdir(name):
+                # Modified info of a directory is a hash of its entries:
+                entries = os.listdir(name if PY2 else os.fsencode(name))
+                return hashlib.md5(b'\0'.join(entries)).hexdigest()
             else:
                 return os.path.getmtime(name)
         except (OSError, IOError):
@@ -268,6 +272,16 @@ if __name__ == '__main__':
 
     test_files = ['filewatcher_test.txt', 'foo/bar.txt']
     test_folder = 'foo'
+
+    f = FileWatcher(
+        callback,
+        files=test_files[0],
+        folders=test_folder,
+        hashable_types=['.py', '.ini', '.txt'],
+        interval=2,
+    )
+
+
     for path in test_files:
         folder, _ = os.path.split(path)
         if not os.path.exists(path):
@@ -275,5 +289,4 @@ if __name__ == '__main__':
                 os.makedirs(folder)
             with open(path, 'w') as f:
                 print('Created file {}'.format(path))
-    f = FileWatcher(callback, files=test_files[0], folders=test_folder,
-                    hashable_types=['.py', '.ini', '.txt'], interval=2)
+    
