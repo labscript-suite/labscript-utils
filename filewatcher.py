@@ -15,17 +15,18 @@ from labscript_utils import PY2
 if PY2:
     str = unicode
     from inspect import getargspec as getfullargspec
+    from Queue import Queue, Empty
 else:
     from inspect import getfullargspec
+    from queue import Queue, Empty
 
 import threading
 import os
-import time
 import hashlib
 
 
 class FileWatcher(object):
-    def __init__(self, callback, files=None, folders=None, modified_info=None,
+    def __init__(self, callback, files=None, folders=None, clean_modified_info=None,
                  hashable_types=None, interval=1, **kwargs):
         """
         Detect modification, deletion, creation, or restoration of specific files
@@ -45,9 +46,9 @@ class FileWatcher(object):
             A single folder can be specified as a string (default None).
             If a file is created/deleted in/from any watched folder, it is added/
             removed to/from the FileWatcher.files attribute.
-        modified_info -- File info to detect modification/restoration with.
-            If None (default), the initial modified info will be based on the 
-            first polling of files.
+        clean_modified_info -- File info to detect modification/restoration with respect
+            to. If None (default), or for files not present in clean_modified_info, the
+            initial modified info will be based on the first polling of files.
         hashable_types -- File extensions for which MD5 checksum will be used to
             detect modification/restoration with (default None). Files of any 
             other type will be watched using their modified time. 
@@ -61,40 +62,55 @@ class FileWatcher(object):
             self.callback = lambda name, info, event: callback(name, info)
         self.lock = threading.Lock()
 
-        self.hashable_types = [] if hashable_types is None else [x.lower() for x in hashable_types]
+        self.hashable_types = (
+            [] if hashable_types is None else [x.lower() for x in hashable_types]
+        )
         self.files = set()
         self.folders = set()
+
+        # Backwards compat for BLACS before hashing was introduced:
+        if 'modified_times' in kwargs and clean_modified_info is None:
+            clean_modified_info = kwargs['modified_times']
+
+        if clean_modified_info is None:
+            clean_modified_info = {}
+        self.clean_modified_info = clean_modified_info.copy()
+
         if files:
             self.add_files(files)
         if folders:
             self.add_folders(folders)
-
-        # Restore modified_info if modified_times is provided as a keyword argument
-        if 'modified_times' in kwargs and modified_info is None:
-            modified_info = kwargs['modified_times']
-        elif modified_info is None:
-            modified_info = {}
-        self.modified_info_original = modified_info.copy()
-        self.modified_info = modified_info.copy()
         self.update_files(trigger_callback=False)
 
-        # Remove keys in self.modified_info that are not in the files watchlist
-        for name in self.modified_info.copy():
+        # Remove keys from clean_modified_info that are not in the files watchlist:
+        for name in self.clean_modified_info.copy():
             if name not in self.files:
-                del self.modified_info[name]
+                del self.clean_modified_info[name]
+
+        self.modified_info = self.clean_modified_info.copy()
 
         self.main = threading.Thread(target=self.mainloop)
         self.main.daemon = True
         self.running = True
         self.interval = interval
+        self._stopping = Queue() 
         self.main.start()
 
     def mainloop(self):
-        while self.running:
-            time.sleep(self.interval)
+        stopping = False
+        while not stopping:
+            try:
+                self._stopping.get(timeout=self.interval)
+            except Empty:
+                stopping = False
+            else:
+                stopping = True
+            # We run one final time if stopping so that after we have stopped,
+            # get_modified_info() is guaranteed to reflect any events prior to stop()
+            # being called
             with self.lock:
-                self.update_files()
-                self.check()
+                self.update_files(trigger_callback=not stopping)
+                self.check(trigger_callback=not stopping)
 
     def update_files(self, folders=None, trigger_callback=True, recursive=True):
         """Refresh the watchlist of files (FileWatcher.files) by checking the folders kwarg
@@ -120,87 +136,117 @@ class FileWatcher(object):
                 # detected, so we can ignore this.
                 continue
 
-    def check(self):
-        check_all = False
-        first_pass = True if not self.modified_info_original else False
-        files_to_forget = []
-        for name in self.files:
-            try:
-                # If extension is a hashable type, use hash for modified_info
-                if os.path.splitext(name)[-1].lower() in self.hashable_types:
-                    with open(name, 'rb') as f:
-                        modified_info = hashlib.md5(f.read()).hexdigest()
-                # Otherwise use last modified time for modified_info
-                else:
-                    modified_info = os.path.getmtime(name)
-            except (OSError, IOError):
-                # If the file does not exist, set modified_info to None
-                if not os.path.exists(name):
-                    modified_info = None
-                else:
-                    # If we couldn't get the modified time but the path does exist,
-                    # there was probablly some race condition with the path becoming unavailable briefly
-                    # we'll skip the rest of the check for now, and leave it up to the next call of check()
-                    # to catch any file modification
-                    continue
-            if first_pass:
-                original_modified_info = self.modified_info_original.setdefault(
-                    name, modified_info)
+    def _modified_info_of_file(self, name):
+        try:
+            # If extension is a hashable type, use hash for modified_info
+            if os.path.splitext(name)[-1].lower() in self.hashable_types:
+                with open(name, 'rb') as f:
+                    return hashlib.md5(f.read()).hexdigest()
+            # Otherwise use last modified time for modified_info
             else:
-                if name in self.modified_info_original:
-                    original_modified_info = self.modified_info_original[name]
-                else:
-                    original_modified_info = None
-            previous_modified_info = self.modified_info.setdefault(
-                name, modified_info)
+                return os.path.getmtime(name)
+        except (OSError, IOError):
+            # If it doesn't exist or is inaccessible, modified info is None
+            return None
+
+    def check(self, trigger_callback=True):
+        check_all = False
+        deleted_files = set()
+        for name in self.files:
+            modified_info = self._modified_info_of_file(name)
+            previous_modified_info = self.modified_info.setdefault(name, modified_info)
             self.modified_info[name] = modified_info
-            if modified_info != previous_modified_info and not first_pass:
-                if modified_info == None:
-                    self.callback(name, modified_info, 'deleted')
-                    files_to_forget.append(name)
-                    self.modified_info.pop(name)
+            if modified_info != previous_modified_info:
+                if modified_info is None:
+                    if trigger_callback:
+                        self.callback(name, modified_info, 'deleted')
+                    deleted_files.add(name)
                     check_all = True
-                elif modified_info == original_modified_info:
-                    self.callback(name, modified_info, 'restored')
+                elif modified_info == self.clean_modified_info.get(name, None):
+                    if trigger_callback:
+                        self.callback(name, modified_info, 'restored')
                     check_all = True
                 elif name in self.modified_info:
-                    del self.modified_info[name]
-                    self.callback(name, modified_info, 'modified')
-        for name in files_to_forget:
-            self.files.remove(name)
-        if check_all and self.modified_info == self.modified_info_original:
+                    if trigger_callback:
+                        self.callback(name, modified_info, 'modified')
+        for name in deleted_files:
+            # Keep monitoring deleted files if they were explicitly added, since we want
+            # to be able to detect them being restored:
+            if name not in self.clean_modified_info:
+                self.files.remove(name)
+                del self.modified_info[name]
+        if (
+            check_all
+            and self.modified_info == self.clean_modified_info
+            and self.files == self.clean_modified_info.keys()
+            and trigger_callback
+        ):
             self.callback('all', '', 'original')
-        if first_pass:
-            print(self.modified_info_original)
 
     def stop(self):
-        self.running = False
+        with self.lock:
+            if not self.running:
+                raise RuntimeError("Not running")
+            self._stopping.put(None)
+            self.running = False
+        self.main.join()
+        self.main = None
 
     def add_file(self, path):
-        self.add_files(path)
+        self.add_files((path,))
+
+    def get_clean_modified_info(self):
+        with self.lock:
+            return self.clean_modified_info.copy()
 
     def get_modified_info(self):
         with self.lock:
-            times = self.modified_info.copy()
-        return times
+            return self.modified_info.copy()
+
+    def get_modified_times(self):
+        # Backward compat for BLACS from before file hashes were introduced
+        return self.get_modified_info()
 
     def add_folder(self, folder):
-        self.add_folders(folder)
+        self.add_folders((folder,))
 
-    def add_files(self, files):
+    def add_files(self, files, clean_modified_info=None):
+        if clean_modified_info is None:
+            clean_modified_info = {}
         with self.lock:
-            if isinstance(files, str):
-                self.files.add(files)
-            else:
-                self.files = self.files.union(set(files))
+            self.files = self.files.union(set(files))
+            # Remove keys from the clean_modified_info that are not in the files
+            # watchlist:
+            for name in self.clean_modified_info.copy():
+                if name not in self.files:
+                    del self.clean_modified_info[name]
+            # For all files added to the watchlist that we were not given a
+            # clean_modified_info for, set it based on their info now:
+            for name in files:
+                if name in clean_modified_info:
+                    self.clean_modified_info[name] = clean_modified_info[name]
+                elif name not in self.clean_modified_info:
+                    self.clean_modified_info[name] = self._modified_info_of_file(name)
 
-    def add_folders(self, folders):
+    def add_folders(self, folders, clean_modified_info=None):
+        if clean_modified_info is None:
+            clean_modified_info = {}
         with self.lock:
-            if isinstance(folders, str):
-                self.folders.add(folders)
-            else:
-                self.folders = self.folders.union(set(folders))
+            self.folders = self.folders.union(set(folders))
+            initial_files = self.files.copy()
             self.update_files(trigger_callback=False)
+            # Remove keys from the clean_modified_info that are not in the files
+            # watchlist:
+            for name in self.clean_modified_info.copy():
+                if name not in self.files:
+                    del self.clean_modified_info[name]
+            # For all files added to the watchlist that we were not given a
+            # clean_modified_info for, set it based on their info now:
+            for name in self.files - initial_files:
+                if name in clean_modified_info:
+                    self.clean_modified_info[name] = clean_modified_info[name]
+                elif name not in self.clean_modified_info:
+                    self.clean_modified_info[name] = self._modified_info_of_file(name)
 
 
 if __name__ == '__main__':
