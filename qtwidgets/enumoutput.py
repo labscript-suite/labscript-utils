@@ -2,7 +2,7 @@
 #                                                                   #
 # enumcontrol.py                                                    #
 #                                                                   #
-# Copyright 2013, Monash University                                 #
+# Copyright 2019, Monash University and contributors                #
 #                                                                   #
 # This file is part of the labscript suite (see                     #
 # http://labscriptsuite.org) and is licensed under the Simplified   #
@@ -122,7 +122,7 @@ class EnumOutput(QWidget):
             if model_index != -1:
                 self._combobox.setCurrentIndex(model_index)
             else:
-                raise RuntimeError(f'Index {index} not found!')
+                raise RuntimeError('Index {index} not found!'.format(index=index))
 
     def block_combobox_signals(self):
         return self._combobox.blockSignals(True)
