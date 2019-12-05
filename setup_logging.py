@@ -22,6 +22,10 @@ from labscript_utils.ls_zprocess import Handler, ensure_connected_to_zlog
 import __main__
 
 
+from labscript_utils import labscript_suite_install_dir
+
+LOG_PATH = os.path.join(labscript_suite_install_dir, 'logs')
+
 class LessThanFilter(logging.Filter):
     def __init__(self, less_than):
         self.less_than = less_than
@@ -31,7 +35,7 @@ class LessThanFilter(logging.Filter):
 
 
 def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.INFO, maxBytes=1024*1024*50, backupCount=1):
-    # MayBytes and backupCount args ignored, these are now set in labconfig since they
+    # MaxBytes and backupCount args ignored, these are now set in labconfig since they
     # are settings to the server rather than individual logging handlers. Args are left
     # in the function signature for backward compatibility.
     ensure_connected_to_zlog()
@@ -39,6 +43,14 @@ def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.
     # Clear any previously added handlers from the logger:
     for handler in logger.handlers[:]:
         logger.removeHandler(handler)
+
+    # Make sure the logging directory exists:
+    if not os.path.exists(LOG_PATH):
+        os.mkdir(LOG_PATH)
+
+    # This code exists solely to migrate existing log files. It can be removed in the
+    # future once it is no longer likely that users are upgrading in-place from an older
+    # version.
     try:
         try:
             program_module = __import__(program_name)
@@ -47,14 +59,18 @@ def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.
         main_path = program_module.__file__
     except ImportError:
         main_path = __main__.__file__ if hasattr(__main__, '__file__') else __file__
+    old_log_dir = os.path.dirname(os.path.realpath(main_path))
+    for fname in os.listdir(old_log_dir):
+        if fname.startswith('%s.log' % program_name):
+            os.rename(os.path.join(old_log_dir, fname), os.path.join(LOG_PATH, fname))
+    # End of migration-only code
 
-    log_dir = os.path.dirname(os.path.realpath(main_path))
-    log_path = os.path.join(log_dir, '%s.log' % program_name)
     # Add a network logging handler from zprocess. Pass in the name of the program so
     # that if we are a subprocess, the handler will be configured to use the same
-    # filepath as our parent process. In this way the zlog server won't create multipl
+    # filepath as our parent process. In this way the zlog server won't create multiple
     # log files with unrelated paths just because the program has a different install
     # location on different computers that are part of the same process tree.
+    log_path = os.path.join(LOG_PATH, '%s.log' % program_name)
     handler = Handler(log_path, name=program_name)
     formatter = logging.Formatter('%(asctime)s %(levelname)s %(name)s: %(message)s')
     handler.setFormatter(formatter)

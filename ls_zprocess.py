@@ -21,7 +21,7 @@ from distutils.version import LooseVersion
 import zmq
 
 from labscript_utils import check_version
-check_version('zprocess', '2.15.0', '3.0.0')
+check_version('zprocess', '2.18.0', '3.0.0')
 
 import zprocess
 import zprocess.process_tree

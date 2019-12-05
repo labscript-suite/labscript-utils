@@ -21,6 +21,7 @@ import sys
 import subprocess
 from socket import gethostbyname
 from labscript_utils.ls_zprocess import get_config
+from labscript_utils.setup_logging import LOG_PATH
 from zprocess import start_daemon
 
 """Script to run a zlock server configured according to LabConfig. Run with:
@@ -47,6 +48,8 @@ def main():
         'zprocess.zlock',
         '--port',
         config['zlock_port'],
+        '-l',
+        LOG_PATH,
     ]
     if config['shared_secret_file'] is not None:
         cmd += ['--shared-secret-file', config['shared_secret_file']]
