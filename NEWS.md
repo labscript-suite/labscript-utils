@@ -39,7 +39,7 @@ components to regular Python packages installable with conda or pip, discussed
 - Bugfix for using automatic metric prefixes with nonlinear unit conversion functions,
   these previously did the unit conversion incorrectly. Contributed by Peter Elgee and
   Chris Billington.
-  ([PR #87](https://bitbucket.org/labscript_suite/labscript_utils/pull-requests/96))
+  ([PR #87](https://bitbucket.org/labscript_suite/labscript_utils/pull-requests/87))
 
 
 ## [2.14.1] - 2019-10-22
