@@ -1,8 +1,8 @@
 ## [2.15.0] - 2019-12-04
 
-This release includes one enhancement, one update for compatibility with a new Python
-version, and two changes that facilitate the move of labscript suite components to
-regular Python packages installable with conda or pip, discussed
+This release includes one bugfix, one enhancement, one update for compatibility with a
+new Python version, and two changes that facilitate the move of labscript suite
+components to regular Python packages installable with conda or pip, discussed
 [here](https://bitbucket.org/labscript_suite/installer/issues/31/)
 
 - `labscript_utils.versions` Python 3.8 compatibility. Fixes an exception raised on
@@ -36,6 +36,10 @@ regular Python packages installable with conda or pip, discussed
   Contributed by Chris Billington.
   ([PR #96](https://bitbucket.org/labscript_suite/labscript_utils/pull-requests/96))
 
+- Bugfix for using automatic metric prefixes with nonlinear unit conversion functions,
+  these previously did the unit conversion incorrectly. Contributed by Peter Elgee and
+  Chris Billington.
+  ([PR #87](https://bitbucket.org/labscript_suite/labscript_utils/pull-requests/96))
 
 
 ## [2.14.1] - 2019-10-22
