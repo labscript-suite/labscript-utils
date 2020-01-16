@@ -25,6 +25,12 @@ if not PY2:
     from importlib._bootstrap import _call_with_frames_removed
 
 
+# Tensorflow contains true double imports. This is arguably a bug in tensorflow,
+# (reported here: https://github.com/tensorflow/tensorflow/issues/35369), but let's work
+# around it since tensorflow is not our problem:
+WHITELIST = ['tensorflow', 'tensorflow_core']
+
+
 class Loader(pkgutil.ImpLoader):
     def __init__(self, fullname, fp, pathname, description):
         pkgutil.ImpLoader.__init__(self, fullname, fp, pathname, description)
@@ -86,9 +92,10 @@ class DoubleImportDenier(object):
             path = os.path.realpath(pathname)
             tb = traceback.format_stack()
             other_name = self.names_by_filepath.get(path, None)
-            if other_name is not None and other_name != fullname:
-                other_tb = self.tracebacks[path]
-                self._raise_error(path, fullname, tb, other_name, other_tb)
+            if fullname.split('.', 1)[0] not in WHITELIST:
+                if other_name is not None and other_name != fullname:
+                    other_tb = self.tracebacks[path]
+                    self._raise_error(path, fullname, tb, other_name, other_tb)
             self.names_by_filepath[path] = fullname
             self.tracebacks[path] = tb
         return Loader(fullname, fp, pathname, description)
