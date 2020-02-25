@@ -51,6 +51,7 @@ SETUP_REQUIRES = ['setuptools', 'setuptools_scm']
 
 INSTALL_REQUIRES = [
     "importlib_metadata >=1.0;      python_version < '3.8'",
+    "pywin32;                       sys_platform == 'win32'",
     "pyqtgraph",
     "numpy >=1.15",
     "scipy",
