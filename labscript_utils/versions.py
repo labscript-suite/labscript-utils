@@ -82,27 +82,9 @@ not properly removed. You may want to uninstall the package, manually delete rem
 metadata files/folders, then reinstall the package.""".replace('\n', ' ')
 
 
-def _get_import_path(import_name, return_app_repo_subdir=True):
+def get_import_path(import_name):
     """Get which entry in sys.path a module would be imported from, without importing
-    it. If return_app_repo_subdir=True, and the resulting path is the labscript suite
-    profile directory, then check if module is a directory containing a setup.py and a
-    subdirectory of the same name as the module. If so, this is one of our module shims
-    that allows a repository to be imported like a regular installed module. In this
-    case, return the repository directory instead of the labscript suite profile
-    directory,"""
-    if return_app_repo_subdir:
-        path = _get_import_path(import_name, return_app_repo_subdir=False)
-        if path != labscript_suite_profile:
-            return path
-        modpath = os.path.join(path, import_name)
-        if (
-            os.path.isdir(modpath)
-            and os.path.exists(os.path.join(modpath, 'setup.py'))
-            and os.path.isdir(os.path.join(modpath, import_name))
-        ):
-            # It's a shim:
-            return modpath
-        return path
+    it."""
     if PY2:
         _, location, _ = imp.find_module(import_name)
         return os.path.dirname(location)
