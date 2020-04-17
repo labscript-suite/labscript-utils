@@ -1,0 +1,2 @@
+import labscript_profile; labscript_profile.add_userlib_and_pythonlib()
+import labscript_profile; labscript_profile.add_development_directories()

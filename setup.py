@@ -40,6 +40,7 @@
 
 import os
 from setuptools import setup
+from distutils import sysconfig
 from runpy import run_path
 
 try:
@@ -60,6 +61,17 @@ INSTALL_REQUIRES = [
     "zprocess >=2.18.0",
 ]
 
+if 'CONDA_BUILD' in os.environ:
+    # Various packaging schemes are variously unhappy with how to include the .pth file
+    # in site-packages. Conda is happy if we specify it with data_files and an absolute
+    # path, whereas basically everything else (pip, setup.py install, bdist,
+    # bdist_wheel) is happy if we specify it as package_data one level up.
+    data_files = [(sysconfig.get_python_lib(), ['labscript-suite.pth'])]
+    package_data = {}
+else:
+    data_files = []
+    package_data = {'labscript_suite': [os.path.join('..', 'labscript-suite.pth')]}
+
 setup(
     name='labscript_utils',
     version=run_path(os.path.join('labscript_utils', '__version__.py'))['__version__'],
@@ -70,13 +82,15 @@ setup(
     author_email='labscriptsuite@googlegroups.com ',
     url='http://labscriptsuite.org',
     license="BSD",
-    packages=["labscript_utils"],
+    packages=["labscript_utils", "labscript_profile"],
     zip_safe=False,
     setup_requires=SETUP_REQUIRES,
     include_package_data=True,
+    package_data=package_data,
     python_requires=">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5",
     install_requires=INSTALL_REQUIRES if 'CONDA_BUILD' not in os.environ else [],
     cmdclass={'dist_conda': dist_conda} if dist_conda is not None else {},
+    data_files=data_files,
     command_options={
         'dist_conda': {
             'pythons': (__file__, ['3.6', '3.7', '3.8']),
