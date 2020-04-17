@@ -1,3 +1,4 @@
+import sys
 import os
 import shutil
 import configparser
@@ -21,7 +22,7 @@ def make_labconfig_file():
     # Now change some things about it:
     config = configparser.ConfigParser()
     config.read(target_path)
-    config.set('DEFAULT', 'labscript_suite', LABSCRIPT_SUITE_PROFILE)
+    config.set('DEFAULT', 'labscript_suite', str(LABSCRIPT_SUITE_PROFILE))
     if sys.platform in ['linux', 'linux2']:
         config.set('programs', 'text_editor', 'gedit')
     elif sys.platform == 'darwin':

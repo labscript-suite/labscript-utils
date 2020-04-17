@@ -91,6 +91,11 @@ setup(
     install_requires=INSTALL_REQUIRES if 'CONDA_BUILD' not in os.environ else [],
     cmdclass={'dist_conda': dist_conda} if dist_conda is not None else {},
     data_files=data_files,
+    entry_points={
+        'console_scripts': [
+            'labscript-profile-create = labscript_profile.create:create_profile',
+        ],
+    },
     command_options={
         'dist_conda': {
             'pythons': (__file__, ['3.6', '3.7', '3.8']),

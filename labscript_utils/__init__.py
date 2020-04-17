@@ -30,7 +30,7 @@ if not os.path.exists(LABSCRIPT_SUITE_PROFILE):
     labscript_profile.add_userlib_and_pythonlib()
 
 # labscript_suite_install_dir alias for backward compatibility:
-labscript_suite_profile = labscript_suite_install_dir = LABSCRIPT_SUITE_PROFILE
+labscript_suite_profile = labscript_suite_install_dir = str(LABSCRIPT_SUITE_PROFILE)
 
 # This folder
 labscript_utils_dir = os.path.dirname(os.path.realpath(__file__))
