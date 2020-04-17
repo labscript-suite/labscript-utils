@@ -167,7 +167,7 @@ def get_version(import_name, project_name=None):
         raise NotImplementedError(msg)
     # Find the path where the module lives:
     try:
-        import_path = _get_import_path(import_name)
+        import_path = get_import_path(import_name)
     except ImportError:
         return NotFound
     # Check if pkg_resources knows about this module:
