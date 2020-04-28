@@ -7,7 +7,7 @@ if sys.version_info.major == 2:
     str = unicode
 
 from labscript_utils import labscript_suite_profile, labscript_utils_dir
-from labscript_utils.versions import _get_import_path
+from labscript_utils.versions import get_import_path
 
 APPS = ['runmanager', 'runviewer', 'blacs', 'lyse']
 
@@ -20,8 +20,12 @@ def launcher_name(appname):
     if env is not None and env != 'base':
         name += ' (%s)' % env
     name += ' - %s' % appname
-    if os.name == 'nt':
+    if sys.platform == 'win32':
         name += '.lnk'
+    elif sys.platform == 'linux':
+        name += '.desktop'
+    elif sys.platform == 'darwin':
+        raise NotImplementedError
     return name
 
 def launch_command(appname):
@@ -44,7 +48,7 @@ def launch_command(appname):
         args += ['-n', CONDA_DEFAULT_ENV, '-p', CONDA_PREFIX]
 
     # Add the actual path to the __main__ script of the app:
-    args += [os.path.join(_get_import_path(appname), appname, '__main__.py')]
+    args += [os.path.join(get_import_path(appname), appname, '__main__.py')]
 
     # Quote for spaces etc in the target and args list:
     target = '"%s"' % target
@@ -82,15 +86,18 @@ def _check_windows():
         msg = "winshell functions are Windows only"
         raise RuntimeError(msg)
 
-def make_shortcut(appname):
+def make_shortcut(appname, directory=labscript_suite_profile):
     """Create a shortcut file in the labscript suite install dir for the given app"""
     _check_windows()
-    shortcut_path = os.path.join(labscript_suite_profile, launcher_name(appname))
-    app_dir = os.path.join(_get_import_path(appname), appname)
+    shortcut_path = os.path.join(directory, launcher_name(appname))
+    if os.path.exists(shortcut_path):
+        os.unlink(shortcut_path)
+    app_dir = os.path.join(get_import_path(appname), appname)
     shortcut = objShell.CreateShortcut(shortcut_path)
     target, args = launch_command(appname)
     shortcut.TargetPath = target
     shortcut.Arguments = args
+    # TODO: read this from labconfig
     shortcut.WorkingDirectory = os.path.join(labscript_suite_profile, 'userlib')
     shortcut.IconLocation = os.path.join(app_dir, appname + '.ico')
     shortcut.Description = app_descriptions[appname]
@@ -135,7 +142,7 @@ def set_appusermodel(
     if appid is None:
         appid = appids[appname]
     if icon_path is None:
-        icon_path = os.path.join(_get_import_path(appname), appname + '.ico')
+        icon_path = os.path.join(get_import_path(appname), appname + '.ico')
     if relaunch_command is None:
         target, args = launch_command(appname)
         relaunch_command = ' '.join([target, args])
@@ -178,6 +185,18 @@ def remove_from_start_menu(name):
         os.unlink(os.path.join(start_menu_programs, name))
     except OSError:
         pass
+
+def clean_start_menu():
+    """Delete from the start menu any shortcut with 'labscript suite' in the name, whose
+    target does not exist"""
+    _check_windows()
+    start_menu = objShell.SpecialFolders("Programs")
+    for name in os.listdir(start_menu):
+        if 'labscript suite' in name:
+            shortcut_path = os.path.join(start_menu, name)
+            shortcut = objShell.CreateShortcut(shortcut_path)
+            if not os.path.exists(shortcut.Targetpath):
+                os.unlink(shortcut_path)
 
 def update_if_pinned(shortcut):
     """If a shortcut with the same name is pinned to the taskbar, delete it and replace
