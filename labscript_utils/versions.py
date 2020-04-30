@@ -16,6 +16,7 @@ import os
 import importlib
 import tokenize
 import ast
+import setuptools_scm
 from distutils.version import LooseVersion
 
 PY2 = sys.version_info.major == 2
@@ -23,13 +24,9 @@ if PY2:
     str = unicode
     import imp
 
-from labscript_utils import labscript_suite_profile
-
-
 # Lazy import so that labscript applications' excepthook is present before we
 # raise errors about not having a new enough importlib_metadata.
 importlib_metadata = None
-
 
 def _initialise():
     global importlib_metadata
@@ -148,14 +145,15 @@ def _get_literal_version(filename):
                             continue
 
 
-def get_version(import_name, project_name=None):
-    """Try very hard to get the version of a package without importing it. First find
-    where it would be imported from, without importing it. Then look for metadata in the
-    same import path with the given project name (note: this is not always the same as
-    the import name, it is the name for example you would ask pip to install). If that
-    is found, return the version info from it. Otherwise look for a __version__.py file
-    in the package directory, or a __version__ = <version> literal defined in the
-    package sournce (without executing it).
+def get_version(import_name, project_name=None, import_path=None):
+    """Try very hard to get the version of a package without importing it. if
+    import_path is not given, first find where it would be imported from, without
+    importing it. Then look for metadata in the same import path with the given project
+    name (note: this is not always the same as the import name, it is the name for
+    example you would ask pip to install). If that is found, return the version info
+    from it. Otherwise look for a __version__.py file in the package directory, or a
+    __version__ = <version> literal defined in the package source (without executing
+    it).
 
     Return NotFound if the package cannot be found, and NoVersionInfo if the version
     cannot be obtained in the above way, or if it was found but was None."""
@@ -165,12 +163,20 @@ def get_version(import_name, project_name=None):
     if '.' in import_name:
         msg = "Version checking of top-level packages only implemented"
         raise NotImplementedError(msg)
-    # Find the path where the module lives:
-    try:
-        import_path = get_import_path(import_name)
-    except ImportError:
+    if import_path is None:
+        # Find the path where the module lives:
+        try:
+            import_path = get_import_path(import_name)
+        except ImportError:
+            return NotFound
+    if not os.path.exists(os.path.join(import_path, import_name)):
         return NotFound
-    # Check if pkg_resources knows about this module:
+    # Check if setuptools_scm gives us a version number, for the case that it's a git
+    # repo:
+    version = setuptools_scm.get_version(import_path)
+    if version is not None:
+        return version
+    # Check if importlib_metadata knows about this module:
     version = _get_metadata_version(project_name, import_path)
     if version is not None:
         return version

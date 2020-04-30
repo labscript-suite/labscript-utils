@@ -51,6 +51,7 @@ except ImportError:
 SETUP_REQUIRES = ['setuptools', 'setuptools_scm']
 
 INSTALL_REQUIRES = [
+    "setuptools_scm",
     "importlib_metadata >=1.0;      python_version < '3.8'",
     "pywin32;                       sys_platform == 'win32'",
     "pyqtgraph",
@@ -74,7 +75,7 @@ else:
 
 setup(
     name='labscript_utils',
-    version=run_path(os.path.join('labscript_utils', '__version__.py'))['__version__'],
+    use_scm_version=True,
     description="Shared utilities for the labscript suite",
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
