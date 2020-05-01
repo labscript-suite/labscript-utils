@@ -10,11 +10,16 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-from .__version__ import __version__
 
 import sys
 import os
 import traceback
+from pathlib import Path
+
+from .versions import get_version, NoVersionInfo
+__version__ = get_version(__name__, import_path=Path(__file__).parent.parent)
+if __version__ is NoVersionInfo:
+    __version__ = None
 
 PY2 = sys.version_info[0] == 2
 
