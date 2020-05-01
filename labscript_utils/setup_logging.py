@@ -48,28 +48,6 @@ def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.
     if not os.path.exists(LOG_PATH):
         os.mkdir(LOG_PATH)
 
-    # This code exists solely to migrate existing log files. It can be removed in the
-    # future once it is no longer likely that users are upgrading in-place from an older
-    # version.
-    try:
-        try:
-            program_module = __import__(program_name)
-        except ImportError:
-            program_module = __import__(program_name.lower())
-        main_path = program_module.__file__
-    except ImportError:
-        main_path = __main__.__file__ if hasattr(__main__, '__file__') else __file__
-    old_log_dir = os.path.dirname(os.path.realpath(main_path))
-    for fname in os.listdir(old_log_dir):
-        if fname.startswith('%s.log' % program_name):
-            try:
-                os.rename(
-                    os.path.join(old_log_dir, fname), os.path.join(LOG_PATH, fname)
-                )
-            except OSError:
-                pass
-    # End of migration-only code
-
     # Add a network logging handler from zprocess. Pass in the name of the program so
     # that if we are a subprocess, the handler will be configured to use the same
     # filepath as our parent process. In this way the zlog server won't create multiple
