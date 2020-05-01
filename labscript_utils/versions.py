@@ -171,11 +171,12 @@ def get_version(import_name, project_name=None, import_path=None):
             return NotFound
     if not os.path.exists(os.path.join(import_path, import_name)):
         return NotFound
-    # Check if setuptools_scm gives us a version number, for the case that it's a git
-    # repo:
-    version = setuptools_scm.get_version(import_path)
-    if version is not None:
-        return version
+    try:
+        # Check if setuptools_scm gives us a version number, for the case that it's a
+        # git repo or PyPI tarball:
+        return setuptools_scm.get_version(import_path)
+    except LookupError:
+        pass
     # Check if importlib_metadata knows about this module:
     version = _get_metadata_version(project_name, import_path)
     if version is not None:

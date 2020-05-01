@@ -41,7 +41,6 @@
 import os
 from setuptools import setup
 from distutils import sysconfig
-from runpy import run_path
 
 try:
     from setuptools_conda import dist_conda
