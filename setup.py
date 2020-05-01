@@ -59,6 +59,8 @@ INSTALL_REQUIRES = [
     "h5py >=2.9",
     "qtutils >=2.2.3",
     "zprocess >=2.18.0",
+    "pyqtgraph >=0.11.0rc0;         python_version >= '3.8'",
+    "pyqtgraph;                     python_version < '3.8'",
 ]
 
 if 'CONDA_BUILD' in os.environ:
