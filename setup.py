@@ -53,7 +53,6 @@ INSTALL_REQUIRES = [
     "setuptools_scm",
     "importlib_metadata >=1.0;      python_version < '3.8'",
     "pywin32;                       sys_platform == 'win32'",
-    "pyqtgraph",
     "numpy >=1.15",
     "scipy",
     "h5py >=2.9",
