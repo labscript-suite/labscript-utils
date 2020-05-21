@@ -1,5 +1,6 @@
 import os
 from setuptools import setup
+from distutils import sysconfig
 
 try:
     from setuptools_conda import dist_conda
