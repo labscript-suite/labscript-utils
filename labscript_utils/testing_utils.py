@@ -10,23 +10,11 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-from __future__ import division, unicode_literals, print_function, absolute_import
-from labscript_utils import PY2
-if PY2:
-    str = unicode
-
 import os
 import sys
 import time
 import threading
-import unittest
-if PY2:
-    import Queue as queue
-    import mock
-else:
-    import queue
-    import unittest.mock as mock
-
+import queue
 from unittest import TestCase
 
 
@@ -112,10 +100,7 @@ class ThreadTestCase(TestCase):
         result, exception = self._thread_return_value.get()
         if exception is not None:
             type, value, traceback = exception
-            if PY2:
-                exec('raise type, value, traceback')
-            else:
-                raise value.with_traceback(traceback)
+            raise value.with_traceback(traceback)
         return result
 
     def _mainloop(self):
@@ -124,10 +109,7 @@ class ThreadTestCase(TestCase):
             if filepath is None:
                 break
             
-            if PY2:
-                filepath_native_string = filepath.encode(sys.getfilesystemencoding())
-            else:
-                filepath_native_string = filepath
+            filepath_native_string = filepath
 
             globals_dict['__name__'] ='__main__'
             globals_dict['__file__']= os.path.basename(filepath_native_string)

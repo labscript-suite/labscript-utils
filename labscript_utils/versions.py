@@ -10,7 +10,6 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-from __future__ import print_function, unicode_literals, absolute_import, division
 import sys
 import os
 import importlib
@@ -19,42 +18,10 @@ import ast
 import setuptools_scm
 from distutils.version import LooseVersion
 
-PY2 = sys.version_info.major == 2
-if PY2:
-    str = unicode
-    import imp
-
-# Lazy import so that labscript applications' excepthook is present before we
-# raise errors about not having a new enough importlib_metadata.
-importlib_metadata = None
-
-def _initialise():
-    global importlib_metadata
-    if importlib_metadata is not None:
-        return
-    # The following import looks pointless, but is required for its side effects. Finders
-    # are added to sys.meta_path that we use:
-    try:
-        # Standard library in Python 3.8+
-        import importlib.metadata as importlib_metadata
-    except ImportError:
-        # The backport of the Python 3.8 stdlib module,
-        import importlib_metadata
-
-        # Check the version of the importlib_metatata package we have imported, so that
-        # we know we can actually use it to check versions. Trust
-        # importlib_metadata.__version__ for now, to avoid using importlib_metadata
-        # itself until we know it is new enough:
-        check_version(
-            'importlib_metadata', '0.23', '2.0', version=importlib_metadata.__version__
-        )
-
-        # Now that we know we have a new enough version of importlib_metadata imported,
-        # confirm that result using importlib_metadata itself. This will detect broken
-        # installations (where the metadata does not agree with the imported package, or
-        # if the same package is installed multiple times to different paths) whereas
-        # the above check will not.
-        check_version('importlib_metadata', '0.23', '2.0')
+try:
+    import importlib.metadata as importlib_metadata
+except ImportError:
+    import importlib_metadata
 
 
 class NotFound(object):
@@ -82,9 +49,6 @@ metadata files/folders, then reinstall the package.""".replace('\n', ' ')
 def get_import_path(import_name):
     """Get which entry in sys.path a module would be imported from, without importing
     it."""
-    if PY2:
-        _, location, _ = imp.find_module(import_name)
-        return os.path.dirname(location)
     spec = importlib.util.find_spec(import_name)
     if spec is None:
         raise ModuleNotFoundError(import_name)
@@ -157,7 +121,6 @@ def get_version(import_name, project_name=None, import_path=None):
 
     Return NotFound if the package cannot be found, and NoVersionInfo if the version
     cannot be obtained in the above way, or if it was found but was None."""
-    _initialise()
     if project_name is None:
         project_name = import_name
     if '.' in import_name:
@@ -209,7 +172,6 @@ def check_version(module_name, at_least, less_than, version=None, project_name=N
     module_name='serial' and project_name='pyserial'. You can also pass in a version
     string yourself, in which case no inspection of packages will take place.
     """
-    _initialise()
     if version is None:
         version = get_version(module_name, project_name)
 

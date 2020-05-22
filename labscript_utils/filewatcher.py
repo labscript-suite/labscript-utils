@@ -10,16 +10,8 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-from __future__ import division, unicode_literals, print_function, absolute_import
-from labscript_utils import PY2
-if PY2:
-    str = unicode
-    from inspect import getargspec as getfullargspec
-    from Queue import Queue, Empty
-else:
-    from inspect import getfullargspec
-    from queue import Queue, Empty
-
+from inspect import getfullargspec
+from queue import Queue, Empty
 import threading
 import os
 import hashlib
@@ -145,7 +137,7 @@ class FileWatcher(object):
             # Otherwise use last modified time for modified_info
             elif os.path.isdir(name):
                 # Modified info of a directory is a hash of its entries:
-                entries = os.listdir(name if PY2 else os.fsencode(name))
+                entries = os.listdir(os.fsencode(name))
                 return hashlib.md5(b'\0'.join(entries)).hexdigest()
             else:
                 return os.path.getmtime(name)

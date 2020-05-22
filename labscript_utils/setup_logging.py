@@ -10,21 +10,14 @@
 # the project for the full license.                                 #
 #                                                                   #
 #####################################################################
-from __future__ import division, unicode_literals, print_function, absolute_import
-from labscript_utils import PY2
-if PY2:
-    str = unicode
-
 import sys, os
 import logging, logging.handlers
 from labscript_utils.ls_zprocess import Handler, ensure_connected_to_zlog
 
-import __main__
 
+from labscript_profile import LABSCRIPT_SUITE_PROFILE
 
-from labscript_utils import labscript_suite_install_dir
-
-LOG_PATH = os.path.join(labscript_suite_install_dir, 'logs')
+LOG_PATH = os.path.join(LABSCRIPT_SUITE_PROFILE, 'logs')
 
 class LessThanFilter(logging.Filter):
     def __init__(self, less_than):

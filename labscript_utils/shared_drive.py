@@ -10,8 +10,6 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-from __future__ import division, unicode_literals, print_function, absolute_import
-
 import os
 from labscript_utils.labconfig import LabConfig
 

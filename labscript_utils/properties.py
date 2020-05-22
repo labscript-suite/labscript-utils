@@ -1,14 +1,7 @@
-from __future__ import division, unicode_literals, print_function, absolute_import
-from labscript_utils import PY2
-if PY2:
-    str = unicode
 import sys
 import json
 from base64 import b64encode, b64decode
-if PY2:    
-    from collections import Iterable, Mapping
-else:
-    from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping
 import numpy as np
 
 
@@ -20,9 +13,6 @@ VALID_PROPERTY_LOCATIONS = {
     "device_properties",
     "unit_conversion_parameters"
     }
-
-if PY2:
-    str = unicode
 
 
 def _check_dicts(o):
@@ -77,8 +67,7 @@ def _default(o):
 
 def serialise(value):
     _check_dicts(value)
-    if not PY2:
-        value = _encode_bytestrings(value)
+    value = _encode_bytestrings(value)
     json_string = json.dumps(value, default=_default)
     return JSON_IDENTIFIER + json_string
 

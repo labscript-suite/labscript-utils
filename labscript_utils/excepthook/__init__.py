@@ -11,7 +11,6 @@
 #                                                                   #
 #####################################################################
 
-from __future__ import division, unicode_literals, print_function, absolute_import
 import sys
 import os
 import threading
@@ -97,9 +96,6 @@ def set_logger(logger):
 # part of the Python standard library. I'll make it a dependency for
 # packaging, but this is an extra check at runtime so that if something
 # goes wrong with that we get an error at import rather than later:
-if sys.version_info[0] == 2:
-    import Tkinter
-else:
-    import tkinter
+import tkinter
 sys.excepthook = tkhandler
 install_thread_excepthook()

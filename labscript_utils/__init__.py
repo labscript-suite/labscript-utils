@@ -15,6 +15,7 @@ import sys
 import os
 import traceback
 from pathlib import Path
+import importlib
 
 from .versions import get_version, NoVersionInfo
 from .__version__ import __version__ 
@@ -46,11 +47,8 @@ def import_or_reload(modulename):
     """
     # see if the proposed module is already loaded
     # if so, we will need to re-run the code contained in it
-    import importlib
-    if not PY2:
-        reload = importlib.reload
     if modulename in sys.modules.keys():
-        reload(sys.modules[modulename])
+        importlib.reload(sys.modules[modulename])
         return sys.modules[modulename]
     module = importlib.import_module(modulename)
     return module
@@ -103,14 +101,8 @@ def dedent(s):
 import labscript_utils.double_import_denier
 labscript_utils.double_import_denier.enable()
 
-try:
-    # If zprocess is new enough, disable the 'quick edit' feature of Windows' cmd.exe,
-    # which causes console applicatons to freeze if their console windows are merely
-    # clicked on. This causes all kinds of headaches, so we disable it in all labscript
-    # programs:
-    import zprocess
-    if hasattr(zprocess, 'disable_quick_edit'):
-        # Feature is present in zprocess > 2.10.0, but if not present we just ignore.
-        zprocess.disable_quick_edit()
-except ImportError:
-    pass
+# Disable the 'quick edit' feature of Windows' cmd.exe, which causes console applicatons
+# to freeze if their console windows are merely clicked on. This causes all kinds of
+# headaches, so we disable it in all labscript programs:
+import zprocess
+zprocess.disable_quick_edit()
