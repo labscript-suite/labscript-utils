@@ -17,9 +17,7 @@ import traceback
 from pathlib import Path
 
 from .versions import get_version, NoVersionInfo
-__version__ = get_version(__name__, import_path=Path(__file__).parent.parent)
-if __version__ is NoVersionInfo:
-    __version__ = None
+from .__version__ import __version__ 
 
 PY2 = sys.version_info[0] == 2
 
