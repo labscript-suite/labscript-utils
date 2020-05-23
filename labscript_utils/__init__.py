@@ -13,11 +13,8 @@
 
 import sys
 import os
-import traceback
-from pathlib import Path
 import importlib
 
-from .versions import get_version, NoVersionInfo
 from .__version__ import __version__ 
 
 PY2 = sys.version_info[0] == 2
@@ -54,7 +51,7 @@ def import_or_reload(modulename):
     return module
 
 
-from labscript_utils.versions import get_version, VersionException, check_version
+from labscript_utils.versions import VersionException, check_version
 
 
 def dedent(s):
