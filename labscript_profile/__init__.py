@@ -61,8 +61,8 @@ def add_userlib_and_pythonlib():
 
 
 def add_development_directories():
-    """Prepend directories in <labscript_suite_profile>/dev to the search path, if they
-    are listed in the file <labscript_suite_profile>/dev/enabled (if that file
+    """Prepend directories in <LABSCRIPT_SUITE_PROFILE>/dev to the search path, if they
+    are listed in the file <LABSCRIPT_SUITE_PROFILE>/dev/enabled (if that file
     exists)."""
     if LABSCRIPT_SUITE_PROFILE is None:
         return
