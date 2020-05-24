@@ -10,8 +10,6 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-from __future__ import division, unicode_literals, print_function, absolute_import
-
 import sys
 import os
 import socket
@@ -19,10 +17,10 @@ import subprocess
 import errno
 import configparser
 
-from labscript_utils import labscript_suite_profile
+from labscript_profile import LABSCRIPT_SUITE_PROFILE
 # Look for a 'labconfig' folder in the labscript install directory:
-if labscript_suite_profile is not None:
-    config_prefix = os.path.join(labscript_suite_profile, 'labconfig')
+if LABSCRIPT_SUITE_PROFILE is not None:
+    config_prefix = os.path.join(LABSCRIPT_SUITE_PROFILE, 'labconfig')
 else:
     # No labscript install directory found? Revert to system defaults
     if os.name == 'nt':

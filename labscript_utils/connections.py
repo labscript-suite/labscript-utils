@@ -11,7 +11,6 @@
 #                                                                   #
 #####################################################################
 
-from __future__ import division, unicode_literals, print_function, absolute_import
 import labscript_utils.h5_lock, h5py
 import labscript_utils.properties
 import logging
@@ -22,9 +21,6 @@ import ast
 from labscript_utils.dict_diff import dict_diff
 import sys
 from zprocess import raise_exception_in_thread
-from labscript_utils import PY2
-if PY2:
-    str = unicode
 
 def _ensure_str(s):
     """convert bytestrings and numpy strings to python strings"""

@@ -10,8 +10,6 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-from __future__ import division, unicode_literals, print_function, absolute_import
-
 import sys
 
 from qtutils.qt.QtCore import *
@@ -119,4 +117,4 @@ if __name__ == '__main__':
     
     
     sys.exit(qapplication.exec_())
-    
+    

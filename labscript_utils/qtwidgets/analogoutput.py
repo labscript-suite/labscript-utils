@@ -10,11 +10,6 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-from __future__ import division, unicode_literals, print_function, absolute_import
-from labscript_utils import PY2
-if PY2:
-    str = unicode
-
 import sys
 
 from qtutils.qt.QtCore import *
@@ -275,4 +270,4 @@ if __name__ == '__main__':
     
     
     sys.exit(qapplication.exec_())
-    
+    

@@ -10,19 +10,9 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-from __future__ import division, unicode_literals, print_function, absolute_import
-from labscript_utils import PY2
-
-if PY2:
-    str = unicode
-
-from labscript_utils import check_version
-
-check_version('qtutils', '2.2.3', '3')
-
 import qtutils.outputbox
 
-from labscript_utils.ls_zprocess import get_config, Context
+from labscript_utils.ls_zprocess import Context
 
 
 class OutputBox(qtutils.outputbox.OutputBox):

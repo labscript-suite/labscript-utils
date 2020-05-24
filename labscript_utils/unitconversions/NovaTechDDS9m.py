@@ -11,7 +11,6 @@
 #                                                                   #
 #####################################################################
 
-from __future__ import division, unicode_literals, print_function, absolute_import
 from .UnitConversionBase import *
 
 class NovaTechDDS9mFreqConversion(UnitConversion):

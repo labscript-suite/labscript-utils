@@ -27,16 +27,17 @@ except Exception:
     LABSCRIPT_SUITE_PROFILE = None
 
 
+def hostname():
+    if sys.platform == 'darwin':
+        return check_output(['scutil', '--get', 'LocalHostName']).decode('utf8').strip()
+    else:
+        return socket.gethostname()
+
+
 def default_labconfig_path():
     if LABSCRIPT_SUITE_PROFILE is None:
         return None
-    if sys.platform == 'darwin':
-        cmd = ['scutil', '--get', 'LocalHostName']
-        hostname = check_output(cmd).decode('utf8').strip()
-    else:
-        hostname = socket.gethostname()
-    labconfig = LABSCRIPT_SUITE_PROFILE / 'labconfig' / f'{hostname}.ini'
-    return labconfig
+    return LABSCRIPT_SUITE_PROFILE / 'labconfig' / f'{hostname()}.ini'
 
 
 def add_userlib_and_pythonlib():
@@ -46,23 +47,22 @@ def add_userlib_and_pythonlib():
     labscript_utils, since we dont' want to import something like labscript_utils every
     time the interpreter starts up"""
     labconfig = default_labconfig_path()
-    if labconfig  is None or not os.path.exists(labconfig):
-        return
-    config = ConfigParser()
-    config.read(labconfig)
-    for option in ['userlib', 'pythonlib']:
-        try:
-            paths = config.get('DEFAULT', option).split(',')
-        except (NoSectionError, NoOptionError):
-            paths = []
-        for path in paths:
-            if os.path.exists(path):
-                sys.path.append(path)
+    if labconfig is not None and labconfig.exists():
+        config = ConfigParser()
+        config.read(labconfig)
+        for option in ['userlib', 'pythonlib']:
+            try:
+                paths = config.get('DEFAULT', option).split(',')
+            except (NoSectionError, NoOptionError):
+                paths = []
+            for path in paths:
+                if os.path.exists(path):
+                    sys.path.append(path)
 
 
 def add_development_directories():
-    """Prepend directories in <labscript_suite_profile>/dev to the search path, if they
-    are listed in the file <labscript_suite_profile>/dev/enabled (if that file
+    """Prepend directories in <LABSCRIPT_SUITE_PROFILE>/dev to the search path, if they
+    are listed in the file <LABSCRIPT_SUITE_PROFILE>/dev/enabled (if that file
     exists)."""
     if LABSCRIPT_SUITE_PROFILE is None:
         return

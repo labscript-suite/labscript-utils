@@ -10,20 +10,12 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-from __future__ import division, unicode_literals, print_function, absolute_import
-
 import sys
 import os
-import traceback
 
 from labscript_utils.ls_zprocess import Lock, connect_to_zlock_server, kill_lock
-
-from labscript_utils import check_version, dedent
-
+from labscript_utils import dedent
 from labscript_utils.shared_drive import path_to_agnostic
-from labscript_utils import PY2
-if PY2:
-    str = unicode
 
 if 'h5py' in sys.modules:
     import labscript_utils.double_import_denier
@@ -43,9 +35,6 @@ if 'h5py' in sys.modules:
         raise ImportError('h5_lock must be imported prior to importing h5py')
         
 import h5py
-# This module used to contain a monkeypatch to work around an issue now fixed in h5py.
-# Depend on the fix since we no longer have the monkeypatch.
-check_version('h5py', '2.9', '3')
 
 _File = h5py.File
 class File(_File):

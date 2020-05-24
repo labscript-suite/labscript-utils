@@ -10,11 +10,8 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-from __future__ import division, unicode_literals, print_function, absolute_import
-
 import os
 import importlib
-from labscript_utils import PY2
 from .UnitConversionBase import UnitConversion
 
 
@@ -55,8 +52,6 @@ class _All(object):
                         # future.
                         fullname = 'labscript_utils.unitconversions.%s.%s'
                         fullname = fullname % (module, name)
-                        if PY2:
-                            fullname = fullname.encode('utf8')
                         globals()[fullname] = value
 
 

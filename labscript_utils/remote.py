@@ -10,13 +10,6 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-
-from __future__ import division, unicode_literals, print_function, absolute_import
-from labscript_utils import PY2
-
-if PY2:
-    str = unicode
-
 import sys
 import subprocess
 from labscript_utils.ls_zprocess import get_config

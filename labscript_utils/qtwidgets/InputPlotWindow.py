@@ -1,4 +1,3 @@
-from __future__ import division, unicode_literals, print_function, absolute_import
 from zprocess import Process
 import pyqtgraph as pg
 import numpy as np
@@ -7,9 +6,6 @@ import qtutils.qt.QtGui as QtGui
 import zmq
 from labscript_utils.labconfig import LabConfig
 import threading
-from labscript_utils import PY2
-if PY2:
-    memoryview = buffer
 
 # maximum amount of datapoints to be plotted at once
 MAX_DATA = 1000

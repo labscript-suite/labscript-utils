@@ -14,12 +14,8 @@
 import sys
 import os
 
-if sys.version < '3':
-    import Tkinter as tkinter
-    import Tkconstants as constants
-else:
-    import tkinter
-    import tkinter.constants as constants
+import tkinter
+import tkinter.constants as constants
 
 error_im_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'error.gif')
 
