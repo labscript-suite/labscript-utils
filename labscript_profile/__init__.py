@@ -48,7 +48,7 @@ def add_userlib_and_pythonlib():
     time the interpreter starts up"""
     labconfig = default_labconfig_path()
     if labconfig is not None and labconfig.exists():
-        config = ConfigParser()
+        config = ConfigParser(defaults={'labscript_suite': LABSCRIPT_SUITE_PROFILE})
         config.read(labconfig)
         for option in ['userlib', 'pythonlib']:
             try:
