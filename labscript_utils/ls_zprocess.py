@@ -11,6 +11,7 @@
 #                                                                   #
 #####################################################################
 import sys
+import os
 from socket import gethostbyname
 from distutils.version import LooseVersion
 import zmq
@@ -39,6 +40,32 @@ the bottom of this module.
 kill_lock = KillLock()
 
 _cached_config = None
+
+_ERR_NO_SHARED_SECRET = """
+
+--------
+
+Security has not been configured. To create a new shared secret, run:
+
+python -m zprocess.makesecret
+
+move the resulting file somewhere (for example the labconfig directory)
+and then add it to labconfig like:
+
+[security]
+shared_secret = %(labscript_suite)s/labconfig/zpsecret-09f6dfa0.key
+
+You will need to copy the same shared secret to all computers running
+the labscript suite that need to communicate with each other. Treat this
+file like a password: it allows anyone on the same network acess to
+labscript suite programs, most of of which are capable of remote code
+execution. If you are on a trusted network and don't want to use encrypted
+communication, you may instead set:
+
+[security]
+allow_insecure = True
+
+in your configuration, but this is not advised."""
 
 def get_config():
     """Get relevant options from LabConfig, substituting defaults where appropriate and
@@ -78,8 +105,9 @@ def get_config():
     try:
         config['allow_insecure'] = labconfig.getboolean('security', 'allow_insecure')
     except (labconfig.NoOptionError, labconfig.NoSectionError):
-        # Default will be set to False once the security rollout is complete:
-        config['allow_insecure'] = True
+        config['allow_insecure'] = False
+        if config['shared_secret'] is None and not config['allow_insecure']:
+            raise ValueError(_ERR_NO_SHARED_SECRET.replace('', os.sep))
     try:
         config['logging_maxBytes'] = labconfig.getint('logging', 'maxBytes')
     except (labconfig.NoOptionError, labconfig.NoSectionError):

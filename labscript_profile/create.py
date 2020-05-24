@@ -3,10 +3,19 @@ import os
 import shutil
 import configparser
 from pathlib import Path
+from subprocess import check_output
 from labscript_profile import LABSCRIPT_SUITE_PROFILE, default_labconfig_path
 
 _here = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_PROFILE_CONTENTS = os.path.join(_here, 'default_profile')
+
+
+def make_shared_secret(directory):
+    """Create a new zprocess shared secret file in the given directory and return its
+    filepath"""
+    cmd = [sys.executable, '-m', 'zprocess.makesecret']
+    path = check_output(cmd, cwd=directory).decode('utf8').splitlines()[-1].strip()
+    return Path(path)
 
 
 def make_labconfig_file():
@@ -22,14 +31,19 @@ def make_labconfig_file():
     # Now change some things about it:
     config = configparser.ConfigParser(interpolation=None)
     config.read(target_path)
-    if sys.platform in ['linux', 'linux2']:
+    if sys.platform == 'linux':
         config.set('programs', 'text_editor', 'gedit')
     elif sys.platform == 'darwin':
         config.set('programs', 'text_editor', 'open')
         config.set('programs', 'text_editor_arguments', '-a TextEdit {file}')
     if sys.platform != 'win32':
         config.set('programs', 'hdf5_viewer', 'hdfview')
-        config.set('DEFAULT', 'shared_drive', str(Path.home() / ' labscript_shared'))
+        config.set('DEFAULT', 'shared_drive', '$HOME/labscript_shared')
+    shared_secret = make_shared_secret(target_path.parent)
+    shared_secret_entry = Path(
+        '%(labscript_suite)s', shared_secret.relative_to(LABSCRIPT_SUITE_PROFILE)
+    )
+    config.set('security', 'shared_secret', str(shared_secret_entry))
 
     with open(target_path, 'w') as f:
         config.write(f)
