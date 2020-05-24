@@ -20,9 +20,8 @@ def make_labconfig_file():
         outfile.write(data)
 
     # Now change some things about it:
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(interpolation=None)
     config.read(target_path)
-    config.set('DEFAULT', 'labscript_suite', str(LABSCRIPT_SUITE_PROFILE))
     if sys.platform in ['linux', 'linux2']:
         config.set('programs', 'text_editor', 'gedit')
     elif sys.platform == 'darwin':
