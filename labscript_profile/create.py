@@ -14,8 +14,11 @@ def make_shared_secret(directory):
     """Create a new zprocess shared secret file in the given directory and return its
     filepath"""
     cmd = [sys.executable, '-m', 'zprocess.makesecret']
-    path = check_output(cmd, cwd=directory).decode('utf8').splitlines()[-1].strip()
-    return Path(path)
+    output = check_output(cmd, cwd=directory).decode('utf8')
+    for line in output.splitlines():
+        if 'zpsecret' in line and '.key' in line:
+            return Path(line.strip())
+    raise RuntimeError("Could not parse output of zprocess.makesecret")
 
 
 def make_labconfig_file():
