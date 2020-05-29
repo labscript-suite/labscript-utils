@@ -106,7 +106,9 @@ def load_appconfig(filename):
     regardless of the written contents on the .ini file."""
     c = configparser.ConfigParser(interpolation=None)
     c.optionxform = str # preserve case
-    c.read(filename)
+    # No file? No config - don't crash.
+    if Path(filename).exists():
+        c.read(filename)
     return {
         section_name: {name: literal_eval(value) for name, value in section.items()}
         for section_name, section in c.items()
