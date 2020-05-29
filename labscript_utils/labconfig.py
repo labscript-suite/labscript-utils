@@ -78,11 +78,22 @@ def save_appconfig(filename, data):
     names, and the values must themselves be dictionaries for the names and values
     within each section. All section values will be converted to strings with
     pprint.pformat()."""
+    # Error checking
+    for section_name, section in data.items():
+        for name, value in section.items():
+            try:
+                valid = value == literal_eval(pformat(value))
+            except (ValueError, SyntaxError):
+                valid = False
+            if not valid:
+                msg = f"{section_name}/{name} value {value} not a Python built-in type"
+                raise TypeError(msg)
     data = {
         section_name: {name: pformat(value) for name, value in section.items()}
         for section_name, section in data.items()
     }
     c = configparser.ConfigParser(interpolation=None)
+    c.optionxform = str # preserve case
     c.read_dict(data)
     Path(filename).parent.mkdir(parents=True, exist_ok=True)
     with open(filename, 'w') as f:
@@ -91,8 +102,10 @@ def save_appconfig(filename, data):
 
 def load_appconfig(filename):
     """Load an .ini file and return a dictionary of its contents. All values will be
-    converted to Python objects with ast.literal_eval()"""
+    converted to Python objects with ast.literal_eval(). All keys will be lowercase
+    regardless of the written contents on the .ini file."""
     c = configparser.ConfigParser(interpolation=None)
+    c.optionxform = str # preserve case
     c.read(filename)
     return {
         section_name: {name: literal_eval(value) for name, value in section.items()}
