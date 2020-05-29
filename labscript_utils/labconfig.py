@@ -10,9 +10,11 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-import sys
 import os
 import configparser
+from ast import literal_eval
+from pprint import pformat
+from pathlib import Path
 
 from labscript_utils import dedent
 from labscript_profile import default_labconfig_path, LABSCRIPT_SUITE_PROFILE
@@ -69,3 +71,30 @@ class LabConfig(configparser.ConfigParser):
                 not have the required keys. Make sure the config file containes the
                 following structure:\n{self.file_format}"""
             raise Exception(dedent(msg))
+
+
+def save_appconfig(filename, data):
+    """Save a dictionary as an ini file. The keys of the dictionary comprise the section
+    names, and the values must themselves be dictionaries for the names and values
+    within each section. All section values will be converted to strings with
+    pprint.pformat()."""
+    data = {
+        section_name: {name: pformat(value) for name, value in section.items()}
+        for section_name, section in data.items()
+    }
+    c = configparser.ConfigParser(interpolation=None)
+    c.read_dict(data)
+    Path(filename).parent.mkdir(parents=True, exist_ok=True)
+    with open(filename, 'w') as f:
+        c.write(f)
+
+
+def load_appconfig(filename):
+    """Load an .ini file and return a dictionary of its contents. All values will be
+    converted to Python objects with ast.literal_eval()"""
+    c = configparser.ConfigParser(interpolation=None)
+    c.read(filename)
+    return {
+        section_name: {name: literal_eval(value) for name, value in section.items()}
+        for section_name, section in c.items()
+    }
