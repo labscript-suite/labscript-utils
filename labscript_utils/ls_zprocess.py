@@ -107,7 +107,7 @@ def get_config():
     except (labconfig.NoOptionError, labconfig.NoSectionError):
         config['allow_insecure'] = False
         if config['shared_secret'] is None and not config['allow_insecure']:
-            raise ValueError(_ERR_NO_SHARED_SECRET.replace('', os.sep))
+            raise ValueError(_ERR_NO_SHARED_SECRET.replace('/', os.sep))
     try:
         config['logging_maxBytes'] = labconfig.getint('logging', 'maxBytes')
     except (labconfig.NoOptionError, labconfig.NoSectionError):
