@@ -130,7 +130,7 @@ intersphinx_mapping['labscript-suite'] = ('https://docs.labscript_suite.org/en/{
 # a list of builtin themes.
 #
 html_theme = "sphinx_rtd_theme"
-html_logo = "img/{}.png".format(project)
+html_logo = "img/{}.svg".format(project)
 html_favicon = "img/{}.ico".format(project)
 html_title = "labscript suite | {project}".format(project=project if project != 'labscript-suite' else "experiment control and automation")
 html_short_title = "labscript suite"
