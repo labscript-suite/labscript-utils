@@ -1,0 +1,3 @@
+PyQt5
+importlib_metadata
+setuptools_scm
