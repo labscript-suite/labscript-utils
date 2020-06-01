@@ -6,11 +6,11 @@
 labscript-utils
 ===============
 
+**labscript-utils** contains code shared between multiple programs in the labscript suite. 
+This documentation is primarily for developers who might want to use this common code in their own custom features. 
+
 .. toctree::
    :maxdepth: 2
 
    api_reference/index
 
-
-**labscript-utils** contains code shared between multiple programs in the labscript suite. 
-This documentation is primarily for developers who might want to use this common code in their own custom features. 
