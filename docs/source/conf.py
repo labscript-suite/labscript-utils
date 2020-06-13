@@ -10,63 +10,46 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-
-from pkg_resources import get_distribution
-
+import os
+import sys
 from m2r import MdInclude
 from recommonmark.transform import AutoStructify
 
-# -- Project information -----------------------------------------------------
+# -- Project information (unique to each project) -------------------------------------
 
-project = 'labscript-utils'
-copyright = '2020, labscript suite'
-author = 'labscript suite contributors'
-
+project = "labscript-utils"
+copyright = "2020, labscript suite"
+author = "labscript suite contributors"
 
 # The full version, including alpha/beta/rc tags
-version = get_distribution(project).version
+from labscript_utils import __version__ as version
+
 release = version
 
+# HTML icons
+html_logo = "img/{}.svg".format(project)
+html_favicon = "img/{}.ico".format(project)
 
-# -- General configuration ---------------------------------------------------
+# -- General configuration (should be identical across all projects) ------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosectionlabel",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
-    # "sphinx.ext.linkcode",
+    "sphinx.ext.todo",
     "sphinx.ext.viewcode",
     "sphinx_rtd_theme",
     "recommonmark",
 ]
 
+autodoc_typehints = 'description'
 
-#
-# This code is for sphinx.ext.linkcode to link to GitHub source directly. 
-# It doesn't link directly to specific lines though so is not as nice as 
-# I would like right now. You also can't customise the "[source]" text
-# in the sphinx docs (if you could, we could have both viewcode and linkcode extensions at the same time)
-#
-# # get github version/tag
-# if '+' in version:
-#     gh_source_version = version.split('+')[-1][1:]
-# else:
-#     gh_source_version = version
-
-# # define function for resolving source link
-# def linkcode_resolve(domain, info):
-#     if domain != 'py':
-#         return None
-#     if not info['module']:
-#         return None
-#     filename = info['module'].replace('.', '/')
-#     return "https://github.com/labscript-suite/{}/blob/{}/{}.py".format(project, gh_source_version, filename)
+# Prefix each autosectionlabel with the name of the document it is in and a colon
+autosectionlabel_prefix_document = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -90,11 +73,17 @@ intersphinx_mapping = {
     'scipy': ('https://docs.scipy.org/doc/scipy/reference/', None),
     'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
     'qtutils': ('https://qtutils.readthedocs.io/en/stable/', None),
-    'pyqtgraph': ('https://pyqtgraph.readthedocs.io/en/latest/', None), # change to stable once v0.11 is published
+    'pyqtgraph': (
+        'https://pyqtgraph.readthedocs.io/en/latest/',
+        None,
+    ),  # change to stable once v0.11 is published
     'matplotlib': ('https://matplotlib.org/', None),
     'h5py': ('http://docs.h5py.org/en/stable/', None),
     'pydaqmx': ('https://pythonhosted.org/PyDAQmx/', None),
-    'qt': ('', 'pyqt5-modified-objects.inv') # from https://github.com/MSLNZ/msl-qt/blob/master/docs/create_pyqt_objects.py under MIT License
+    'qt': (
+        '',
+        'pyqt5-modified-objects.inv',
+    )  # from https://github.com/MSLNZ/msl-qt/blob/master/docs/create_pyqt_objects.py under MIT License
     # TODO
     # desktop-app
     # spinapi/pynivision/etc
@@ -115,24 +104,47 @@ if project in labscript_suite_programs:
     labscript_suite_programs.remove(project)
 
 # whether to use stable or latest version
-labscript_suite_doc_version = 'stable' # 'stable' or 'latest'
+labscript_suite_doc_version = 'stable'  # 'stable' or 'latest'
 
 # add intersphinx references for each component
 for ls_prog in labscript_suite_programs:
-    intersphinx_mapping[ls_prog] = ('https://docs.labscript_suite.org/projects/{}/en/{}/'.format(ls_prog, labscript_suite_doc_version), None)
+    intersphinx_mapping[ls_prog] = (
+        'https://docs.labscript_suite.org/projects/{}/en/{}/'.format(
+            ls_prog, labscript_suite_doc_version
+        ),
+        None,
+    )
 
 # add intersphinx reference for the metapackage
-intersphinx_mapping['labscript-suite'] = ('https://docs.labscript_suite.org/en/{}/'.format(labscript_suite_doc_version), None)
+if project != "the labscript suite":
+    intersphinx_mapping['labscript-suite'] = (
+        'https://docs.labscript_suite.org/en/{}/'.format(labscript_suite_doc_version),
+        None,
+    )
 
+# Make `some code` equivalent to :code:`some code`
+default_role = 'code'
+
+# hide todo notes if on readthedocs and not building the latest
+if os.environ.get('READTHEDOCS') and (
+    os.environ.get('READTHEDOCS_VERSION') != 'latest'
+    or (
+        os.environ.get('READTHEDOCS_PROJECT') == project
+        or os.environ.get('READTHEDOCS_PROJECT') == 'labscriptsuite'
+    )
+):
+    todo_include_todos = False
+else:
+    todo_include_todos = True
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
 html_theme = "sphinx_rtd_theme"
-html_logo = "img/{}.svg".format(project)
-html_favicon = "img/{}.ico".format(project)
-html_title = "labscript suite | {project}".format(project=project if project != 'labscript-suite' else "experiment control and automation")
+html_title = "labscript suite | {project}".format(
+    project=project if project != "labscript-suite" else "experiment control and automation"
+)
 html_short_title = "labscript suite"
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -157,3 +169,4 @@ def setup(app):
     app.add_config_value('m2r_anonymous_references', False, 'env')
     app.add_config_value('m2r_disable_inline_math', False, 'env')
     app.add_directive('mdinclude', MdInclude)
+    app.add_stylesheet('custom.css')
