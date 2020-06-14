@@ -11,7 +11,6 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
-import sys
 from m2r import MdInclude
 from recommonmark.transform import AutoStructify
 
@@ -22,7 +21,7 @@ copyright = "2020, labscript suite"
 author = "labscript suite contributors"
 
 # The full version, including alpha/beta/rc tags
-from labscript_utils import __version__ as version
+from labscript_utils import __version__ as version  # noqa: E402
 
 release = version
 
@@ -80,10 +79,12 @@ intersphinx_mapping = {
     'matplotlib': ('https://matplotlib.org/', None),
     'h5py': ('http://docs.h5py.org/en/stable/', None),
     'pydaqmx': ('https://pythonhosted.org/PyDAQmx/', None),
+    # from https://github.com/MSLNZ/msl-qt/blob/master/docs/create_pyqt_objects.py
+    # under MIT License
     'qt': (
         '',
         'pyqt5-modified-objects.inv',
-    )  # from https://github.com/MSLNZ/msl-qt/blob/master/docs/create_pyqt_objects.py under MIT License
+    )
     # TODO
     # desktop-app
     # spinapi/pynivision/etc
@@ -143,7 +144,9 @@ else:
 #
 html_theme = "sphinx_rtd_theme"
 html_title = "labscript suite | {project}".format(
-    project=project if project != "labscript-suite" else "experiment control and automation"
+    project=project
+    if project != "labscript-suite"
+    else "experiment control and automation"
 )
 html_short_title = "labscript suite"
 
@@ -151,6 +154,10 @@ html_short_title = "labscript suite"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+# Customize the html_theme
+html_theme_options = {'navigation_depth': 3}
+
 
 # Use m2r only for mdinclude and recommonmark for everything else
 # https://github.com/readthedocs/recommonmark/issues/191#issuecomment-622369992
