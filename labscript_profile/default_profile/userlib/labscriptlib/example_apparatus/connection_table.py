@@ -1,4 +1,4 @@
-from labscript import start, stop, add_time_marker, DigitalOut
+from labscript import start, stop, add_time_marker, AnalogOut, DigitalOut
 from labscript_devices.DummyPseudoclock.labscript_devices import DummyPseudoclock
 from labscript_devices.DummyIntermediateDevice import DummyIntermediateDevice
 
@@ -9,8 +9,13 @@ DummyPseudoclock(name='pseudoclock')
 # to trigger children devices
 DummyIntermediateDevice(name='intermediate_device', parent_device=pseudoclock.clockline)
 
+# Create an AnalogOut child of the DummyIntermediateDevice
+AnalogOut(name='analog_out', parent_device=intermediate_device, connection='ao0')
+
 # Create a DigitalOut child of the DummyIntermediateDevice
-DigitalOut(name='digital_out', parent_device=intermediate_device, connection='do0')
+DigitalOut(
+    name='digital_out', parent_device=intermediate_device, connection='port0/line0'
+)
 
 # Begin issuing labscript primitives
 # start() elicits the commencement of the shot
