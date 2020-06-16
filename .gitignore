@@ -136,3 +136,6 @@ dmypy.json
 # conda build results
 conda_build/
 conda_packages/
+
+# dynamically generated docs
+docs/source/component_docs.rst

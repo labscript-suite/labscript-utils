@@ -79,12 +79,11 @@ intersphinx_mapping = {
     'matplotlib': ('https://matplotlib.org/', None),
     'h5py': ('http://docs.h5py.org/en/stable/', None),
     'pydaqmx': ('https://pythonhosted.org/PyDAQmx/', None),
-    # from https://github.com/MSLNZ/msl-qt/blob/master/docs/create_pyqt_objects.py
-    # under MIT License
     'qt': (
         '',
         'pyqt5-modified-objects.inv',
-    )
+    )  # from https://github.com/MSLNZ/msl-qt/blob/master/docs/create_pyqt_objects.py
+    # under MIT License
     # TODO
     # desktop-app
     # spinapi/pynivision/etc
@@ -105,7 +104,9 @@ if project in labscript_suite_programs:
     labscript_suite_programs.remove(project)
 
 # whether to use stable or latest version
-labscript_suite_doc_version = 'stable'  # 'stable' or 'latest'
+labscript_suite_doc_version = os.environ.get('READTHEDOCS_VERSION', 'latest')
+if labscript_suite_doc_version not in ['stable', 'latest']:
+    labscript_suite_doc_version = 'stable'
 
 # add intersphinx references for each component
 for ls_prog in labscript_suite_programs:
@@ -137,6 +138,7 @@ if os.environ.get('READTHEDOCS') and (
     todo_include_todos = False
 else:
     todo_include_todos = True
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -177,3 +179,22 @@ def setup(app):
     app.add_config_value('m2r_disable_inline_math', False, 'env')
     app.add_directive('mdinclude', MdInclude)
     app.add_stylesheet('custom.css')
+
+    with open(
+        os.path.join(os.path.dirname(os.path.realpath(__file__)), 'component_docs.rst'),
+        'w',
+    ) as f:
+        f.write("labscript suite components\n")
+        f.write("==========================\n")
+        f.write("    \n")
+        f.write(".. toctree::\n")
+        f.write("    :maxdepth: 2\n")
+        f.write("    \n")
+        if project != "the labscript suite":
+            f.write(
+                "    labscript suite (metapackage)<{}>\n".format(
+                    intersphinx_mapping['labscript-suite'][0]
+                )
+            )
+        for ls_prog in labscript_suite_programs:
+            f.write("    {} <{}>\n".format(ls_prog, intersphinx_mapping[ls_prog][0]))
