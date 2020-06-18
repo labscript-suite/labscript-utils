@@ -13,7 +13,7 @@ This documentation is primarily for developers who might want to use this common
    :maxdepth: 2
 
    api_reference/index
-   component_docs
+   components
    Home Page <http://labscriptsuite.org>
    Source Code <https://github.com/labscript-suite/labscript-suite>
    BitBucket Archive <http://bitbucket-archive.labscriptsuite.org/#!/labscript_suite/labscript_utils>
