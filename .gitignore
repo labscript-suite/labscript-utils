@@ -76,9 +76,7 @@ instance/
 .scrapy
 
 # Sphinx documentation
-docs/html/
 docs/_build/
-docs/source/_build/
 
 # PyBuilder
 target/
@@ -148,5 +146,7 @@ dmypy.json
 conda_build/
 conda_packages/
 
-# dynamically generated docs
-docs/source/component_docs.rst
+# Sphinx documentation
+docs/html/
+docs/source/_build/
+docs/source/components.rst
