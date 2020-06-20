@@ -14,7 +14,7 @@ This documentation is primarily for developers who might want to use this common
    :hidden:
    :caption: DOCUMENTATION
 
-   API Reference <api/index>
+   api/index
    
 .. toctree::
    :maxdepth: 2
