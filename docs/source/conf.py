@@ -207,7 +207,7 @@ def setup(app):
     app.add_config_value('m2r_anonymous_references', False, 'env')
     app.add_config_value('m2r_disable_inline_math', False, 'env')
     app.add_directive('mdinclude', MdInclude)
-    app.add_stylesheet('custom.css')
+    app.add_css_file('custom.css')
 
     # generate the components.rst file dynamically so it points to stable/latest
     # of subprojects correctly
