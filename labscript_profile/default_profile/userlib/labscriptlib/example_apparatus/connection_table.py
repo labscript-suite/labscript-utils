@@ -17,9 +17,11 @@ DigitalOut(
     name='digital_out', parent_device=intermediate_device, connection='port0/line0'
 )
 
-# Begin issuing labscript primitives
-# start() elicits the commencement of the shot
-start()
 
-# Stop the experiment shot with stop()
-stop(1.0)
+if __name__ == '__main__':
+    # Begin issuing labscript primitives
+    # start() elicits the commencement of the shot
+    start()
+
+    # Stop the experiment shot with stop()
+    stop(1.0)
