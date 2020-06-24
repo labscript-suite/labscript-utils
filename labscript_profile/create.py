@@ -56,7 +56,7 @@ def make_labconfig_file():
 def create_profile():
     # copy the .pth file if necessary (only needed for ediatble installs)
     pth_src = Path(_here).parent / 'labscript-suite.pth'
-    site_dir = desktop_app.environment._get_install_directory('labscript_profile')
+    site_dir = desktop_app.environment.get_install_directory('labscript_profile')
     if site_dir is not None and pth_src.parent != site_dir:
         pth_dest = site_dir / 'labscript-suite.pth'
         if pth_src.exists() and not pth_dest.exists():
