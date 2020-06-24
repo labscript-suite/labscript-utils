@@ -1,3 +1,4 @@
+import site
 import sys
 import os
 from configparser import ConfigParser, NoSectionError, NoOptionError
@@ -56,22 +57,4 @@ def add_userlib_and_pythonlib():
             except (NoSectionError, NoOptionError):
                 paths = []
             for path in paths:
-                if os.path.exists(path):
-                    sys.path.append(path)
-
-
-def add_development_directories():
-    """Prepend directories in <LABSCRIPT_SUITE_PROFILE>/dev to the search path, if they
-    are listed in the file <LABSCRIPT_SUITE_PROFILE>/dev/enabled (if that file
-    exists)."""
-    if LABSCRIPT_SUITE_PROFILE is None:
-        return
-    dev_dir = LABSCRIPT_SUITE_PROFILE / 'dev'
-    enabled_file = dev_dir / 'enabled'
-    if not os.path.exists(enabled_file):
-        return
-    with open(enabled_file) as f:
-        for line in f:
-            repository = dev_dir / line.strip()
-            if os.path.isdir(repository):
-                sys.path.insert(0, repository)
+                site.addsitedir(path)
