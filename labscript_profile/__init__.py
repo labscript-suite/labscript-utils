@@ -1,3 +1,4 @@
+import site
 import sys
 import os
 from configparser import ConfigParser, NoSectionError, NoOptionError
@@ -56,8 +57,7 @@ def add_userlib_and_pythonlib():
             except (NoSectionError, NoOptionError):
                 paths = []
             for path in paths:
-                if os.path.exists(path):
-                    sys.path.append(path)
+                site.addsitedir(path)
 
 
 def add_development_directories():

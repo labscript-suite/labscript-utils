@@ -5,6 +5,7 @@ import configparser
 from pathlib import Path
 from subprocess import check_output
 from labscript_profile import LABSCRIPT_SUITE_PROFILE, default_labconfig_path
+import desktop_app
 
 _here = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_PROFILE_CONTENTS = os.path.join(_here, 'default_profile')
@@ -53,6 +54,15 @@ def make_labconfig_file():
 
 
 def create_profile():
+    # copy the .pth file if necessary (only needed for ediatble installs)
+    pth_src = Path(_here).parent / 'labscript-suite.pth'
+    site_dir = desktop_app.environment._get_install_directory('labscript_profile')
+    if site_dir is not None and pth_src.parent != site_dir:
+        pth_dest = site_dir / 'labscript-suite.pth'
+        if pth_src.exists() and not pth_dest.exists():
+            shutil.copy2(pth_src, pth_dest)
+            print(f'Copied labscript-suite.pth file to {pth_dest}')
+
     src = Path(DEFAULT_PROFILE_CONTENTS)
     dest = Path(LABSCRIPT_SUITE_PROFILE)
     # Profile directory may exist already, but we will error if it contains any of the

@@ -1,2 +1,2 @@
-import labscript_profile; labscript_profile.add_userlib_and_pythonlib()
-import labscript_profile; labscript_profile.add_development_directories()
+import sys; exec("try: import labscript_profile; labscript_profile.add_userlib_and_pythonlib()\nexcept ModuleNotFoundError: pass")
+import sys; exec("try: import labscript_profile; labscript_profile.add_development_directories()\nexcept ModuleNotFoundError: pass")
