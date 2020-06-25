@@ -158,7 +158,7 @@ class TubingenCameraServer(CameraServer):
         them to the h5 file"""
         import pyfits
         start_time = time.time()
-        with h5py.File(h5_filepath) as f:
+        with h5py.File(h5_filepath, 'r+') as f:
             group = f['devices']['camera']
             if not 'EXPOSURES' in group:
                 print('no images taken this shot')
