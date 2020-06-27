@@ -1,5 +1,4 @@
 import os
-import sys
 import importlib
 import imp
 import warnings
@@ -43,6 +42,20 @@ use of subrepositories, the grouping of similar devices within subfolders, and o
 nice things to have.
 The old method may be deprecated in the future.
 """
+
+
+__all__ = [
+    'LABSCRIPT_DEVICES_DIRS',
+    'labscript_device',
+    'BLACS_worker',
+    'BLACS_tab',
+    'runviewer_parser',
+    'import_class_by_fullname',
+    'deprecated_import_alias',
+    'get_BLACS_tab',
+    'get_runviewer_parser',
+    'register_classes',
+]
 
 
 def _get_import_paths(import_names):
