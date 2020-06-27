@@ -1,4 +1,7 @@
-import importlib
+try:
+    import importlib.metadata as importlib_metadata
+except ImportError:
+    import importlib_metadata
 import packaging.version
 
 labscript_device_version_str = importlib.metadata.version('labscript_devices')
