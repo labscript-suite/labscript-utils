@@ -18,4 +18,4 @@ except importlib_metadata.PackageNotFoundError:
 if not use_local_machinery:
     from labscript_devices import * 
 else:
-    from ._import_machinery import *
+    from ._device_registry import *
