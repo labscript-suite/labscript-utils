@@ -4,7 +4,7 @@ except ImportError:
     import importlib_metadata
 import packaging.version
 
-labscript_device_version_str = importlib.metadata.version('labscript_devices')
+labscript_device_version_str = importlib_metadata.version('labscript_devices')
 labscript_devices_version = packaging.version.parse(labscript_device_version_str)
 
 # import and use the labscript_devices code if an old version of the package is used.
