@@ -16,7 +16,7 @@ import importlib
 import tokenize
 import ast
 import setuptools_scm
-from distutils.version import LooseVersion
+import packaging.version
 
 try:
     import importlib.metadata as importlib_metadata
@@ -184,7 +184,7 @@ def check_version(module_name, at_least, less_than, version=None, project_name=N
         )
 
     at_least_version, less_than_version, installed_version = [
-        LooseVersion(v) for v in [at_least, less_than, version]
+        packaging.version.parse(v) for v in [at_least, less_than, version]
     ]
 
     if not at_least_version <= installed_version < less_than_version:
