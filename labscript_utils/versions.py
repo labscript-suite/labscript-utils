@@ -165,7 +165,7 @@ def check_version(module_name, at_least, less_than, version=None, project_name=N
     """Check that the version of the given module is at least and less than the given
     version strings, and raise VersionException if not. Raise VersionException if the
     module was not found or its version could not be determined. This function uses
-    get_vrsion to determine version numbers without importing modules. In order to do
+    get_version to determine version numbers without importing modules. In order to do
     this, project_name must be provided if it differs from module_name. For example,
     pyserial is imported as 'serial', but the project name, as passed to a 'pip install'
     command, is 'pyserial'. Therefore to check the version of pyserial, pass in
