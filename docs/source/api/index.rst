@@ -2,9 +2,11 @@
 API Reference
 *************
 
+Labscript Tools
+~~~~~~~~~~~~~~~
+
 .. toctree::
    :maxdepth: 2
-   :caption: Labscript Tools
 
    labscript_utils
    connections
@@ -15,9 +17,11 @@ API Reference
    properties
    unitconversions
 
+Communications
+~~~~~~~~~~~~~~
+
 .. toctree::
    :maxdepth: 2
-   :caption: Remote Communications
 
    h5_lock
    ls_zprocess
@@ -26,25 +30,32 @@ API Reference
    zlock
    zlog
 
+GUI
+~~~~
+
 .. toctree::
    :maxdepth: 2
-   :caption: GUI
 
    splash
    qtwidgets
 
+Logging and Profiling
+~~~~~~~~~~~~~~~~~~~~~
+
 .. toctree::
    :maxdepth: 2
-   :caption: Logging and Profiling
 
    impprof
    memprof
    setup_logging
    tracelog
 
+
+Module and File Tools
+~~~~~~~~~~~~~~~~~~~~~
+
 .. toctree::
-   :maxdepth: 2
-   :caption: Module and File Tools  
+   :maxdepth: 2 
    
    double_import_denier
    filewatcher
