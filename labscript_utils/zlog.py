@@ -10,18 +10,20 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+"""
+Script to run a zlog server configured according to LabConfig. Run with:
+
+.. code-block:: bash
+
+    python -m labscript_utils.zlog [--daemon]
+
+If --daemon is specified, the zlog server will be started in the background.
+"""
 import sys
 import subprocess
 from labscript_utils.ls_zprocess import get_config
 from labscript_utils.setup_logging import LOG_PATH
 from zprocess import start_daemon
-
-"""Script to run a zlog server configured according to LabConfig. Run with:
-
-    python -m labscript_utils.zlog [--daemon]
-
-if --daemon is specified, the zlog server will be started in the background.
-"""
 
 
 def main():

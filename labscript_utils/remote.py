@@ -10,20 +10,21 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
+"""Script to run a zprocess.remote server configured according to LabConfig. Run with:
+
+.. code-block:: bash
+
+    python -m labscript_utils.remote [--daemon] [--no-tui]
+
+If --daemon is specified, the server will be started in the background. 
+If --no-tui is specified, the server will run with ordinary terminal output 
+instead of with the interactive text-based user interface (TUI).
+"""
 import sys
 import subprocess
 from labscript_utils.ls_zprocess import get_config
 from labscript_utils.setup_logging import LOG_PATH
 from zprocess import start_daemon
-
-"""Script to run a zprocess.remote server configured according to LabConfig. Run with:
-
-    python -m labscript_utils.remote [--daemon] [--no-tui]
-
-if --daemon is specified, the server will be started in the background. If --no-tui is
-specified, the server will run with ordinary terminal output instead of with the
-interactive text-based user interface (TUI).
-"""
 
 
 def main():
