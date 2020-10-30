@@ -253,7 +253,7 @@ class Connection(object):
                 return labscript_utils.properties.deserialise(value)
             else:
                 # Backward compatibility with older hdf5 files:
-                return ast.literal_eval(value)
+                return ast.literal_eval(_ensure_str(value))
         return _ensure_str(value)
 
     def _populate_relatives(self, table):
