@@ -17,7 +17,7 @@ class develop_command(develop):
 
 
 VERSION_SCHEME = {
-    "version_scheme": os.getenv("SCM_VERSION_SCHEME", "guess-next-dev"),
+    "version_scheme": os.getenv("SCM_VERSION_SCHEME", "release-branch-semver"),
     "local_scheme": os.getenv("SCM_LOCAL_SCHEME", "node-and-date"),
 }
 
