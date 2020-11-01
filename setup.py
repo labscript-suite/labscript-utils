@@ -16,9 +16,4 @@ class develop_command(develop):
                 self.copy_file('labscript-suite.pth', path)
 
 
-VERSION_SCHEME = {
-    "version_scheme": os.getenv("SCM_VERSION_SCHEME", "guess-next-dev"),
-    "local_scheme": os.getenv("SCM_LOCAL_SCHEME", "node-and-date"),
-}
-
-setup(use_scm_version=VERSION_SCHEME, cmdclass={'develop': develop_command})
+setup(cmdclass={'develop': develop_command})
