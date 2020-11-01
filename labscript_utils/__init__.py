@@ -47,6 +47,9 @@ def import_or_reload(modulename):
     return module
 
 
+from labscript_utils.versions import VersionException, check_version
+
+
 def dedent(s):
     """Remove leading spaces from the first line of a string, all common leading
     indentation (spaces only) from subsequent lines, strip trailing spaces from all
