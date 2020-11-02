@@ -15,6 +15,7 @@ defaults:
 
 env:
   PACKAGE_NAME: labscript-utils
+  SCM_LOCAL_SCHEME: no-local-version
   ANACONDA_USER: labscript-suite
 
   # Configuration for a package with compiled extensions:
