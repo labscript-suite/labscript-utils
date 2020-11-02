@@ -60,3 +60,4 @@ Module and File Tools
    double_import_denier
    filewatcher
    modulewatcher
+   versions

@@ -48,7 +48,20 @@ metadata files/folders, then reinstall the package.""".replace('\n', ' ')
 
 def get_import_path(import_name):
     """Get which entry in sys.path a module would be imported from, without importing
-    it."""
+    it.
+    
+    Args:
+        import_name (str): The module name.
+
+    Raises:
+        ModuleNotFoundError: Raised if the module is not installed.
+        NotImplementedError: Raised if the module is a "namespace package".
+            Support for namepsace packages is not currently availabled.
+
+    Returns:
+        str: The path to the folder containing the module.
+
+    """
     spec = importlib.util.find_spec(import_name)
     if spec is None:
         raise ModuleNotFoundError(import_name)
@@ -66,8 +79,22 @@ def get_import_path(import_name):
 
 
 def _get_metadata_version(project_name, import_path):
-    """Return the metadata version for a package with the given project name located at
-    the given import path, or None if there is no such package."""
+    """Gets the package metadata version.
+
+    Args:
+        project_name (str): The package name (e.g. the name used when pip installing
+            the package).
+        import_path (str): The path to the folder containing the installed package.
+
+    Raises:
+        :exc:`BrokenInstall`: Raised if the package installation is corrupted (multiple
+            packages matching the given arguments were found). May occur if 
+            (un)installation for a particular package version only partially completed.
+    
+    Returns:
+        The metadata version for a package with the given project name located at
+        the given import path, or None if there is no such package.
+    """
     
     for finder in sys.meta_path:
         if hasattr(finder, 'find_distributions'):
@@ -84,8 +111,14 @@ def _get_metadata_version(project_name, import_path):
 
 
 def _get_literal_version(filename):
-    """Tokenize a source file and return any __version__ = <version> literal defined in
-    it.
+    """Tokenize a source file and return any :code:`__version__ = <version>` literal 
+    defined in it.
+
+    Args:
+        filename (str): The path to the file to tokenize.
+
+    Returns:
+        Any version literal found matching the above criteria, or None.
     """
     if not os.path.exists(filename):
         return None
@@ -110,17 +143,34 @@ def _get_literal_version(filename):
 
 
 def get_version(import_name, project_name=None, import_path=None):
-    """Try very hard to get the version of a package without importing it. if
-    import_path is not given, first find where it would be imported from, without
+    """Try very hard to get the version of a package without importing it. 
+    
+    If import_path is not given, first find where it would be imported from, without
     importing it. Then look for metadata in the same import path with the given project
     name (note: this is not always the same as the import name, it is the name for
     example you would ask pip to install). If that is found, return the version info
-    from it. Otherwise look for a __version__.py file in the package directory, or a
-    __version__ = <version> literal defined in the package source (without executing
-    it).
+    from it. Otherwise look for a :code:`__version__.py` file in the package directory,
+    or a :code:`__version__ = <version>` literal defined in the package source (without
+    executing it).
 
-    Return NotFound if the package cannot be found, and NoVersionInfo if the version
-    cannot be obtained in the above way, or if it was found but was None."""
+    Args:
+        import_name (str): The module name.
+        project_name (str, optional): The package name (e.g. the name used when pip
+            installing the package). This must be specified if it does not match the
+            module name.
+        import_path (str, optional): The path to the folder containing the installed
+            package.
+
+    Raises:
+        NotImplementedError: Raised if the module name contains a period. Only 
+            top-level packages are supported at this time.
+
+    Returns: 
+        The version literal of the package. 
+        If the package cannot be found, :class:`NotFound` is returned. 
+        If the version cannot be obtained in the above way, or if the version was found
+        but was :code:`None`, :class:`NoVersionInfo` is returned.
+    """
     if project_name is None:
         project_name = import_name
     if '.' in import_name:
@@ -162,15 +212,34 @@ def get_version(import_name, project_name=None, import_path=None):
 
 
 def check_version(module_name, at_least, less_than, version=None, project_name=None):
-    """Check that the version of the given module is at least and less than the given
-    version strings, and raise VersionException if not. Raise VersionException if the
-    module was not found or its version could not be determined. This function uses
-    get_version to determine version numbers without importing modules. In order to do
-    this, project_name must be provided if it differs from module_name. For example,
-    pyserial is imported as 'serial', but the project name, as passed to a 'pip install'
-    command, is 'pyserial'. Therefore to check the version of pyserial, pass in
-    module_name='serial' and project_name='pyserial'. You can also pass in a version
-    string yourself, in which case no inspection of packages will take place.
+    """Checks if a module version is within specified bounds.
+    
+    Checks that the version of the given module is at least and less than the given
+    version strings. This function uses :func:`get_version` to determine version 
+    numbers without importing modules. In order to do this, :code:`project_name` must
+    be provided if it differs from :code:`module_name`. For example, pyserial is 
+    imported as 'serial', but the project name, as passed to a 'pip install' command, 
+    is 'pyserial'. Therefore to check the version of pyserial, pass in
+    :code:`module_name='serial'` and :code:`project_name='pyserial'`. 
+    You can also pass in a version string yourself, in which case no inspection of
+    packages will take place.
+
+    Args:
+        module_name (str): The name of the module to check.
+        at_least (str): The minimum acceptable module version.
+        less_than (str): The minimum unacceptable module version. Usually this would be
+            the next major version if the package follows 
+            `semver <https://semver.org>`_.
+        version (str, optional): The current version of the installed package. Useful when the
+            package version is stored in a non-standard location.
+        project_name (str, optional): The package name (e.g. the name used when pip
+            installing the package). This must be specified if it does not match the
+            module name.
+
+    Raises:
+        :exc:`VersionException`: if the module was not found or its version could not
+            be determined.
+
     """
     if version is None:
         version = get_version(module_name, project_name)
