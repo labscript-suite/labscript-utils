@@ -33,6 +33,14 @@ PKGDIRS = set(PKGDIRS)
 
 
 class ModuleWatcher(object):
+    """A watcher that reloads modules that have been modified on disk
+    
+    Only reloads modules imported after instantiation. Does not reload C extensions.
+
+    Args:
+        debug (bool, optional): When :code:`True`, prints debugging information
+            when reloading modules.
+    """
     def __init__(self, debug=False):
         self.debug = debug
         # A lock to hold whenever you don't want modules unloaded:
