@@ -405,15 +405,6 @@ class ToolPalette(QScrollArea):
 
     def resizeEvent(self, event):
         # overwrite the resize event!
-        # print '--------- %s'%self._name
-        # print self._widget_list[0].size()
-        # print self._widget_list[0].sizeHint()
-        # print self._widget_list[0].minimumSizeHint()
-        # print self._layout.rowMinimumHeight(0)
-        # print self.size()
-        # print self.minimumSize()
-        # print self.sizeHint()
-        # print self.minimumSizeHint()
         # This method can end up undergoing infinite recursion for some window
         # layouts, see
         # https://github.com/labscript-suite/labscript-utils/issues/27. It seems
