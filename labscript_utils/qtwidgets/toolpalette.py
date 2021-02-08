@@ -19,6 +19,8 @@ from qtutils.qt.QtWidgets import *
 EXPAND_ICON = ':/qtutils/fugue/toggle-small-expand'
 CONTRACT_ICON = ':/qtutils/fugue/toggle-small'
 
+_ENABLE_LAYOUT_EVENT_TYPE = QEvent.User
+
 class ToolPaletteGroup(QVBoxLayout):
     
     def __init__(self,*args,**kwargs):
@@ -265,6 +267,10 @@ class ToolPalette(QScrollArea):
         self._column_count = 0
         self._row_count = 0
         
+        # Variable for controlling whether or not self._layout_widgets() is
+        # called in self.resizeEvent().
+        self._layout_widgets_during_resizeEvent = True
+        
     def addWidget(self,widget,force_relayout=True):
         # Append to end of tool pallete
         #widget.clicked.connect(embed)
@@ -385,24 +391,53 @@ class ToolPalette(QScrollArea):
         height = self.minimumSize().height()
         return QSize(width, height)
 
+    def event(self, event):
+        # Handle the custom event for reenabling the call to
+        # self._layout_widgets() during self.resizeEvent().
+        if (event.type() == _ENABLE_LAYOUT_EVENT_TYPE):
+            self._layout_widgets_during_resizeEvent = True
+            # Return True so that this event isn't sent along to other event
+            # handlers as well.
+            return True
+
+        # Handle all other events in the usual way.
+        return super().event(event)
+
     def resizeEvent(self, event):
         # overwrite the resize event!
-        # print '--------- %s'%self._name
-        # print self._widget_list[0].size()
-        # print self._widget_list[0].sizeHint()
-        # print self._widget_list[0].minimumSizeHint()
-        # print self._layout.rowMinimumHeight(0)
-        # print self.size()
-        # print self.minimumSize()
-        # print self.sizeHint()
-        # print self.minimumSizeHint()
-        #pass resize event on to qwidget
-        # call layout()
-        QWidget.resizeEvent(self, event)
-        size = event.size()
-        if size.width() == self.size().width() and size.height() == self.size().height():
-            # print 'relaying out widgets'
-            self._layout_widgets()
+        # This method can end up undergoing infinite recursion for some window
+        # layouts, see
+        # https://github.com/labscript-suite/labscript-utils/issues/27. It seems
+        # that sometimes self._layout_widgets() increases the number of columns,
+        # which then triggers a resizeEvent, which then calls
+        # self._layout_widgets() which then decreases the number of columns to
+        # its previous value, which triggers a resizeEvent, and so on. That loop
+        # may occur e.g. if increasing/decreasing the number of columns
+        # add/removes a scrollbar, which then changes the number of widgets that
+        # can fit in a row. Keeping track of the recursion depth isn't trivial
+        # because _layout_widgets() doesn't directly call itself; it just causes
+        # more resizing events to be added to the event queue. To work around
+        # that, this method will mark that future calls to this method shouldn't
+        # call _layout_widgets() but will also add an event to the event queue
+        # to reenable calling _layout_widgets() again once all of the resize
+        # events caused by this call to it have been processed.
+        
+        try:
+            #pass resize event on to qwidget
+            QWidget.resizeEvent(self, event)
+            size = event.size()
+            if size.width() == self.size().width() and size.height() == self.size().height():
+                if self._layout_widgets_during_resizeEvent:
+                    # Avoid calling this again until all the resize events that
+                    # will be put in the queue by self._layout_widgets() have
+                    # run.
+                    self._layout_widgets_during_resizeEvent = False
+                    self._layout_widgets()
+        finally:
+            # Add event to end of the event queue to allow _layout_widgets() in
+            # future calls. This event shouldn't be handled until the resize
+            # events generated during _layout_widgets() have run.
+            QCoreApplication.instance().postEvent(self, QEvent(_ENABLE_LAYOUT_EVENT_TYPE))
 
 
 # A simple test!
