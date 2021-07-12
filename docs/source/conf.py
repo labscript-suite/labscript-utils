@@ -40,6 +40,7 @@ html_favicon = img_path + "/labscript.ico"
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
@@ -50,6 +51,8 @@ extensions = [
 ]
 
 autodoc_typehints = 'description'
+autosummary_generate = True
+numfig = True
 
 # mock missing site packages methods
 import site

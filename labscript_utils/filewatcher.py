@@ -24,28 +24,27 @@ class FileWatcher(object):
         Detect modification, deletion, creation, or restoration of specific files
         (and all files in specific folders).
 
-        callback -- elicited whenever file events are detected, requires at least
-            (name, info) arguments. Event specific callback requires 
-            (name, info, event) arguments, where event is on of:
-            'modified', 'deleted' (or None), 'created', 'restored', 'original'
-            The 'original' event corresponds to a state change that results in 
-            the original file info at instantiation.
-
-        Keyword arguments:
-        files -- List of specific files to watch.
-            A single file can be specified as a string (default None).
-        folders -- List of specific folders to watch.
-            A single folder can be specified as a string (default None).
-            If a file is created/deleted in/from any watched folder, it is added/
-            removed to/from the FileWatcher.files attribute.
-        clean_modified_info -- File info to detect modification/restoration with respect
-            to. If None (default), or for files not present in clean_modified_info, the
-            initial modified info will be based on the first polling of files.
-        hashable_types -- File extensions for which MD5 checksum will be used to
-            detect modification/restoration with (default None). Files of any 
-            other type will be watched using their modified time. 
-            Restoration cannot be detected for types not in hashable_types.
-        interval -- Polling interval in seconds (default 1).
+        Args:
+            callback (function): elicited whenever file events are detected, requires at least
+                (name, info) arguments. Event specific callback requires 
+                (name, info, event) arguments, where event is on of:
+                'modified', 'deleted' (or None), 'created', 'restored', 'original'
+                The 'original' event corresponds to a state change that results in 
+                the original file info at instantiation.
+            files (list, optional): List of specific files to watch.
+                A single file can be specified as a string (default None).
+            folders (list, optional): List of specific folders to watch.
+                A single folder can be specified as a string (default None).
+                If a file is created/deleted in/from any watched folder, it is added/
+                removed to/from the FileWatcher.files attribute.
+            clean_modified_info (dict, optional): File info to detect modification/restoration with respect
+                to. If None (default), or for files not present in clean_modified_info, the
+                initial modified info will be based on the first polling of files.
+            hashable_types (iterable, optional): File extensions for which MD5 checksum will be used to
+                detect modification/restoration with (default None). Files of any 
+                other type will be watched using their modified time. 
+                Restoration cannot be detected for types not in hashable_types.
+            interval (float, optional): Polling interval in seconds (default 1).
         """
         if len(getfullargspec(callback)[0]) > 2:
             # For backwards compatability, allow callback to have only two args
