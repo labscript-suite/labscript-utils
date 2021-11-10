@@ -26,7 +26,6 @@ class _All(object):
 
     def __getitem__(self, ix):
         if self.__all__ is None:
-            self.__all__ = []
             self._import_all()
         return self.__all__[ix]
 
@@ -34,6 +33,8 @@ class _All(object):
         """imports all unit conversion classes in module within this subpackage into
         this module's globals. This is used only for backward compatibility with unit
         conversion classes that were not specified with a fully qualified name"""
+        if self.__all__ is None:
+            self.__all__ = []
         for filename in os.listdir(os.path.split(__file__)[0]):
             if filename.endswith('.py') and filename != '__init__.py':
                 module = filename[:-3]
