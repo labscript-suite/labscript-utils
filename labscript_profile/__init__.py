@@ -49,7 +49,10 @@ def add_userlib_and_pythonlib():
     time the interpreter starts up"""
     labconfig = default_labconfig_path()
     if labconfig is not None and labconfig.exists():
-        config = ConfigParser(defaults={'labscript_suite': LABSCRIPT_SUITE_PROFILE})
+        # str() below is for py36 compat, where ConfigParser can't deal with Path objs
+        config = ConfigParser(
+            defaults={'labscript_suite': str(LABSCRIPT_SUITE_PROFILE)}
+        )
         config.read(labconfig)
         for option in ['userlib', 'pythonlib']:
             try:
