@@ -13,6 +13,7 @@
 import sys, os
 from io import UnsupportedOperation
 import logging, logging.handlers
+import warnings
 from labscript_utils.ls_zprocess import Handler, ensure_connected_to_zlog
 
 
@@ -73,6 +74,8 @@ def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.
     except UnsupportedOperation:
         # Special handling for Jupyter notebook kernels where sys.stdout.fileno is not
         # callable.
-        pass
+        warnings.warn(
+            "Logging to stdout and stderr is disabled. See the log files for log messages."
+        )
     logger.setLevel(logging.DEBUG)
     return logger
