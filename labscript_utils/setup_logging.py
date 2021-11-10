@@ -11,7 +11,9 @@
 #                                                                   #
 #####################################################################
 import sys, os
+from io import UnsupportedOperation
 import logging, logging.handlers
+import warnings
 from labscript_utils.ls_zprocess import Handler, ensure_connected_to_zlog
 
 
@@ -52,21 +54,32 @@ def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.
     handler.setFormatter(formatter)
     handler.setLevel(log_level)
     logger.addHandler(handler)
-    if sys.stdout is not None and sys.stdout.fileno() >= 0:
-        stdout_handler = logging.StreamHandler(sys.stdout)
-        stdout_handler.setFormatter(formatter)
-        stdout_handler.setLevel(terminal_level)
-        logger.addHandler(stdout_handler)
-        if sys.stderr is not None and sys.stderr.fileno() >= 0:
-            # Send warnings and greater to stderr instead of stdout:
-            stdout_handler.addFilter(LessThanFilter(logging.WARNING))
-            sterr_handler = logging.StreamHandler(sys.stderr)
-            sterr_handler.setFormatter(formatter)
-            sterr_handler.setLevel(logging.WARNING)
-            logger.addHandler(sterr_handler)
+    try:
+        # Check that sys.stdout.fileno is callable, which is needed below. It is NOT
+        # callable in Jupyter notebooks.
+        stdout_fileno = sys.stdout.fileno()
+    except UnsupportedOperation:
+        # In this case the code is likely being run from a Jupyter notebook, warn the
+        # user that log messages won't be printed to stdout or stderr.
+        warnings.warn(
+            "Logging to stdout and stderr is disabled. See the log files for log messages."
+        )
     else:
-        # Prevent bug on windows where writing to stdout without a command
-        # window causes a crash:
-        sys.stdout = sys.stderr = open(os.devnull, 'w')
+        if sys.stdout is not None and stdout_fileno >= 0:
+            stdout_handler = logging.StreamHandler(sys.stdout)
+            stdout_handler.setFormatter(formatter)
+            stdout_handler.setLevel(terminal_level)
+            logger.addHandler(stdout_handler)
+            if sys.stderr is not None and sys.stderr.fileno() >= 0:
+                # Send warnings and greater to stderr instead of stdout:
+                stdout_handler.addFilter(LessThanFilter(logging.WARNING))
+                sterr_handler = logging.StreamHandler(sys.stderr)
+                sterr_handler.setFormatter(formatter)
+                sterr_handler.setLevel(logging.WARNING)
+                logger.addHandler(sterr_handler)
+        else:
+            # Prevent bug on windows where writing to stdout without a command
+            # window causes a crash:
+            sys.stdout = sys.stderr = open(os.devnull, 'w')
     logger.setLevel(logging.DEBUG)
     return logger
