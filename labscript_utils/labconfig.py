@@ -43,7 +43,8 @@ class LabConfig(configparser.ConfigParser):
             required_params = {}
         if defaults is None:
             defaults = {}
-        defaults['labscript_suite'] = LABSCRIPT_SUITE_PROFILE
+        # str() below is for py36 compat, where ConfigParser can't deal with Path objs
+        defaults['labscript_suite'] = str(LABSCRIPT_SUITE_PROFILE)
         if isinstance(config_path, list):
             self.config_path = config_path[0]
         else:

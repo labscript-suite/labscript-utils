@@ -14,6 +14,7 @@ This documentation is primarily for developers who might want to use this common
    :hidden:
    :caption: DOCUMENTATION
 
+   labconfig
    api/index
    
 .. toctree::
