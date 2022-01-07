@@ -72,7 +72,7 @@ class Splash(QtWidgets.QFrame):
 
         center_point = QtWidgets.QDesktopWidget().availableGeometry().center()
         x0, y0 = center_point.x(), center_point.y()
-        self.move(x0 - self.w / 2, y0 - self.h / 2)
+        self.move(x0 - self.w // 2, y0 - self.h // 2)
         self._first_paint_complete = False
 
     def paintEvent(self, event):
