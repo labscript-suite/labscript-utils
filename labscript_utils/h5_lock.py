@@ -89,6 +89,9 @@ def hack_locks_onto_h5py():
     # Monkeypatch h5py so all files are locked:
     h5py.File = File
 
-
-connect_to_zlock_server()
-hack_locks_onto_h5py()
+if os.environ.get('READTHEDOCS'):
+    # prevent starting a zlock server on RTD, which always fails
+    pass
+else:
+    connect_to_zlock_server()
+    hack_locks_onto_h5py()
