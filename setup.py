@@ -1,7 +1,7 @@
 import os
 from setuptools import setup
 from setuptools.command.develop import develop
-from distutils import log
+import logging
 
 
 class develop_command(develop):
@@ -11,7 +11,7 @@ class develop_command(develop):
         path = os.path.join(self.install_dir, 'labscript-suite.pth')
         super().run()
         if not self.uninstall:
-            log.info(f'Copying labscript-suite.pth to {path}')
+            logging.info(f'Copying labscript-suite.pth to {path}')
             if not self.dry_run:
                 self.copy_file('labscript-suite.pth', path)
 
