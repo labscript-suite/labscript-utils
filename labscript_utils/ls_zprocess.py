@@ -13,7 +13,7 @@
 import sys
 import os
 from socket import gethostbyname
-from distutils.version import LooseVersion
+from packaging.version import Version
 import zmq
 
 import zprocess
@@ -337,7 +337,7 @@ def connect_to_zlock_server():
     global _zlock_server_supports_readwrite
     if hasattr(client, 'get_protocol_version'):
         version = client.get_protocol_version()
-        if LooseVersion(version) >= LooseVersion('1.1.0'):
+        if Version(version) >= Version('1.1.0'):
             _zlock_server_supports_readwrite = True
 
     # The user can call these functions to change the timeouts later if they

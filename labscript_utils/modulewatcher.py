@@ -16,16 +16,16 @@ import time
 import os
 import imp
 import site
-import distutils.sysconfig
+import sysconfig
 
 
 # Directories in which the standard library and installed packages may be located.
 # Modules in these locations will be whitelisted:
 PKGDIRS = [
-    distutils.sysconfig.get_python_lib(plat_specific=True, standard_lib=True),
-    distutils.sysconfig.get_python_lib(plat_specific=True, standard_lib=False),
-    distutils.sysconfig.get_python_lib(plat_specific=False, standard_lib=True),
-    distutils.sysconfig.get_python_lib(plat_specific=False, standard_lib=False),
+    sysconfig.get_path('platstdlib'),
+    sysconfig.get_path('platlib'),
+    sysconfig.get_path('stdlib'),
+    sysconfig.get_path('purelib'),
     site.getusersitepackages(),
 ]
 PKGDIRS += site.getsitepackages()
