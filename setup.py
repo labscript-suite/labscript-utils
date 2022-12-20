@@ -18,6 +18,7 @@ else:
             wheel_path = super()._create_wheel_file(bdist_wheel)
             with WheelFile(wheel_path, 'a') as wheel:
                 wheel.write("labscript-suite.pth")
+            return wheel_path
 
 
 # Setuptools <= 63:
