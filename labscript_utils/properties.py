@@ -124,7 +124,7 @@ def _get_con_table_properties(h5_file, device_name):
 
     # Compare with the name in the connection table
     # whether it is np.bytes_ or vlenstr:
-    namecol_dtype = dataset['name'].dtype
+    namecol_dtype = dataset.dtype['name']
     if namecol_dtype.type is np.bytes_:
         device_name = device_name.encode('utf8')
     elif namecol_dtype is h5py.special_dtype(vlen=str):
@@ -143,7 +143,7 @@ def _get_unit_conversion_parameters(h5_file, device_name):
 
     # Compare with the name in the connection table
     # whether it is np.bytes_ or vlenstr:
-    namecol_dtype = dataset['name'].dtype
+    namecol_dtype = dataset.dtype['name']
     if namecol_dtype.type is np.bytes_:
         device_name = device_name.encode('utf8')
     elif namecol_dtype is h5py.special_dtype(vlen=str):
