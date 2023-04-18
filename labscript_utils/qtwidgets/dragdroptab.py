@@ -316,7 +316,9 @@ class TabAnimation(QAbstractAnimation):
                 if dy * (target_pos_y - new_pos_y) < 0:
                     new_pos_y = target_pos_y
 
-                self.limbo_position = QPoint(new_pos_x, new_pos_y)
+                self.limbo_position = QPoint(
+                    int(round(new_pos_x)), int(round(new_pos_y))
+                )
             else:
                 self.limbo.animation_over()
                 self.limbo = None
