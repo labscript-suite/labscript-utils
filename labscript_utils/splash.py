@@ -29,6 +29,15 @@ except ImportError as e:
 Qt = QtCore.Qt
 
 
+# Set auto high-DPI scaling - this ensures pixel metrics are scaled
+# appropriately so that we don't get a weird mix of large fonts and small
+# everything else on High DPI displays:
+QtWidgets.QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+# Use high res pixmaps if available, instead of rendering at low resolution and
+# upscaling:
+QtWidgets.QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+
+
 class Splash(QtWidgets.QFrame):
     w = 250
     h = 230
