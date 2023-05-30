@@ -94,7 +94,7 @@ class DigitalOutput(QPushButton):
     
 class InvertedDigitalOutput(DigitalOutput):
     def set_DO(self,DO,notify_old_DO=True,notify_new_DO=True,inverted=True):
-        return DigitalOutput.set_DO(self, DO, notify_old_DO, notify_new_DO, inverted)
+        DigitalOutput.set_DO(self, DO, notify_old_DO, notify_new_DO, inverted)
 
     @property
     def state(self):
