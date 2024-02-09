@@ -17,7 +17,7 @@ import os
 import site
 import sysconfig
 
-# deal with removal of _imp from new python
+# deal with removal of imp from python 3.12
 try:
     import _imp as imp
 except ImportError:

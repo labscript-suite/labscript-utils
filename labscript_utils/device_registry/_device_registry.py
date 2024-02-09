@@ -6,7 +6,7 @@ import inspect
 from labscript_utils import dedent
 from labscript_utils.labconfig import LabConfig
 
-# deal with removal of _imp from new python
+# deal with removal of imp from python 3.12
 try:
     import _imp as imp
 except ImportError:
