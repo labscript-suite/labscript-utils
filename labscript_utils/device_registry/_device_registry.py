@@ -1,11 +1,16 @@
 import os
 import importlib
-import imp
 import warnings
 import traceback
 import inspect
 from labscript_utils import dedent
 from labscript_utils.labconfig import LabConfig
+
+# deal with removal of _imp from new python
+try:
+    import _imp as imp
+except ImportError:
+    import imp
 
 """This file contains the machinery for registering and looking up what BLACS tab and
 runviewer parser classes belong to a particular labscript device. "labscript device"
