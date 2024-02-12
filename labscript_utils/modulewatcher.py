@@ -14,9 +14,14 @@ import sys
 import threading
 import time
 import os
-import imp
 import site
 import sysconfig
+
+# deal with removal of imp from python 3.12
+try:
+    import _imp as imp
+except ImportError:
+    import imp
 
 
 # Directories in which the standard library and installed packages may be located.
