@@ -17,12 +17,6 @@ import os
 import site
 import sysconfig
 
-# deal with removal of imp from python 3.12
-try:
-    import imp
-except ImportError:
-    import _imp as imp
-
 
 # Directories in which the standard library and installed packages may be located.
 # Modules in these locations will be whitelisted:
@@ -63,16 +57,8 @@ class ModuleWatcher(object):
         while True:
             time.sleep(1)
             with self.lock:
-                # Acquire the import lock so that we don't unload modules whilst an
-                # import is in progess:
-                imp.acquire_lock()
-                try:
-                    if self.check():
-                        self.unload()
-                finally:
-                    # We're done mucking around with the cached modules, normal imports
-                    # in other threads may resume:
-                    imp.release_lock()
+                if self.check():
+                    self.unload()
 
     def check(self):
         unload_required = False
