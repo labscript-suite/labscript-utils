@@ -8,9 +8,9 @@ from labscript_utils.labconfig import LabConfig
 
 # deal with removal of imp from python 3.12
 try:
-    import _imp as imp
-except ImportError:
     import imp
+except ImportError:
+    import _imp as imp
 
 """This file contains the machinery for registering and looking up what BLACS tab and
 runviewer parser classes belong to a particular labscript device. "labscript device"
