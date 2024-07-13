@@ -19,9 +19,9 @@ import sysconfig
 
 # deal with removal of imp from python 3.12
 try:
-    import _imp as imp
-except ImportError:
     import imp
+except ImportError:
+    import _imp as imp
 
 
 # Directories in which the standard library and installed packages may be located.
