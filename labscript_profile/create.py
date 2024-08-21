@@ -91,9 +91,13 @@ def create_profile():
                                      )
 
     parser.add_argument('-n', '--apparatus_name',
-                        type = str,
-                        help = 'Sets the apparatus_name in the labconfig file. Defaults to example_apparatus',
+                        type=str,
+                        help='Sets the apparatus_name in the labconfig file. Defaults to example_apparatus',
                         )
+    parser.add_argument('-c', '--compile',
+                        type=bool,
+                        help='Enables compilation of the default example connection table',
+                        default=False)
     
     args = parser.parse_args()
 
@@ -123,5 +127,6 @@ def create_profile():
             new_path = Path(str(path).replace('example_apparatus', args.apparatus_name))
             path.rename(new_path)
 
-    # compile the initial example connection table
-    compile_connection_table()
+    if args.compile:
+        # compile the initial example connection table
+        compile_connection_table()
