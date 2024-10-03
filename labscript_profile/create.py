@@ -95,7 +95,7 @@ def create_profile():
                         help='Sets the apparatus_name in the labconfig file. Defaults to example_apparatus',
                         )
     parser.add_argument('-c', '--compile',
-                        type=bool,
+                        action='store_true',
                         help='Enables compilation of the default example connection table',
                         default=False)
     
