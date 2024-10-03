@@ -50,6 +50,7 @@ def make_labconfig_file(apparatus_name):
     )
     config.set('security', 'shared_secret', str(shared_secret_entry))
     if apparatus_name is not None:
+        print(f'\tSetting apparatus name to \'{apparatus_name}\'')
         config.set('DEFAULT', 'apparatus_name', apparatus_name)
 
     with open(target_path, 'w') as f:
@@ -82,6 +83,7 @@ def compile_connection_table():
                                        run_file = output_h5_path,
                                        stream_port = None,
                                        done_callback = dummy_callback)
+    print(f'\tOutput written to {output_h5_path}')
 
 def create_profile():
 
@@ -103,6 +105,7 @@ def create_profile():
 
     src = Path(DEFAULT_PROFILE_CONTENTS)
     dest = Path(LABSCRIPT_SUITE_PROFILE)
+    print(f'Creating labscript profile at {LABSCRIPT_SUITE_PROFILE}')
     # Profile directory may exist already, but we will error if it contains any of the
     # sub-directories we want to copy into it:
     os.makedirs(dest, exist_ok=True)
@@ -119,14 +122,16 @@ def create_profile():
         else:
             shutil.copy2(src_file, dest_file)
 
+    print('Writing labconfig file')
     make_labconfig_file(args.apparatus_name)
-        
+
     # rename apparatus directories
     if args.apparatus_name is not None:
+        print('\tRenaming apparatus directories')
         for path in dest.glob('**/example_apparatus/'):
             new_path = Path(str(path).replace('example_apparatus', args.apparatus_name))
             path.rename(new_path)
 
     if args.compile:
-        # compile the initial example connection table
+        print('Compiling the example connection table')
         compile_connection_table()
