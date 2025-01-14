@@ -68,9 +68,9 @@ def compile_connection_table():
     config.read(default_labconfig_path())
 
     # The path to the user's connection_table.py script
-    script_path = config['paths']['connection_table_py']
+    script_path = os.path.expandvars(config['paths']['connection_table_py'])
     # path to the connection_table.h5 destination
-    output_h5_path = config['paths']['connection_table_h5']
+    output_h5_path = os.path.expandvars(config['paths']['connection_table_h5'])
     # create output directory, if needed
     Path(output_h5_path).parent.mkdir(parents=True, exist_ok=True)
     # compile the h5 file
