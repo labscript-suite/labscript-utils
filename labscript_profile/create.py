@@ -22,7 +22,14 @@ def make_shared_secret(directory):
     raise RuntimeError("Could not parse output of zprocess.makesecret")
 
 
-def make_labconfig_file(apparatus_name):
+def make_labconfig_file(apparatus_name = None):
+    """Create labconfig file from template
+    
+    Parameters
+    ----------
+    apparatus_name: str, optional
+        Overrides the default apparatus name with the provided one if not None
+    """
 
     source_path = os.path.join(LABSCRIPT_SUITE_PROFILE, 'labconfig', 'example.ini')
     target_path = default_labconfig_path()
@@ -57,6 +64,10 @@ def make_labconfig_file(apparatus_name):
         config.write(f)
 
 def compile_connection_table():
+    """Compile the connection table defined in the labconfig file
+    
+    The output is placed in the location defined by the labconfig file.
+    """
 
     try:
         import runmanager
@@ -86,6 +97,8 @@ def compile_connection_table():
     print(f'\tOutput written to {output_h5_path}')
 
 def create_profile():
+    """Function that defines the labscript-profile-create command
+    """
 
     # capture CMD arguments
     parser = argparse.ArgumentParser(prog='labscript-profile-create',
