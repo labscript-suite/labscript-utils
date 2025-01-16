@@ -30,13 +30,13 @@ class DigitalOutput(QPushButton):
         self._DO = None
     
     # Setting and getting methods for the Digitl Out object in charge of this button
-    def set_DO(self,DO,notify_old_DO=True,notify_new_DO=True):
+    def set_DO(self,DO,notify_old_DO=True,notify_new_DO=True,inverted=False):
         # If we are setting a new DO, remove this widget from the old one (if it isn't None) and add it to the new one (if it isn't None)
         if DO != self._DO:
             if self._DO is not None and notify_old_DO:
                 self._DO.remove_widget(self)
             if DO is not None and notify_new_DO:
-                DO.add_widget(self)
+                DO.add_widget(self, inverted)
         # Store a reference to the digital out object
         self._DO = DO
         
@@ -93,6 +93,9 @@ class DigitalOutput(QPushButton):
     
     
 class InvertedDigitalOutput(DigitalOutput):
+    def set_DO(self,DO,notify_old_DO=True,notify_new_DO=True,inverted=True):
+        DigitalOutput.set_DO(self, DO, notify_old_DO, notify_new_DO, inverted)
+
     @property
     def state(self):
         return not DigitalOutput.state.fget(self)
