@@ -69,4 +69,4 @@ docs = [
 ]
 
 [project.scripts]
-labscript-profile-create = "labscript_profile.create:create_profile"
+labscript-profile-create = "labscript_profile.create:create_profile_cli"

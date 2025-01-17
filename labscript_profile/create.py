@@ -96,8 +96,10 @@ def compile_connection_table():
                                        done_callback = dummy_callback)
     print(f'\tOutput written to {output_h5_path}')
 
-def create_profile():
+def create_profile_cli():
     """Function that defines the labscript-profile-create command
+
+    Parses CLI arguments and calls :func:`~.create_profile`.
     """
 
     # capture CMD arguments
@@ -115,6 +117,21 @@ def create_profile():
                         default=False)
     
     args = parser.parse_args()
+
+    create_profile(args.apparatus_name, args.compile)
+
+def create_profile(apparatus_name = None, compile_table = False):
+    """Function that creates a labscript config profile from the default config
+
+    Parameters
+    ----------
+    appratus_name: str, optional
+        apparatus_name to define in the config.
+        If None, defaults to example_apparatus (set in default config file)
+    compile_table: bool, optional
+        Whether to compile to example connection table defined by the default config file
+        Default is False.
+    """
 
     src = Path(DEFAULT_PROFILE_CONTENTS)
     dest = Path(LABSCRIPT_SUITE_PROFILE)
@@ -136,15 +153,15 @@ def create_profile():
             shutil.copy2(src_file, dest_file)
 
     print('Writing labconfig file')
-    make_labconfig_file(args.apparatus_name)
+    make_labconfig_file(apparatus_name)
 
     # rename apparatus directories
-    if args.apparatus_name is not None:
+    if apparatus_name is not None:
         print('\tRenaming apparatus directories')
         for path in dest.glob('**/example_apparatus/'):
-            new_path = Path(str(path).replace('example_apparatus', args.apparatus_name))
+            new_path = Path(str(path).replace('example_apparatus', apparatus_name))
             path.rename(new_path)
 
-    if args.compile:
+    if compile_table:
         print('Compiling the example connection table')
         compile_connection_table()
