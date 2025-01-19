@@ -15,27 +15,28 @@ import sys
 from labscript_utils import dedent
 
 try:
-    from qtutils.qt import QtWidgets, QtCore, QtGui
+    from qtutils.qt import QtWidgets, QtCore, QtGui, QT_ENV
 except ImportError as e:
     if 'DLL load failed' in str(e):
         msg = """Failed to load Qt DLL. This can be caused by application shortcuts
             not being configured to activate conda environments. Try running the
             following from within the activated conda environment to fix the shortcuts:
 
-                python -m labscript_utils.winshell --fix-shortcuts."""
+                desktop-app install blacs lyse runmanager runviewer"""
         raise ImportError(dedent(msg))
     raise
     
 Qt = QtCore.Qt
 
-
-# Set auto high-DPI scaling - this ensures pixel metrics are scaled
-# appropriately so that we don't get a weird mix of large fonts and small
-# everything else on High DPI displays:
-QtWidgets.QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-# Use high res pixmaps if available, instead of rendering at low resolution and
-# upscaling:
-QtWidgets.QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+# These are default in Qt6 and print a warning if set
+if QT_ENV == 'PyQt5':
+    # Set auto high-DPI scaling - this ensures pixel metrics are scaled
+    # appropriately so that we don't get a weird mix of large fonts and small
+    # everything else on High DPI displays:
+    QtWidgets.QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    # Use high res pixmaps if available, instead of rendering at low resolution and
+    # upscaling:
+    QtWidgets.QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 
 
 class Splash(QtWidgets.QFrame):
@@ -46,12 +47,13 @@ class Splash(QtWidgets.QFrame):
     alpha = 0.875
     icon_frac = 0.65
     BG = '#ffffff'
+    FG = '#000000'
 
     def __init__(self, imagepath):
         self.qapplication = QtWidgets.QApplication.instance()
         if self.qapplication is None:
             self.qapplication = QtWidgets.QApplication(sys.argv)
-        QtWidgets.QFrame.__init__(self)
+        super().__init__()
         self.icon = QtGui.QPixmap()
         self.icon.load(imagepath)
         if self.icon.isNull():
@@ -63,7 +65,7 @@ class Splash(QtWidgets.QFrame):
         self.setWindowFlags(Qt.SplashScreen)
         self.setWindowOpacity(self.alpha)
         self.label = QtWidgets.QLabel(self.text)
-        self.setStyleSheet("background-color: %s; font-size: 10pt" % self.BG)
+        self.setStyleSheet(f"color: {self.FG}; background-color: {self.BG}; font-size: 10pt")
         # Frame not necessary on macos, and looks ugly.
         if sys.platform != 'darwin':
             self.setFrameShape(QtWidgets.QFrame.StyledPanel)
@@ -79,17 +81,11 @@ class Splash(QtWidgets.QFrame):
         layout.addWidget(image_label)
         layout.addWidget(self.label)
 
-        center_point = QtWidgets.QDesktopWidget().availableGeometry().center()
-        x0, y0 = center_point.x(), center_point.y()
-        self.move(x0 - self.w // 2, y0 - self.h // 2)
-        self._first_paint_complete = False
+        self._paint_pending = False
 
     def paintEvent(self, event):
-        result = QtWidgets.QFrame.paintEvent(self, event)
-        if not self._first_paint_complete:
-            self._first_paint_complete = True
-            self.qapplication.quit()
-        return result
+        self._paint_pending = False
+        return super().paintEvent(event)
 
     def show(self):
         QtWidgets.QFrame.show(self)
@@ -98,27 +94,15 @@ class Splash(QtWidgets.QFrame):
     def update_text(self, text):
         self.text = text
         self.label.setText(text)
-        # If we are not visible yet, exec until we are painted.
-        if not self._first_paint_complete:
-            self.qapplication.exec_()
-        else:
-            self.repaint()
+        self._paint_pending = True
+        while self._paint_pending:
+            QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents)
+            QtCore.QCoreApplication.sendPostedEvents()
 
 
 if __name__ == '__main__':
     import time
-
-    MACOS = sys.platform == 'darwin'
-    WINDOWS = sys.platform == 'win32'
-    LINUX = sys.platform.startswith('linux')
-
-    if MACOS:
-        icon = '/Users/bilbo/tmp/runmanager/runmanager.svg'
-    elif LINUX:
-        icon = '/home/bilbo/labscript_suite/runmanager/runmanager.svg'
-    elif WINDOWS:
-        icon = R'C:\labscript_suite\runmanager\runmanager.svg'
-
+    icon = '../../runmanager/runmanager/runmanager.svg'
     splash = Splash(icon)
     splash.show()
     time.sleep(1)
