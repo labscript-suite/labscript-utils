@@ -87,10 +87,6 @@ class Splash(QtWidgets.QFrame):
         self._paint_pending = False
         return super().paintEvent(event)
 
-    def show(self):
-        QtWidgets.QFrame.show(self)
-        self.update_text(self.text)
-
     def update_text(self, text):
         self.text = text
         self.label.setText(text)
