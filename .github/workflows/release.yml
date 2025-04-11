@@ -274,7 +274,7 @@ jobs:
             # Short path to minimise odds of hitting Windows max path length
             CONDA_BUILD_ARGS+=" --croot ${{ runner.temp }}\cb"
           fi
-          conda install -c labscript-suite setuptools-conda
+          conda install -c labscript-suite setuptools-conda "conda-build<25"
           setuptools-conda build $CONDA_BUILD_ARGS .
 
       - name: Upload artifact
