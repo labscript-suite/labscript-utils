@@ -1,11 +1,12 @@
+import importlib.machinery
 import os
 import importlib
-import imp
 import warnings
 import traceback
 import inspect
 from labscript_utils import dedent
 from labscript_utils.labconfig import LabConfig
+
 
 """This file contains the machinery for registering and looking up what BLACS tab and
 runviewer parser classes belong to a particular labscript device. "labscript device"
@@ -248,20 +249,19 @@ def register_classes(labscript_device_name, BLACS_tab=None, runviewer_parser=Non
 
 def populate_registry():
     """Walk the labscript_devices folder looking for files called register_classes.py,
-    and run them (i.e. import them). These files are expected to make calls to
+    and run them. These files are expected to make calls to
     register_classes() to inform us of what BLACS tabs and runviewer classes correspond
     to their labscript device classes."""
-    # We import the register_classes modules as a direct submodule of labscript_devices.
-    # But they cannot all have the same name, so we import them as
-    # labscript_devices._register_classes_script_<num> with increasing number.
-    module_num = 0
+    # We execute the register_classes modules as a direct submodule of labscript_devices.
     for devices_dir in LABSCRIPT_DEVICES_DIRS:
         for folder, _, filenames in os.walk(devices_dir):
             if 'register_classes.py' in filenames:
                 # The module name is the path to the file, relative to the labscript suite
                 # install directory:
-                # Open the file using the import machinery, and import it as module_name.
-                fp, pathname, desc = imp.find_module('register_classes', [folder])
-                module_name = 'labscript_devices._register_classes_%d' % module_num
-                _ = imp.load_module(module_name, fp, pathname, desc)
-                module_num += 1
+                # Open the file using the import machinery, and run it
+                spec = importlib.machinery.PathFinder.find_spec('register_classes', [folder])
+                mod = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                # fully importing module would require adding to sys.modules
+                # and each import would need to have unique names
+                # but we just need to run the registering code, not actually import the module

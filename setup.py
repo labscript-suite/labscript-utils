@@ -33,14 +33,7 @@ class develop_command(develop):
             if not self.dry_run:
                 self.copy_file('labscript-suite.pth', path)
 
-
-VERSION_SCHEME = {
-    "version_scheme": os.getenv("SCM_VERSION_SCHEME", "release-branch-semver"),
-    "local_scheme": os.getenv("SCM_LOCAL_SCHEME", "node-and-date"),
-}
-
 setup(
-    use_scm_version=VERSION_SCHEME,
     cmdclass={
         'develop': develop_command,
         'editable_wheel': editable_wheel_command,

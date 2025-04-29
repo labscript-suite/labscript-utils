@@ -29,5 +29,5 @@ class OutputBox(qtutils.outputbox.OutputBox):
             container=container,
             scrollback_lines=scrollback_lines,
             zmq_context=context,
-            bind_address='tcp://0.0.0.0',
+            bind_address='tcp://*',
         )

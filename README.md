@@ -4,7 +4,7 @@
 
 ### Shared modules used by the _labscript suite_
 
-[![Actions Status](https://github.com/labscript-suite/labscript-utils/workflows/Build%20and%20Release/badge.svg?branch=maintenance%2F3.0.x)](https://github.com/labscript-suite/labscript-utils/actions)
+[![Actions Status](https://github.com/labscript-suite/labscript-utils/workflows/Build%20and%20Release/badge.svg)](https://github.com/labscript-suite/labscript-utils/actions)
 [![License](https://img.shields.io/pypi/l/labscript-utils.svg)](https://github.com/labscript-suite/labscript-utils/raw/master/LICENSE.txt)
 [![Python Version](https://img.shields.io/pypi/pyversions/labscript-utils.svg)](https://python.org)
 [![PyPI](https://img.shields.io/pypi/v/labscript-utils.svg)](https://pypi.org/project/labscript-utils)

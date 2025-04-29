@@ -14,7 +14,6 @@ import sys
 import threading
 import time
 import os
-import imp
 import site
 import sysconfig
 
@@ -58,16 +57,8 @@ class ModuleWatcher(object):
         while True:
             time.sleep(1)
             with self.lock:
-                # Acquire the import lock so that we don't unload modules whilst an
-                # import is in progess:
-                imp.acquire_lock()
-                try:
-                    if self.check():
-                        self.unload()
-                finally:
-                    # We're done mucking around with the cached modules, normal imports
-                    # in other threads may resume:
-                    imp.release_lock()
+                if self.check():
+                    self.unload()
 
     def check(self):
         unload_required = False
@@ -133,3 +124,32 @@ class ModuleWatcher(object):
         # code holds references to sys.meta_path, and to preserve order, since order
         # is relevant.
         sys.meta_path[:] = self.meta_whitelist
+
+if __name__ == "__main__":
+
+    from pathlib import Path
+    import time
+
+    dict1 = {'t': 5, 'val': 10}
+    dict2 = {'t': 5, 'val': 11}
+
+    print('ModuleWatcher instatiated in debug mode')
+    module_watcher = ModuleWatcher(debug=True)
+
+    # import a local module
+    import labscript_utils.dict_diff
+    print('imported labscript_utils.dict_diff')
+    print(labscript_utils.dict_diff.dict_diff(dict1, dict2))
+    print('used dict_diff function, waiting 2 seconds for module watcher to update')
+    time.sleep(2)
+
+    # now pretend it has been updated
+    ex_mod = Path('dict_diff.py')
+    ex_mod.touch()
+    print('dict_diff module touched, waiting 2 seconds for ModuleWatcher to notice')
+    time.sleep(2)
+
+    print(labscript_utils.dict_diff.dict_diff(dict1, dict2))
+    print('Used dict_diff again, waiting 2 seconds for ModuleWatcher to not do anything')
+    time.sleep(2)
+    
