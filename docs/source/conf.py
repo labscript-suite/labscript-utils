@@ -104,7 +104,7 @@ intersphinx_mapping = {
     'h5py': ('https://docs.h5py.org/en/stable/', None),
     'pydaqmx': ('https://pythonhosted.org/PyDAQmx/', None),
     'qt': (
-        '',
+        'https://riverbankcomputing.com/static/Docs/PyQt5/',
         'pyqt5-modified-objects.inv',
     )  # from https://github.com/MSLNZ/msl-qt/blob/master/docs/create_pyqt_objects.py
     # under MIT License
