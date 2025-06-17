@@ -14,6 +14,7 @@ import copy
 import os
 from pathlib import Path
 from jinja2 import FileSystemLoader, Environment
+import importlib.metadata
 
 # -- Project information (unique to each project) -------------------------------------
 
@@ -22,7 +23,7 @@ copyright = "2020, labscript suite"
 author = "labscript suite contributors"
 
 # The full version, including alpha/beta/rc tags
-from labscript_utils import __version__ as version  # noqa: E402
+version = importlib.metadata.version('labscript-utils')
 
 release = version
 
