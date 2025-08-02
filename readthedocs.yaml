@@ -24,9 +24,10 @@ sphinx:
   fail_on_warning: false
 
 # Optionally build your docs in additional formats such as PDF
-formats:
-  - pdf
-  - epub
+# Disable since h5_lock breaks build when sphinx is run twice in a row
+#formats:
+#  - pdf
+# - epub
 
 # Optionally set the requirements required to build your docs
 python:
