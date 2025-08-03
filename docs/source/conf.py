@@ -83,7 +83,10 @@ templates_path = ['_templates']
 exclude_patterns = []
 
 # The suffix(es) of source filenames.
-source_suffix = ['.rst', '.md']
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.md': 'markdown',
+}
 
 # The master toctree document.
 master_doc = 'index'
