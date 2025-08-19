@@ -7,7 +7,9 @@ The name of this file must be the host computer's system name.
 So if my system's name was `heisenberg`, the labconfig file name would be `heisenberg.ini`.
 This file should be located in the `labscript-suite` directory in the user space, in the `labconfig` subdirectory.
 
-When :doc:`installing the **labscript-suite** for the first time <labscript-suite:installation/index>`, running the `labscript-profile-create` command will automatically generate the `labscript-suite` user space directory in the correct place and generate a `labconfig.ini` file for use on your system.
+When :doc:`installing the **labscript-suite** for the first time <labscript-suite:installation/index>`,
+running the `labscript-profile-create` command will automatically generate the `labscript-suite` user space directory in the correct place
+and generate a `labconfig.ini` file for use on your system.
 By editing the `ini` file named after your system, you can update the configuration settings of your **labscript-suite** installation.
 
 The Default *labconfig.ini*
