@@ -122,7 +122,7 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
                 font = item.font()
                 fontmetrics = QtGui.QFontMetrics(font, self)
                 indent = ''
-                while fontmetrics.width(indent) < desired_indent:
+                while fontmetrics.horizontalAdvance(indent) < desired_indent:
                     indent += self.thinspace
                 self.indents[widget] = indent
         font = self.font()
