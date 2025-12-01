@@ -20,7 +20,7 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
                  /* Required, otherwise set to zero upon setting any stylesheet at all: */
                  padding-left: 4px;
                  /* Required for some reason, otherwise other settings ignored: */
-                 color: black;
+                 color: palette(text);
                  }
 
                  /* Any other style goes here: */
