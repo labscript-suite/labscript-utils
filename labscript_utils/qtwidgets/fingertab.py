@@ -5,7 +5,7 @@
 # as Public Domain, but boy would it beswell if you could credit me, or tweet me
 # [@LegoStormtoopr](http://www.twitter.com/legostormtroopr) to say thanks!
 
-from qtutils.qt import QtCore, QtGui, QtWidgets
+from qtutils.qt import QtCore, QtWidgets
 
 
 class FingerTabBarWidget(QtWidgets.QTabBar):
@@ -38,3 +38,4 @@ class FingerTabWidget(QtWidgets.QTabWidget):
     def __init__(self, parent, *args):
         QtWidgets.QTabWidget.__init__(self, parent, *args)
         self.setTabBar(FingerTabBarWidget(self))
+

@@ -14,14 +14,12 @@ import base64
 import sys
 import os
 
-from qtutils.qt.QtCore import *
-from qtutils.qt.QtGui import *
-from qtutils.qt.QtWidgets import *
+from qtutils.qt import QtCore, QtGui, QtWidgets
 from qtutils.qt.QtCore import pyqtSignal as Signal
 
-class BrowseButton(QPushButton):
+class BrowseButton(QtWidgets.QPushButton):
     def __init__(self, image_output, *args, **kwargs):
-        QPushButton.__init__(self, *args, **kwargs)
+        QtWidgets.QPushButton.__init__(self, *args, **kwargs)
         self.image_output = image_output
         self.installEventFilter(self)
         self.clicked.connect(self.browse)
@@ -31,13 +29,13 @@ class BrowseButton(QPushButton):
         # supported_images = "Image files (*.png *.bmp *.gif *.jpg *.jpeg *.pbm *.pgm *.ppm *.xbm *.xpm)"
         supported_images = "Image files ("
         
-        for format in QImageReader.supportedImageFormats():
+        for format in QtGui.QImageReader.supportedImageFormats():
             supported_images += "*.%s " % format.data().decode()
             
         supported_images = supported_images [:-1]
         supported_images += ")"
         
-        image_file = QFileDialog.getOpenFileName(self, 'Select image file to load', self.last_opened_folder, supported_images)
+        image_file = QtWidgets.QFileDialog.getOpenFileName(self, 'Select image file to load', self.last_opened_folder, supported_images)
         if type(image_file) is tuple:
             image_file, _ = image_file
         if image_file == None or image_file == "":
@@ -59,23 +57,23 @@ class BrowseButton(QPushButton):
         self.image_output.value = data
         
     def eventFilter(self, obj, event):
-        if event.type() == QEvent.MouseButtonRelease and event.button() == Qt.RightButton:
-            menu = QMenu(self)
+        if event.type() == QtCore.QEvent.MouseButtonRelease and event.button() == QtCore.Qt.RightButton:
+            menu = QtWidgets.QMenu(self)
             menu.addAction("Lock" if not self.image_output.lock_state else "Unlock")
             menu.triggered.connect(self.image_output._menu_triggered)
             menu.popup(self.mapToGlobal(event.pos()))
             return True
             
-        return QPushButton.eventFilter(self, obj, event)
+        return QtWidgets.QPushButton.eventFilter(self, obj, event)
     
     
-class ImageView(QGraphicsView):
+class ImageView(QtWidgets.QGraphicsView):
     def __init__(self, *args, **kwargs):
-        QGraphicsView.__init__(self, *args, **kwargs)
+        QtWidgets.QGraphicsView.__init__(self, *args, **kwargs)
         self.installEventFilter(self)
         
     def contextMenuEvent(self, event):
-        menu = QMenu(self)
+        menu = QtWidgets.QMenu(self)
         menu.addAction("Lock" if not self.parent().lock_state else "Unlock")
         menu.triggered.connect(self.parent()._menu_triggered)
         menu.popup(self.mapToGlobal(event.pos()))
@@ -93,46 +91,46 @@ class ImageView(QGraphicsView):
         # return QGraphicsView.eventFilter(self, obj, event)
     
     
-class ImageOutput(QWidget):
+class ImageOutput(QtWidgets.QWidget):
     
     imageUpdated = Signal(str)
 
     def __init__(self, name, width, height, *args, **kwargs):
-        QWidget.__init__(self, *args, **kwargs)        
-        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+        QtWidgets.QWidget.__init__(self, *args, **kwargs)        
+        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
         
         
         # create the layout
-        self._layout = QVBoxLayout(self)
+        self._layout = QtWidgets.QVBoxLayout(self)
         self._layout.setSpacing(0)
         self._layout.setContentsMargins(0, 0, 0, 0)
         
         # Create a layout for the header of this ImageOutput widget
-        header_widget = QWidget(self)
-        header_layout = QHBoxLayout(header_widget)        
+        header_widget = QtWidgets.QWidget(self)
+        header_layout = QtWidgets.QHBoxLayout(header_widget)        
         
         # Add the label
-        self._label = QLabel(name)
+        self._label = QtWidgets.QLabel(name)
         header_layout.addWidget(self._label)
         
         # Add the browse button
         self._browse_button = BrowseButton(self, 'Select Image')
-        self._browse_button.setIcon(QIcon(':/qtutils/fugue/image-import'))
+        self._browse_button.setIcon(QtGui.QIcon(':/qtutils/fugue/image-import'))
         header_layout.addWidget(self._browse_button)
        
         # Add a spacer item to keep everything bunched
-        header_layout.addItem(QSpacerItem(0,0,QSizePolicy.MinimumExpanding,QSizePolicy.Minimum))
+        header_layout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Minimum))
         
         # add the header widget to the layout
         self._layout.addWidget(header_widget)
         
-        self.image_size = QSize(width,height)
+        self.image_size = QtCore.QSize(width,height)
         
         # Create the graphics scene and view
-        self._scene = QGraphicsScene(0, 0, width, height)
-        self._scene.setBackgroundBrush(Qt.black)
+        self._scene = QtWidgets.QGraphicsScene(0, 0, width, height)
+        self._scene.setBackgroundBrush(QtCore.Qt.black)
         self._view = ImageView(self._scene)
-        self._view.setAlignment(Qt.AlignLeft | Qt.AlignTop)        
+        self._view.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)        
         self._view.setStyleSheet("border: 0px")
         # self._view.setStyleSheet("background-color:#000000; border: 0px;")
         self._view.setMinimumSize(self.image_size)
@@ -170,8 +168,8 @@ class ImageOutput(QWidget):
     
     # The event filter that pops up a context menu on a right click, even when the button is disabled
     def eventFilter(self, obj, event):
-        if event.type() == QEvent.MouseButtonRelease and event.button() == Qt.RightButton:
-            menu = QMenu(self)
+        if event.type() == QtCore.QEvent.MouseButtonRelease and event.button() == QtCore.Qt.RightButton:
+            menu = QtWidgets.QMenu(self)
             menu.addAction("Lock" if not self.lock_state else "Unlock")
             menu.triggered.connect(self._menu_triggered)
             menu.popup(self.mapToGlobal(event.pos()))
@@ -180,13 +178,13 @@ class ImageOutput(QWidget):
         # pass scrollwheel events of disabled buttons through to the parent
         # code adapted from: http://www.qtforum.org/article/28540/disabled-widgets-and-wheel-events.html
         elif obj and not obj.isEnabled() and event.type() == QEvent.Wheel:
-            newEvent = QWheelEvent(obj.mapToParent(event.pos()), event.globalPos(),
+            newEvent = QtGui.QWheelEvent(obj.mapToParent(event.pos()), event.globalPos(),
                                    event.delta(), event.buttons(),
                                    event.modifiers(), event.orientation())
-            QApplication.instance().postEvent(obj.parent(), newEvent)
+            QtWidgets.QApplication.instance().postEvent(obj.parent(), newEvent)
             return True
         
-        return QWidget.eventFilter(self, obj, event)
+        return QtWidgets.QWidget.eventFilter(self, obj, event)
      
     # This method is called whenever an entry in the context menu is clicked
     def _menu_triggered(self,action):
@@ -218,15 +216,15 @@ class ImageOutput(QWidget):
         if isinstance(value, bytes):
             value = value.decode()
         decoded_image = base64.b64decode(value)
-        pixmap = QPixmap()
-        pixmap.loadFromData(decoded_image, flags=Qt.AvoidDither | Qt.ThresholdAlphaDither | Qt.ThresholdDither)
+        pixmap = QtGui.QPixmap()
+        pixmap.loadFromData(decoded_image, flags=QtCore.Qt.AvoidDither | QtCore.Qt.ThresholdAlphaDither | QtCore.Qt.ThresholdDither)
         # print decoded_image
         if pixmap.size() != self.image_size:
-            QMessageBox.warning(self, "Failed to load image", 'The image size was incorrect. It must be %dx%d pixels.'%(self.image_size.width(), self.image_size.height()), QMessageBox.Ok, QMessageBox.Ok)
+            QtWidgets.QMessageBox.warning(self, "Failed to load image", 'The image size was incorrect. It must be %dx%d pixels.'%(self.image_size.width(), self.image_size.height()), QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Ok)
             return
         
         self._value = value
-        pixmap_item = QGraphicsPixmapItem(pixmap)
+        pixmap_item = QtWidgets.QGraphicsPixmapItem(pixmap)
         
         if self._pixmap_item is not None:
             self._scene.removeItem(self._pixmap_item)
@@ -240,10 +238,10 @@ class ImageOutput(QWidget):
 # A simple test!
 if __name__ == '__main__':
     
-    qapplication = QApplication(sys.argv)
+    qapplication = QtWidgets.QApplication(sys.argv)
     
-    window = QWidget()
-    layout = QVBoxLayout(window)
+    window = QtWidgets.QWidget()
+    layout = QtWidgets.QVBoxLayout(window)
     button = ImageOutput('hello', 200, 200)
         
     layout.addWidget(button)
@@ -251,5 +249,5 @@ if __name__ == '__main__':
     window.show()
     
     
-    sys.exit(qapplication.exec_())
+    sys.exit(qapplication.exec())
     

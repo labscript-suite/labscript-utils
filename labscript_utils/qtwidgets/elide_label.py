@@ -202,4 +202,4 @@ if __name__ == '__main__':
         elide_left.setText("The <b>quick</b><br>brown fox <b>jumped <br>over the lazy dog</b>")
 
     QTimer.singleShot(3000, foo)
-    app.exec_()
+    app.exec()

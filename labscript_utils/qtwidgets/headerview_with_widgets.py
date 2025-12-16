@@ -1,6 +1,5 @@
 from qtutils.qt import QtCore, QtGui, QtWidgets
 
-
 class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
 
     """A QHeaderView that supports inserting arbitrary
@@ -226,32 +225,32 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
 if __name__ == '__main__':
 
     import sys
-    import qtutils.icons
+    # import qtutils.icons
 
     class TestApp(object):
 
         def __init__(self):
-            self.window = QtGui.QWidget()
+            self.window = QtWidgets.QWidget()
             self.window.resize(640, 480)
-            layout = QtGui.QVBoxLayout(self.window)
+            layout = QtWidgets.QVBoxLayout(self.window)
             self.model = QtGui.QStandardItemModel()
-            self.treeview = QtGui.QTreeView(self.window)
+            self.treeview = QtWidgets.QTreeView(self.window)
             self.header = HorizontalHeaderViewWithWidgets(self.model)
 
             self.treeview.setSortingEnabled(True)
 
             self.model.setHorizontalHeaderLabels(['Delete', 'Name', 'Value', 'Units', 'Expansion'])
-            self.button = QtGui.QPushButton('hello, world!')
+            self.button = QtWidgets.QPushButton('hello, world!')
             self.button.setIcon(QtGui.QIcon(':qtutils/fugue/smiley-lol'))
 
-            self.button2 = QtGui.QToolButton()
+            self.button2 = QtWidgets.QToolButton()
             self.button2.setIcon(QtGui.QIcon(':qtutils/fugue/plus'))
 
-            self.button3 = QtGui.QToolButton()
+            self.button3 = QtWidgets.QToolButton()
             self.button3.setMinimumHeight(50)
             self.button3.setIcon(QtGui.QIcon(':qtutils/fugue/minus'))
 
-            self.button4 = QtGui.QCheckBox()
+            self.button4 = QtWidgets.QCheckBox()
 
             self.header.setWidget(0, self.button)
             self.header.setWidget(1, self.button2)
@@ -271,7 +270,7 @@ if __name__ == '__main__':
             QtCore.QTimer.singleShot(6000, lambda: self.header.setWidget(0, None))
             QtCore.QTimer.singleShot(8000, lambda: self.header.setWidget(0, self.button))
 
-    qapplication = QtGui.QApplication(sys.argv)
+    qapplication = QtWidgets.QApplication(sys.argv)
     qapplication.setAttribute(QtCore.Qt.AA_DontShowIconsInMenus, False)
     app = TestApp()
-    qapplication.exec_()
+    qapplication.exec()

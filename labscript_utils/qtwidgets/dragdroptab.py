@@ -14,9 +14,7 @@
 import weakref
 from collections import namedtuple, defaultdict
 
-from qtutils.qt.QtGui import *
-from qtutils.qt.QtWidgets import *
-from qtutils.qt.QtCore import *
+from qtutils.qt import QtCore, QtGui, QtWidgets
 
 
 class debug(object):
@@ -53,11 +51,11 @@ Tab = namedtuple('Tab', ['widget', 'text', 'data', 'text_color', 'tooltip',
                          'whats_this', 'button_left', 'button_right', 'icon'])
 
 
-class _BaseDragDropTabBar(QTabBar):
+class _BaseDragDropTabBar(QtWidgets.QTabBar):
     """Base class for Limbo and DragDropTabBar containing the common class
     attributes and  methods"""
 
-    # The QPoint of the mouse relative to the top left corner the tab at the
+    # The QtCore.QPoint of the mouse relative to the top left corner the tab at the
     # time the drag began. Shared by all instances:
     _dragged_tab_grab_point = None
 
@@ -81,8 +79,8 @@ class _BaseDragDropTabBar(QTabBar):
                   text_color=self.tabTextColor(index),
                   tooltip=self.tabToolTip(index),
                   whats_this=self.tabWhatsThis(index),
-                  button_left=self.tabButton(index, QTabBar.LeftSide),
-                  button_right=self.tabButton(index, QTabBar.RightSide),
+                  button_left=self.tabButton(index, QtWidgets.QTabBar.LeftSide),
+                  button_right=self.tabButton(index, QtWidgets.QTabBar.RightSide),
                   icon=self.tabIcon(index))
 
         self.parent().removeTab(index)
@@ -108,9 +106,9 @@ class _BaseDragDropTabBar(QTabBar):
         if tab.whats_this:
             self.setTabWhatsThis(index, tab.whats_this)
         if tab.button_left:
-            self.setTabButton(index, QTabBar.LeftSide, tab.button_left)
+            self.setTabButton(index, QtWidgets.QTabBar.LeftSide, tab.button_left)
         if tab.button_right:
-            self.setTabButton(index, QTabBar.RightSide, tab.button_right)
+            self.setTabButton(index, QtWidgets.QTabBar.RightSide, tab.button_right)
         if tab.icon:
             self.setTabIcon(index, tab.icon)
 
@@ -119,13 +117,13 @@ class _Limbo(_BaseDragDropTabBar):
     """A floating TabBar to be the parent of the tab when it is not in a
     DragDropTabBar"""
     def __init__(self):
-        self.parent_tabwidget = QTabWidget()
+        self.parent_tabwidget = QtWidgets.QTabWidget()
         _BaseDragDropTabBar.__init__(self, self.parent_tabwidget)
         self.parent_tabwidget.setTabBar(self)
         self.previous_parent = None
         self.previous_index = None
         self.prev_active_tab = None
-        self.setWindowFlags(Qt.ToolTip)
+        self.setWindowFlags(QtCore.Qt.ToolTip)
         self.setUsesScrollButtons(False)
         # For storing a pixmap to render during animations when we no longer
         # own the tab:
@@ -136,8 +134,8 @@ class _Limbo(_BaseDragDropTabBar):
     def remove_dragged_tab(self, index):
         # Grab a pixmap of our current contents for rendering in case there is
         # animation of the tab flying back to a tab bar:
-        self.pixmap = QPixmap(self.size())
-        self.render(self.pixmap, QPoint(), QRegion(self.rect()))
+        self.pixmap = QtGui.QPixmap(self.size())
+        self.render(self.pixmap, QtCore.QPoint(), QtGui.QRegion(self.rect()))
         result = _BaseDragDropTabBar.remove_dragged_tab(self, index)
         self.hide()
         return result
@@ -186,21 +184,21 @@ class _Limbo(_BaseDragDropTabBar):
         associated with any event triggering this, for maximal
         responsiveness."""
         if self.dragged_tab_grab_point is not None:
-            self.move(QCursor.pos() - self.dragged_tab_grab_point)
+            self.move(QtGui.QCursor.pos() - self.dragged_tab_grab_point)
         _BaseDragDropTabBar.update(self)
 
     @debug.trace
     def paintEvent(self, event):
         if self.animation_in_progress:
             # Just draw the pixmap we've been given
-            painter = QPainter(self)
-            painter.drawPixmap(QPoint(), self.pixmap)
+            painter = QtGui.QPainter(self)
+            painter.drawPixmap(QtCore.QPoint(), self.pixmap)
             painter.end()
         else:
             _BaseDragDropTabBar.paintEvent(self, event)
 
 
-class TabAnimation(QAbstractAnimation):
+class TabAnimation(QtCore.QAbstractAnimation):
 
     # We move tabs with speed proportional to the distance from their target.
 
@@ -210,7 +208,7 @@ class TabAnimation(QAbstractAnimation):
     tau = float(60)
 
     def __init__(self, parent):
-        QAbstractAnimation.__init__(self, parent)
+        QtCore.QAbstractAnimation.__init__(self, parent)
         # The left edges of where the tabs will be drawn. This animates over
         # time to approach the left edge as returned by parent.tabRect().
         self.positions = []
@@ -233,7 +231,7 @@ class TabAnimation(QAbstractAnimation):
         # Don't recurse:
         if self.callback_in_progress:
             return
-        if self.state() == QAbstractAnimation.Stopped:
+        if self.state() == QtCore.QAbstractAnimation.Stopped:
             self.start()
 
     @debug.trace
@@ -316,7 +314,7 @@ class TabAnimation(QAbstractAnimation):
                 if dy * (target_pos_y - new_pos_y) < 0:
                     new_pos_y = target_pos_y
 
-                self.limbo_position = QPoint(
+                self.limbo_position = QtCore.QPoint(
                     int(round(new_pos_x)), int(round(new_pos_y))
                 )
             else:
@@ -381,10 +379,10 @@ class DragDropTabBar(_BaseDragDropTabBar):
         self.animation = TabAnimation(self)
         self.tabMoved.connect(self.animation.on_tab_moved)
         self.scroll_offset = 0
-        self.left_scrollbutton = QToolButton(self)
-        self.right_scrollbutton = QToolButton(self)
-        self.left_scrollbutton.setArrowType(Qt.LeftArrow)
-        self.right_scrollbutton.setArrowType(Qt.RightArrow)
+        self.left_scrollbutton = QtWidgets.QToolButton(self)
+        self.right_scrollbutton = QtWidgets.QToolButton(self)
+        self.left_scrollbutton.setArrowType(QtCore.Qt.LeftArrow)
+        self.right_scrollbutton.setArrowType(QtCore.Qt.RightArrow)
         self.left_scrollbutton.setAutoRepeat(True)
         self.right_scrollbutton.setAutoRepeat(True)
         self.left_scrollbutton.clicked.connect(
@@ -395,7 +393,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
         self.left_scrollbutton.hide()
         self.right_scrollbutton.hide()
         _BaseDragDropTabBar.setUsesScrollButtons(self, False)
-        self.setElideMode(Qt.ElideRight)
+        self.setElideMode(QtCore.Qt.ElideRight)
         self.uses_scrollbuttons = False
 
     @debug.trace
@@ -403,9 +401,9 @@ class DragDropTabBar(_BaseDragDropTabBar):
         self.uses_scrollbuttons = uses_scrollbuttons
         if uses_scrollbuttons:
             # No elision if we are scrollable:
-            self.setElideMode(Qt.ElideNone)
+            self.setElideMode(QtCore.Qt.ElideNone)
         else:
-            self.setElideMode(Qt.ElideRight)
+            self.setElideMode(QtCore.Qt.ElideRight)
         self.update_scroll_button_state()
         self.update()
 
@@ -631,7 +629,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
     def mousePressEvent(self, event):
         """Take note of the tab that was clicked so it can be dragged on
         mouseMoveEvents"""
-        if event.button() != Qt.LeftButton:
+        if event.button() != QtCore.Qt.LeftButton:
             return
         event.accept()
         index = self.tabAt(event.pos())
@@ -674,7 +672,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
         outside of any widgets at the time of mouse release, in which case
         move the tab to its last known parent and position."""
         _BaseDragDropTabBar.mouseReleaseEvent(self, event)
-        if not self.drag_in_progress or event.button() != Qt.LeftButton:
+        if not self.drag_in_progress or event.button() != QtCore.Qt.LeftButton:
             return
         event.accept()
         # Cancel the drag:
@@ -795,20 +793,20 @@ class DragDropTabBar(_BaseDragDropTabBar):
         painter.save()
         if self.is_dragged_tab(index):
             # The dragged tab is pinned to the mouse:
-            xpos = self.mapFromGlobal(QCursor.pos()).x() - self.dragged_tab_grab_point.x()
+            xpos = self.mapFromGlobal(QtGui.QCursor.pos()).x() - self.dragged_tab_grab_point.x()
         else:
             # Other tabs are at their current animated position:
             xpos = self.animation.positions[index]
         tabrect = self.tabRect(index)
         painter.translate(xpos - tabrect.left() - self.scroll_offset, 0)
         self.initStyleOption(option, index)
-        painter.drawControl(QStyle.CE_TabBarTab, option)
+        painter.drawControl(QtWidgets.QStyle.CE_TabBarTab, option)
         painter.restore()
 
     @debug.trace
     def paintEvent(self, event):
-        painter = QStylePainter(self)
-        option = QStyleOptionTab()
+        painter = QtWidgets.QStylePainter(self)
+        option = QtWidgets.QStyleOptionTab()
         # Draw in reverse order so if there is overlap, tabs to the left are
         # on top:
         for index in range(self.count() - 1, -1, -1):
@@ -828,12 +826,12 @@ class DragDropTabBar(_BaseDragDropTabBar):
         painter.end()
 
 
-class DragDropTabWidget(QTabWidget):
+class DragDropTabWidget(QtWidgets.QTabWidget):
     """A tab widget that supports dragging and dropping of tabs between tab
     widgets that share a group_id. a group_id of None indicates that tab
     dragging is disabled."""
     def __init__(self, group_id=None, accept_drops_bar_only=False):
-        QTabWidget.__init__(self)
+        QtWidgets.QTabWidget.__init__(self)
         self.setTabBar(DragDropTabBar(self, group_id))
         self.tabBar().setExpanding(False)
         self.tab_bar = self.tabBar() # Backward compatibility for BLACS
@@ -859,10 +857,10 @@ if __name__ == '__main__':
             #ui = UiLoader().load('viewport.ui')
             self.tab_widget = DragDropTabWidget(id)
             container_layout.addWidget(self.tab_widget)
-            self.tab_widget.addTab(QLabel("foo %d"%i), 'foo %d 1' % i)
-            self.tab_widget.addTab(QLabel("bar %d"%i), 'bar bar bar %d 1' % i)
-            self.tab_widget.tabBar().setTabTextColor(0, QColor(255, 0, 0))
-            self.tab_widget.tabBar().setTabTextColor(1, QColor(0, 255, 0))
+            self.tab_widget.addTab(QtWidgets.QLabel("foo %d"%i), 'foo %d 1' % i)
+            self.tab_widget.addTab(QtWidgets.QLabel("bar %d"%i), 'bar bar bar %d 1' % i)
+            self.tab_widget.tabBar().setTabTextColor(0, QtGui.QColor(255, 0, 0))
+            self.tab_widget.tabBar().setTabTextColor(1, QtGui.QColor(0, 255, 0))
 
             self.tab_widget.tabBar().setTabIcon(1, lyse_icon)
             self.tab_widget.tabBar().setTabIcon(0, runmanager_icon)
@@ -874,8 +872,8 @@ if __name__ == '__main__':
             self.moving_tab = None
             self.moving_tab_index = -1
             
-            self.window = QWidget()
-            container = QVBoxLayout(self.window)
+            self.window = QtWidgets.QWidget()
+            container = QtWidgets.QVBoxLayout(self.window)
             
             self.viewports = []
             for i in range(3):               
@@ -888,16 +886,16 @@ if __name__ == '__main__':
             self.window.show()
         
 
-    qapplication = QApplication([])
+    qapplication = QtWidgets.QApplication([])
 
     import qtutils.icons
 
-    lyse_icon = QIcon(':/qtutils/custom/lyse')
-    runmanager_icon = QIcon(':/qtutils/custom/runmanager')
+    lyse_icon = QtGui.QIcon(':/qtutils/custom/lyse')
+    runmanager_icon = QtGui.QIcon(':/qtutils/custom/runmanager')
 
     app = RunViewer()
     
-    timer = QTimer()
+    timer = QtCore.QTimer()
     timer.start(500)
 
     import time
@@ -918,4 +916,4 @@ if __name__ == '__main__':
                     limbo.setTabIcon(0, runmanager_icon)
 
     timer.timeout.connect(change_text)
-    qapplication.exec_()
+    qapplication.exec()
