@@ -39,3 +39,18 @@ class FingerTabWidget(QtWidgets.QTabWidget):
         QtWidgets.QTabWidget.__init__(self, parent, *args)
         self.setTabBar(FingerTabBarWidget(self))
 
+#A simple test!
+if __name__ == '__main__':
+    import sys
+
+    app = QtWidgets.QApplication(sys.argv)
+    tabs = QtWidgets.QTabWidget()
+    tabs.setTabBar(FingerTabBarWidget(width=100,height=25))
+    digits = ['Thumb','Pointer','Rude','Ring','Pinky']
+    for i,d in enumerate(digits):
+        widget =  QtWidgets.QLabel("Area #%s <br> %s Finger"% (i,d))
+        tabs.addTab(widget, d)
+    tabs.setTabPosition(QtWidgets.QTabWidget.East)
+    tabs.show()
+    sys.exit(app.exec_())
+    
