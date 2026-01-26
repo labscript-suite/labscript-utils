@@ -1,61 +1,57 @@
 import sys
 
-from qtutils.qt.QtCore import *
-from qtutils.qt.QtGui import *
-from qtutils.qt.QtWidgets import *
-
-from qtutils import *
+from qtutils.qt import QtCore, QtGui, QtWidgets
 
 
 ELLIPSIS = u'\u2026'
 
 
-class ElideScrollArea(QScrollArea):
+class ElideScrollArea(QtWidgets.QScrollArea):
     """A ScrollArea for containing a label that we want to elide. The elision
     is attained by just letting the text we don't want to see be scrolled off
     to the side with the scrollbars hidden."""
     def __init__(self, *args, **kwargs):
-        QScrollArea.__init__(self, *args, **kwargs)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setFrameStyle(QFrame.NoFrame)
+        QtWidgets.QScrollArea.__init__(self, *args, **kwargs)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setFrameStyle(QtWidgets.QFrame.NoFrame)
         self.setStyleSheet("background-color:transparent;")
-        self.setElideMode(Qt.ElideNone)
+        self.setElideMode(QtCore.Qt.ElideNone)
         self.setWidgetResizable(True)
 
     def event(self, event):
-        if event.type() == QEvent.LayoutRequest:
+        if event.type() == QtCore.QEvent.LayoutRequest:
             self.updateGeometry()
-        return QScrollArea.event(self, event)
+        return QtWidgets.QScrollArea.event(self, event)
 
     def setElideMode(self, elideMode):
-        if not isinstance(elideMode, Qt.TextElideMode):
+        if not isinstance(elideMode, QtCore.Qt.TextElideMode):
             raise TypeError("Argument must be of type Qt.TextElideMode")
-        if elideMode == Qt.ElideMiddle:
+        if elideMode == QtCore.Qt.ElideMiddle:
             raise NotImplementedError("The hack being used to elidetext does not work for ElideMiddle")
 
         self._elideMode = elideMode
         
     def minimumSizeHint(self):
-        if self.widget is None or self._elideMode == Qt.ElideNone:
-            return QScrollArea.minimumSizeHint(self)
+        if self.widget is None or self._elideMode == QtCore.Qt.ElideNone:
+            return QtWidgets.QScrollArea.minimumSizeHint(self)
         else:
             actual_minimum_sizehint = self.widget().minimumSizeHint()
-            return QSize(0, actual_minimum_sizehint.height())
+            return QtCore.QSize(0, actual_minimum_sizehint.height())
 
     def sizeHint(self):
-        if self.widget is None or self._elideMode == Qt.ElideNone:
-            return QScrollArea.sizeHint(self)
+        if self.widget is None or self._elideMode == QtCore.Qt.ElideNone:
+            return QtWidgets.QScrollArea.sizeHint(self)
         else:
             actual_sizehint = self.widget().sizeHint()
-            return QSize(0, actual_sizehint.height())
+            return QtCore.QSize(0, actual_sizehint.height())
 
     def setWidget(self, widget):
-        QScrollArea.setWidget(self, widget)
-        self.setSizePolicy(QSizePolicy(self.sizePolicy().horizontalPolicy(), widget.sizePolicy().verticalPolicy()))
+        QtWidgets.QScrollArea.setWidget(self, widget)
+        self.setSizePolicy(QtWidgets.QSizePolicy(self.sizePolicy().horizontalPolicy(), widget.sizePolicy().verticalPolicy()))
 
 
-class ElidedLabelContainer(QWidget):
+class ElidedLabelContainer(QtWidgets.QWidget):
     """A QWidget to contain a QLabel with a single line of (possibly rich)
     text that we want to elide. The elision is obtained by putting the QLabel
     in a QScrollArea and having the QScrollarea only show the part of the text
@@ -63,34 +59,34 @@ class ElidedLabelContainer(QWidget):
     inserted next to the QScrollArea.
     """
     def __init__(self, label):
-        QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self)
         if label.wordWrap():
             raise ValueError("Cannot elide label with word wrapping enabled")
         self.label = label
-        self.layout = QHBoxLayout(self)
+        self.layout = QtWidgets.QHBoxLayout(self)
         self.layout.setSpacing(0)
         self.layout.setContentsMargins(0,0,0,0)
-        self.ellipsis_label = QLabel(ELLIPSIS)
+        self.ellipsis_label = QtWidgets.QLabel(ELLIPSIS)
         self.scroll_area = ElideScrollArea()
         self.scroll_area.setWidget(self.label)
-        self.setElideMode(Qt.ElideNone)
+        self.setElideMode(QtCore.Qt.ElideNone)
         self.setSizePolicy(label.sizePolicy())
         self.scroll_area.horizontalScrollBar().rangeChanged.connect(self.update_elide_widget)
         # self.scroll_area.horizontalScrollBar().valueChanged.connect(self.update_elide_widget)
         self.update_elide_widget()
 
     def event(self, event):
-        if event.type() == QEvent.ToolTip:
+        if event.type() == QtCore.QEvent.ToolTip:
             self.setToolTip(self.label.text())
-        return QWidget.event(self, event)
+        return QtWidgets.QWidget.event(self, event)
 
     def elideMode(self):
         return self._elideMode
 
     def setElideMode(self, elideMode):
-        if not isinstance(elideMode, Qt.TextElideMode):
+        if not isinstance(elideMode, QtCore.Qt.TextElideMode):
             raise TypeError("Argument must be of type Qt.TextElideMode")
-        if elideMode == Qt.ElideMiddle:
+        if elideMode == QtCore.Qt.ElideMiddle:
             raise NotImplementedError("The hack being used to elidetext does not work for ElideMiddle")
 
         self._elideMode = elideMode
@@ -99,10 +95,10 @@ class ElidedLabelContainer(QWidget):
         if self.layout.count():
             self.layout.removeWidget(self.ellipsis_label)
             self.layout.removeWidget(self.scroll_area)
-        if self._elideMode == Qt.ElideLeft:
+        if self._elideMode == QtCore.Qt.ElideLeft:
             self.layout.addWidget(self.ellipsis_label)
             self.layout.addWidget(self.scroll_area)
-        elif self._elideMode == Qt.ElideRight:
+        elif self._elideMode == QtCore.Qt.ElideRight:
             self.layout.addWidget(self.scroll_area)
             self.layout.addWidget(self.ellipsis_label)
 
@@ -120,11 +116,11 @@ class ElidedLabelContainer(QWidget):
         else:
             self.ellipsis_label.setText('')
 
-        if self._elideMode == Qt.ElideNone:
+        if self._elideMode == QtCore.Qt.ElideNone:
             return
-        elif self._elideMode == Qt.ElideLeft:
+        elif self._elideMode == QtCore.Qt.ElideLeft:
             self.scroll_area.ensureVisible(label_width, 0, 0, 0)
-        elif self._elideMode == Qt.ElideRight:
+        elif self._elideMode == QtCore.Qt.ElideRight:
             self.scroll_area.ensureVisible(0, 0, 0, 0)
 
     def minimumSizeHint(self):
@@ -145,7 +141,7 @@ def elide_label(label, layout, elide_mode):
     ElidedLabelContainer(label) before inserting it into a layout or other
     container widget, which is more flexible than this function which only
     works if the label is in a QBoxLayout"""
-    if not (isinstance(layout, QBoxLayout) or isinstance(layout, QSplitter)):
+    if not (isinstance(layout, QtWidgets.QBoxLayout) or isinstance(layout, QtWidgets.QSplitter)):
         raise NotImplementedError("Only labels that are in QBoxLayouts or QSplitters supported")
     index = layout.indexOf(label)
     if index == -1:
@@ -162,24 +158,24 @@ if __name__ == '__main__':
     # test:
     
     test_text = "The <b>quick</b> brown fox <b>jumped over the lazy dog</b>"
-    app = QApplication(sys.argv)
-    window = QWidget()
-    hlayout = QHBoxLayout(window)
-    tabwidget = QTabWidget()
-    widget = QWidget()
+    app = QtWidgets.QApplication(sys.argv)
+    window = QtWidgets.QWidget()
+    hlayout = QtWidgets.QHBoxLayout(window)
+    tabwidget = QtWidgets.QTabWidget()
+    widget = QtWidgets.QWidget()
     tabwidget.addTab(widget, 'test')
-    layout = QVBoxLayout(widget)
-    normal_label = QLabel("Normal label")
+    layout = QtWidgets.QVBoxLayout(widget)
+    normal_label = QtWidgets.QLabel("Normal label")
     normal_label.setStyleSheet("QLabel { background-color : red; color : blue; }")
     hlayout.addWidget(normal_label)
     hlayout.addWidget(tabwidget)
 
-    elide_left = QLabel("ElideLeft: " + test_text)
-    elide_left.setAlignment(Qt.AlignCenter)
-    elide_right = QLabel("ElideRight: " + test_text)
-    smaller_label = QLabel("Smaller label")
-    smaller_label2 = QLabel("Smaller label")
-    smaller_label3 = QLabel("Smaller label")
+    elide_left = QtWidgets.QLabel("ElideLeft: " + test_text)
+    elide_left.setAlignment(QtCore.Qt.AlignCenter)
+    elide_right = QtWidgets.QLabel("ElideRight: " + test_text)
+    smaller_label = QtWidgets.QLabel("Smaller label")
+    smaller_label2 = QtWidgets.QLabel("Smaller label")
+    smaller_label3 = QtWidgets.QLabel("Smaller label")
     smaller_label.setStyleSheet("QLabel { background-color : red; color : blue; }")
     smaller_label2.setStyleSheet("QLabel { background-color : red; color : blue; }")
     smaller_label3.setStyleSheet("QLabel { background-color : red; color : blue; }")
@@ -195,11 +191,11 @@ if __name__ == '__main__':
     window.show()
     window.resize(20, 20)
 
-    elide_label(elide_left, layout, Qt.ElideLeft)
-    elide_label(elide_right, layout, Qt.ElideRight)
+    elide_label(elide_left, layout, QtCore.Qt.ElideLeft)
+    elide_label(elide_right, layout, QtCore.Qt.ElideRight)
 
     def foo():
         elide_left.setText("The <b>quick</b><br>brown fox <b>jumped <br>over the lazy dog</b>")
 
-    QTimer.singleShot(3000, foo)
+    QtCore.QTimer.singleShot(3000, foo)
     app.exec()
