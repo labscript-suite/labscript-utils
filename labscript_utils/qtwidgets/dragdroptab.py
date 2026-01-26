@@ -557,7 +557,7 @@ class DragDropTabBar(_BaseDragDropTabBar):
             # child StackedWidget's current widget when it gets a tabMoved
             # signal durint a mouseMove event:
             if self.currentIndex() == move_target:
-                stack = self.parent().findChild(QStackedWidget, 'qt_tabwidget_stackedwidget')
+                stack = self.parent().findChild(QtWidgets.QStackedWidget, 'qt_tabwidget_stackedwidget')
                 stack.setCurrentWidget(self.parent().widget(move_target))
 
             return move_target
