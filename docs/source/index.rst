@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-labscript-utils
-===============
+labscript-utils |version|
+=========================
 
 **labscript-utils** contains code shared between multiple programs in the labscript suite. 
 This documentation is primarily for developers who might want to use this common code in their own custom features. 

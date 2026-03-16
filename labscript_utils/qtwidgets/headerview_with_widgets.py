@@ -20,7 +20,7 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
                  /* Required, otherwise set to zero upon setting any stylesheet at all: */
                  padding-left: 4px;
                  /* Required for some reason, otherwise other settings ignored: */
-                 color: black;
+                 color: palette(text);
                  }
 
                  /* Any other style goes here: */
@@ -122,7 +122,7 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
                 font = item.font()
                 fontmetrics = QtGui.QFontMetrics(font, self)
                 indent = ''
-                while fontmetrics.width(indent) < desired_indent:
+                while fontmetrics.horizontalAdvance(indent) < desired_indent:
                     indent += self.thinspace
                 self.indents[widget] = indent
         font = self.font()
