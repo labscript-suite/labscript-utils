@@ -12,19 +12,18 @@
 #####################################################################
 import sys
 
-from qtutils.qt.QtCore import *
-from qtutils.qt.QtGui import *
-from qtutils.qt.QtWidgets import *
+from qtutils.qt import QtCore, QtGui, QtWidgets
+
 
 EXPAND_ICON = ':/qtutils/fugue/toggle-small-expand'
 CONTRACT_ICON = ':/qtutils/fugue/toggle-small'
 
-_ENABLE_LAYOUT_EVENT_TYPE = QEvent.User
+_ENABLE_LAYOUT_EVENT_TYPE = QtCore.QEvent.User
 
-class ToolPaletteGroup(QVBoxLayout):
+class ToolPaletteGroup(QtWidgets.QVBoxLayout):
     
     def __init__(self,*args,**kwargs):
-        QVBoxLayout.__init__(self,*args,**kwargs)
+        QtWidgets.QVBoxLayout.__init__(self,*args,**kwargs)
         self._widget_groups = {}
         self._width_groups = {}
         self._all_widths_linked = False
@@ -37,19 +36,19 @@ class ToolPaletteGroup(QVBoxLayout):
             
         # Create the tool palette and store a reference to it and an index indicating the order of Tool Palettes
         tool_palette = ToolPalette(self,name,*args,**kwargs)
-        push_button = QPushButton(name)        
-        push_button.setIcon(QIcon(CONTRACT_ICON))
-        push_button.setFocusPolicy(Qt.NoFocus)
+        push_button = QtWidgets.QPushButton(name)        
+        push_button.setIcon(QtGui.QIcon(CONTRACT_ICON))
+        push_button.setFocusPolicy(QtCore.Qt.NoFocus)
         push_button.setToolTip('Click to hide')
 
-        frame = QFrame()
-        frame.setFrameStyle(QFrame.StyledPanel)
-        frame_layout = QVBoxLayout(frame)
+        frame = QtWidgets.QFrame()
+        frame.setFrameStyle(QtWidgets.QFrame.StyledPanel)
+        frame_layout = QtWidgets.QVBoxLayout(frame)
         frame_layout.setContentsMargins(0,0,0,0)
         frame_layout.setSpacing(0)
 
-        header_widget = QWidget()
-        header_layout = QHBoxLayout()
+        header_widget = QtWidgets.QWidget()
+        header_layout = QtWidgets.QHBoxLayout()
         header_layout.addWidget(push_button)
         header_layout.addStretch(1)
         header_widget.setLayout(header_layout)
@@ -82,7 +81,7 @@ class ToolPaletteGroup(QVBoxLayout):
             raise RuntimeError('The tool palette does not have a palette named %s'%name)
         _, palette, push_button = self._widget_groups[name]
         palette.show()
-        push_button.setIcon(QIcon(CONTRACT_ICON))
+        push_button.setIcon(QtGui.QIcon(CONTRACT_ICON))
         push_button.setToolTip('Click to hide')
             
     def show_palette_by_index(self,index):
@@ -94,7 +93,7 @@ class ToolPaletteGroup(QVBoxLayout):
         
         _, palette, push_button = self._widget_groups[name]
         palette.hide()
-        push_button.setIcon(QIcon(EXPAND_ICON))
+        push_button.setIcon(QtGui.QIcon(EXPAND_ICON))
         push_button.setToolTip('Click to show')
     
     def hide_palette_by_index(self,index):
@@ -244,15 +243,15 @@ class ToolPaletteGroup(QVBoxLayout):
             return self._widget_groups[name][1]._find_max_item_width
         
         
-class ToolPalette(QScrollArea):
+class ToolPalette(QtWidgets.QScrollArea):
     def __init__(self,parent,name,*args,**kwargs):
-        QScrollArea.__init__(self,*args,**kwargs)
-        self.setSizePolicy(QSizePolicy.MinimumExpanding,QSizePolicy.Minimum)
-        self.setFrameStyle(QFrame.NoFrame)
+        QtWidgets.QScrollArea.__init__(self,*args,**kwargs)
+        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Minimum)
+        self.setFrameStyle(QtWidgets.QFrame.NoFrame)
         # create the grid layout
         #self.setWidget(QWidget(self))
         #self.widget().setSizePolicy(QSizePolicy.Preferred,QSizePolicy.Preferred)
-        self._layout = QGridLayout(self) 
+        self._layout = QtWidgets.QGridLayout(self) 
         self._layout.setContentsMargins(3,0,3,3)
         self._layout.setHorizontalSpacing(3)
         self._layout.setVerticalSpacing(3)
@@ -350,7 +349,7 @@ class ToolPalette(QScrollArea):
             total_height += self._layout.verticalSpacing() * (self._row_count - 1)
             total_height += self._layout.contentsMargins().top()
             total_height += self._layout.contentsMargins().bottom()
-            self.setMinimumSize(QSize(self.minimumSize().width(), total_height))
+            self.setMinimumSize(QtCore.QSize(self.minimumSize().width(), total_height))
             for i in range(self._layout.rowCount()):
                 if i < self._row_count:
                     self._layout.setRowMinimumHeight(i,max(h_size_hints))
@@ -360,7 +359,7 @@ class ToolPalette(QScrollArea):
 
     def minimumSize(self):
         # Get the widgets minimum size:
-        widget_size = QWidget.minimumSize(self)
+        widget_size = QtWidgets.QWidget.minimumSize(self)
         
         # now get the smallest minimum size width of all child widgets:
         widths = [w.minimumSizeHint().width() for w in self._widget_list]
@@ -371,7 +370,7 @@ class ToolPalette(QScrollArea):
             #print 'max_width: %d'%max_width
             #print 'widget width: %d'%widget_size.width()
             if max_width > widget_size.width():
-                widget_size = QSize(max_width,widget_size.height())
+                widget_size = QtCore.QSize(max_width,widget_size.height())
                 #print 'modifying minimum size width'
         
         #print 'minimum size is %s'%str(widget_size)
@@ -382,14 +381,14 @@ class ToolPalette(QScrollArea):
         self.setMinimumSize(self.minimumSize())
         
     def sizeHint(self):
-        width = QScrollArea.sizeHint(self).width()
+        width = QtWidgets.QScrollArea.sizeHint(self).width()
         height = self.minimumSize().height()
-        return QSize(width, height)
+        return QtCore.QSize(width, height)
 
     def minimumSizeHint(self):
-        width = QScrollArea.minimumSizeHint(self).width()
+        width = QtWidgets.QScrollArea.minimumSizeHint(self).width()
         height = self.minimumSize().height()
-        return QSize(width, height)
+        return QtCore.QSize(width, height)
 
     def event(self, event):
         # Handle the custom event for reenabling the call to
@@ -424,7 +423,7 @@ class ToolPalette(QScrollArea):
         
         try:
             #pass resize event on to qwidget
-            QWidget.resizeEvent(self, event)
+            QtWidgets.QWidget.resizeEvent(self, event)
             size = event.size()
             if size.width() == self.size().width() and size.height() == self.size().height():
                 if self._layout_widgets_during_resizeEvent:
@@ -437,19 +436,19 @@ class ToolPalette(QScrollArea):
             # Add event to end of the event queue to allow _layout_widgets() in
             # future calls. This event shouldn't be handled until the resize
             # events generated during _layout_widgets() have run.
-            QCoreApplication.instance().postEvent(self, QEvent(_ENABLE_LAYOUT_EVENT_TYPE))
+            QtCore.QCoreApplication.instance().postEvent(self, QtCore.QEvent(_ENABLE_LAYOUT_EVENT_TYPE))
 
 
 # A simple test!
 if __name__ == '__main__':
     
-    qapplication = QApplication(sys.argv)
+    qapplication = QtWidgets.QApplication(sys.argv)
 
-    from .ddsoutput import DDSOutput
+    from labscript_utils.qtwidgets.ddsoutput import DDSOutput
 
-    window = QWidget()
-    layout = QVBoxLayout(window)
-    widget = QWidget()
+    window = QtWidgets.QWidget()
+    layout = QtWidgets.QVBoxLayout(window)
+    widget = QtWidgets.QWidget()
     layout.addWidget(widget)
     tpg = ToolPaletteGroup(widget)
     toolpalette = tpg.append_new_palette('Digital Outputs')
@@ -459,7 +458,7 @@ if __name__ == '__main__':
     #layout.addItem(tpg)
     #toolpalette.show()
     
-    layout.addItem(QSpacerItem(0,0,QSizePolicy.Minimum,QSizePolicy.MinimumExpanding))
+    layout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.MinimumExpanding))
     for i in range(20):
         #button = QPushButton('Button %d'%i)
         button = DDSOutput('DDS %d'%i)
@@ -467,9 +466,9 @@ if __name__ == '__main__':
         toolpalette.addWidget(button)
         
     for i in range(20):
-        button = QPushButton('very very long Button %d'%i)
+        button = QtWidgets.QPushButton('very very long Button %d'%i)
         
-        button.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
+        button.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
         toolpalette2.addWidget(button)
     
     #tpg.create_linked_width_group("Digital outs", ['Digital Outputs','Digital Outputs 2'])
@@ -477,5 +476,5 @@ if __name__ == '__main__':
     window.show()
     
     
-    sys.exit(qapplication.exec_())
+    sys.exit(qapplication.exec())
     

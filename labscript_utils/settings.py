@@ -10,9 +10,7 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-from qtutils.qt.QtCore import *
-from qtutils.qt.QtGui import *
-from qtutils.qt.QtWidgets import *
+from qtutils.qt import QtCore, QtWidgets
 
 import labscript_utils.h5_lock, h5py
 from labscript_utils.qtwidgets.fingertab import FingerTabWidget
@@ -77,31 +75,31 @@ class Settings(object):
             self.instantiated_pages = {}
             
             # Create the dialog
-            self.dialog = QDialog(self.parent)
+            self.dialog = QtWidgets.QDialog(self.parent)
             self.dialog.setModal(True)
             self.dialog.accepted.connect(self.on_save)
             self.dialog.rejected.connect(self.on_cancel)
             self.dialog.setMinimumSize(800,600)
             self.dialog.setWindowTitle("Preferences")
             # Remove the help flag next to the [X] close button
-            self.dialog.setWindowFlags(self.dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+            self.dialog.setWindowFlags(self.dialog.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint)
             
             # Create the layout
-            layout = QVBoxLayout(self.dialog)
+            layout = QtWidgets.QVBoxLayout(self.dialog)
             #Create the Notebook
             self.notebook = FingerTabWidget(self.dialog)            
-            self.notebook.setTabPosition(QTabWidget.West)
+            self.notebook.setTabPosition(QtWidgets.QTabWidget.West)
             self.notebook.show() 
             layout.addWidget(self.notebook)
             
             # Create the button box
-            widget = QWidget()
-            hlayout = QHBoxLayout(widget)
-            button_box = QDialogButtonBox()
-            button_box.setStandardButtons(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            widget = QtWidgets.QWidget()
+            hlayout = QtWidgets.QHBoxLayout(widget)
+            button_box = QtWidgets.QDialogButtonBox()
+            button_box.setStandardButtons(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
             button_box.accepted.connect(self.dialog.accept)
             button_box.rejected.connect(self.dialog.reject)
-            hlayout.addItem(QSpacerItem(0,0,QSizePolicy.MinimumExpanding,QSizePolicy.Minimum))
+            hlayout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Minimum))
             hlayout.addWidget(button_box)
             layout.addWidget(widget)
             

@@ -13,20 +13,18 @@
 
 import sys
 
-from qtutils.qt.QtCore import *
-from qtutils.qt.QtGui import *
-from qtutils.qt.QtWidgets import *
-from qtutils import *
+from qtutils.qt import QtCore, QtGui, QtWidgets
 import qtutils.icons
+from qtutils import inmain_decorator
 
 import threading
 import time
 from labscript_utils.qtwidgets.InputPlotWindow import PlotWindow
 
 
-class AnalogInput(QWidget):
+class AnalogInput(QtWidgets.QWidget):
     def __init__(self, device_name, hardware_name, connection_name='-', display_name=None, horizontal_alignment=False, parent=None):
-        QWidget.__init__(self, parent)
+        QtWidgets.QWidget.__init__(self, parent)
 
         self.plot = None
         self._device_name = device_name
@@ -35,49 +33,49 @@ class AnalogInput(QWidget):
         self.win = None
 
         label_text = (self._hardware_name + '\n' + self._connection_name) if display_name is None else display_name
-        self._label = QLabel(label_text)
-        self._label.setAlignment(Qt.AlignCenter)
-        self._label.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Minimum)
-        self._line_edit = QLineEdit()
-        self._line_edit.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
-        self._line_edit.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self._label = QtWidgets.QLabel(label_text)
+        self._label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self._label.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        self._line_edit = QtWidgets.QLineEdit()
+        self._line_edit.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
+        self._line_edit.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         self._line_edit.setMaximumWidth(55)
-        self._line_edit.setAlignment(Qt.AlignRight)
+        self._line_edit.setAlignment(QtCore.Qt.AlignRight)
         self._line_edit.setReadOnly(True)
 
-        self._plot_btn = QPushButton()
-        self._plot_btn.setIcon(QIcon(':/qtutils/fugue/chart-up'))
+        self._plot_btn = QtWidgets.QPushButton()
+        self._plot_btn.setIcon(QtGui.QIcon(':/qtutils/fugue/chart-up'))
         self._plot_btn.clicked.connect(self.open_plot_window)
 
         self._value_changed_function = None
 
-        self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
 
         # Create widgets and layouts
         if horizontal_alignment:
-            self._layout = QHBoxLayout(self)
+            self._layout = QtWidgets.QHBoxLayout(self)
             self._layout.addWidget(self._label)
             self._layout.addWidget(self._line_edit)
             self._layout.addWidget(self._plot_btn)
         else:
-            self._layout = QGridLayout(self)
+            self._layout = QtWidgets.QGridLayout(self)
             self._layout.setVerticalSpacing(0)
             self._layout.setHorizontalSpacing(0)
             self._layout.setContentsMargins(5, 5, 5, 5)
 
-            self._label.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.Minimum)
+            self._label.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
             self._layout.addWidget(self._label)
-            self._layout.addItem(QSpacerItem(0, 0, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum), 0, 1)
+            self._layout.addItem(QtWidgets.QSpacerItem(0, 0, QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum), 0, 1)
 
-            h_widget = QWidget()
-            h_layout = QHBoxLayout(h_widget)
+            h_widget = QtWidgets.QWidget()
+            h_layout = QtWidgets.QHBoxLayout(h_widget)
             h_layout.setContentsMargins(0, 0, 0, 0)
             h_layout.addWidget(self._line_edit)
 
             self._layout.addWidget(self._label, 0, 0)
             self._layout.addWidget(h_widget, 1, 0)
             self._layout.addWidget(self._plot_btn, 2, 0)
-            self._layout.addItem(QSpacerItem(0, 0, QSizePolicy.MinimumExpanding, QSizePolicy.Minimum), 1, 1)
+            self._layout.addItem(QtWidgets.QSpacerItem(0, 0, QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum), 1, 1)
 
         self.set_value(None)
 
@@ -129,14 +127,14 @@ class AnalogInput(QWidget):
 # A simple test!
 if __name__ == '__main__':
 
-    qapplication = QApplication(sys.argv)
+    qapplication = QtWidgets.QApplication(sys.argv)
 
-    window = QWidget()
-    layout = QVBoxLayout(window)
+    window = QtWidgets.QWidget()
+    layout = QtWidgets.QVBoxLayout(window)
     button = AnalogInput('AI1', 'AI1')
 
     layout.addWidget(button)
 
     window.show()
 
-    sys.exit(qapplication.exec_())
+    sys.exit(qapplication.exec())

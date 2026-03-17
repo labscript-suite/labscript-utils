@@ -2,7 +2,7 @@ from zprocess import Process
 import pyqtgraph as pg
 import numpy as np
 from qtutils import inmain_decorator
-import qtutils.qt.QtGui as QtGui
+from qtutils.qt import QtGui, QtWidgets
 import zmq
 from labscript_utils.labconfig import LabConfig
 import threading
@@ -38,7 +38,7 @@ class PlotWindow(Process):
         self.cmd_thread.daemon = True
         self.cmd_thread.start()
 
-        QtGui.QApplication.instance().exec_()
+        QtWidgets.QApplication.instance().exec()
 
         self.to_parent.put("closed")
 
