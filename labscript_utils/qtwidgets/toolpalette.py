@@ -444,7 +444,7 @@ if __name__ == '__main__':
     
     qapplication = QtWidgets.QApplication(sys.argv)
 
-    from ddsoutput import DDSOutput
+    from labscript_utils.qtwidgets.ddsoutput import DDSOutput
 
     window = QtWidgets.QWidget()
     layout = QtWidgets.QVBoxLayout(window)
