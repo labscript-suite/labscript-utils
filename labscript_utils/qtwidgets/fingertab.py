@@ -5,7 +5,7 @@
 # as Public Domain, but boy would it beswell if you could credit me, or tweet me
 # [@LegoStormtoopr](http://www.twitter.com/legostormtroopr) to say thanks!
 
-from qtutils.qt import QtCore, QtGui, QtWidgets
+from qtutils.qt import QtCore, QtWidgets
 
 
 class FingerTabBarWidget(QtWidgets.QTabBar):
@@ -38,3 +38,19 @@ class FingerTabWidget(QtWidgets.QTabWidget):
     def __init__(self, parent, *args):
         QtWidgets.QTabWidget.__init__(self, parent, *args)
         self.setTabBar(FingerTabBarWidget(self))
+
+#A simple test!
+if __name__ == '__main__':
+    import sys
+
+    app = QtWidgets.QApplication(sys.argv)
+    tabs = QtWidgets.QTabWidget()
+    tabs.setTabBar(FingerTabBarWidget(width=100,height=25))
+    digits = ['Thumb','Pointer','Rude','Ring','Pinky']
+    for i,d in enumerate(digits):
+        widget =  QtWidgets.QLabel("Area #%s <br> %s Finger"% (i,d))
+        tabs.addTab(widget, d)
+    tabs.setTabPosition(QtWidgets.QTabWidget.East)
+    tabs.show()
+    sys.exit(app.exec_())
+    

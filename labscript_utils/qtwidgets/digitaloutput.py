@@ -12,15 +12,12 @@
 #####################################################################
 import sys
 
-from qtutils.qt.QtCore import *
-from qtutils.qt.QtGui import *
-from qtutils.qt import QT_ENV, PYQT5
-from qtutils.qt.QtWidgets import *
+from qtutils.qt import QtCore, QtGui, QtWidgets, QT_ENV, PYQT5
 
 
-class DigitalOutput(QPushButton):
+class DigitalOutput(QtWidgets.QPushButton):
     def __init__(self,*args,**kwargs):
-        QPushButton.__init__(self,*args,**kwargs)
+        QtWidgets.QPushButton.__init__(self,*args,**kwargs)
         
         # Install the event filter that will allow us to catch right click mouse release events so we can popup a menu even when the button is disabled
         self.installEventFilter(self)
@@ -45,22 +42,22 @@ class DigitalOutput(QPushButton):
     
     # The event filter that pops up a context menu on a right click, even when the button is disabled
     def eventFilter(self, obj, event):
-        if event.type() == QEvent.MouseButtonRelease and event.button() == Qt.RightButton:
-            menu = QMenu(self)
+        if event.type() == QtCore.QEvent.MouseButtonRelease and event.button() == QtCore.Qt.RightButton:
+            menu = QtWidgets.QMenu(self)
             menu.addAction("Lock" if self.isEnabled() else "Unlock")
             menu.triggered.connect(self._menu_triggered)
             menu.popup(self.mapToGlobal(event.pos()))
         
         # pass scrollwheel events of disabled buttons through to the parent
         # code adapted from: http://www.qtforum.org/article/28540/disabled-widgets-and-wheel-events.html
-        elif obj and not obj.isEnabled() and event.type() == QEvent.Wheel and QT_ENV != PYQT5:
-            newEvent = QWheelEvent(obj.mapToParent(event.pos()), event.globalPos(),
+        elif obj and not obj.isEnabled() and event.type() == QtCore.QEvent.Wheel and QT_ENV != PYQT5:
+            newEvent = QtGui.QWheelEvent(obj.mapToParent(event.pos()), event.globalPos(),
                                    event.delta(), event.buttons(),
                                    event.modifiers(), event.orientation())
-            QApplication.instance().postEvent(obj.parent(), newEvent)
+            QtWidgets.QApplication.instance().postEvent(obj.parent(), newEvent)
             return True
         
-        return QPushButton.eventFilter(self, obj, event)
+        return QtWidgets.QPushButton.eventFilter(self, obj, event)
      
     # This method is called whenever an entry in the context menu is clicked
     def _menu_triggered(self,action):
@@ -108,10 +105,10 @@ class InvertedDigitalOutput(DigitalOutput):
 # A simple test!
 if __name__ == '__main__':
     
-    qapplication = QApplication(sys.argv)
+    qapplication = QtWidgets.QApplication(sys.argv)
     
-    window = QWidget()
-    layout = QVBoxLayout(window)
+    window = QtWidgets.QWidget()
+    layout = QtWidgets.QVBoxLayout(window)
     button = DigitalOutput('very very long Button')
         
     layout.addWidget(button)
@@ -119,5 +116,5 @@ if __name__ == '__main__':
     window.show()
     
     
-    sys.exit(qapplication.exec_())
+    sys.exit(qapplication.exec())
     
