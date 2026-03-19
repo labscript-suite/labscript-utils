@@ -20,14 +20,14 @@ class NoStealFocusDoubleSpinBox(QtWidgets.QDoubleSpinBox):
     mouse wheel."""
     def __init__(self, *args, **kwargs):
         QtWidgets.QDoubleSpinBox.__init__(self, *args, **kwargs)
-        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
 
     def focusInEvent(self, event):
-        self.setFocusPolicy(QtCore.Qt.WheelFocus)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.WheelFocus)
         return QtWidgets.QDoubleSpinBox.focusInEvent(self, event)
 
     def focusOutEvent(self, event):
-        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
         return QtWidgets.QDoubleSpinBox.focusOutEvent(self, event)
 
     def wheelEvent(self, event):
@@ -46,17 +46,17 @@ class AnalogOutput(QtWidgets.QWidget):
         label_text = (self._hardware_name + '\n' + self._connection_name) if display_name is None else display_name
         self._label = QtWidgets.QLabel(label_text)
         self._label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self._label.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Minimum)
+        self._label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed,QtWidgets.QSizePolicy.Policy.Minimum)
         self._spin_widget = NoStealFocusDoubleSpinBox()
-        self._spin_widget.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Minimum)
+        self._spin_widget.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding,QtWidgets.QSizePolicy.Policy.Minimum)
         self._spin_widget.setKeyboardTracking(False)
         self._combobox = QtWidgets.QComboBox()
-        self._combobox.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
+        self._combobox.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum,QtWidgets.QSizePolicy.Policy.Minimum)
         self._combobox.currentIndexChanged.connect(self._on_combobox_change)
         
         self._value_changed_function = None
         
-        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Minimum)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding,QtWidgets.QSizePolicy.Policy.Minimum)
         
         # Handle spinbox context menu
         # Lock/Unlock action
@@ -106,7 +106,7 @@ class AnalogOutput(QtWidgets.QWidget):
             # Show the menu
             menu.popup(self.mapToGlobal(pos))
             
-        self._spin_widget.lineEdit().setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self._spin_widget.lineEdit().setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self._spin_widget.lineEdit().customContextMenuRequested.connect(context_menu)
         
         # Create widgets and layouts        
@@ -122,10 +122,10 @@ class AnalogOutput(QtWidgets.QWidget):
             self._layout.setHorizontalSpacing(0)
             self._layout.setContentsMargins(3,3,3,3)
             
-            self._label.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Minimum)
+            self._label.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding,QtWidgets.QSizePolicy.Policy.Minimum)
             
             #self._layout.addWidget(self._label)            
-            #self._layout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Minimum),0,1)
+            #self._layout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.Policy.MinimumExpanding,QtWidgets.QSizePolicy.Policy.Minimum),0,1)
             
             h_widget = QtWidgets.QWidget()            
             h_layout = QtWidgets.QHBoxLayout(h_widget)
@@ -135,8 +135,8 @@ class AnalogOutput(QtWidgets.QWidget):
             
             self._layout.addWidget(self._label,0,0)
             self._layout.addWidget(h_widget,1,0)            
-            #self._layout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Minimum),1,1)
-            self._layout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.MinimumExpanding),2,0)
+            #self._layout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.Policy.MinimumExpanding,QtWidgets.QSizePolicy.Policy.Minimum),1,1)
+            self._layout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.Policy.Minimum,QtWidgets.QSizePolicy.Policy.MinimumExpanding),2,0)
         
         # Install the event filter that will allow us to catch right click mouse release events so we can popup a menu even when the button is disabled
         self.installEventFilter(self)
@@ -223,7 +223,7 @@ class AnalogOutput(QtWidgets.QWidget):
     
     # The event filter that pops up a context menu on a right click, even when the button is disabled
     def eventFilter(self, obj, event):
-        if event.type() == QtCore.QEvent.MouseButtonRelease and event.button() == QtCore.Qt.RightButton:
+        if event.type() == QtCore.QEvent.Type.MouseButtonRelease and event.button() == QtCore.Qt.MouseButton.RightButton:
             menu = QtWidgets.QMenu(self)
             menu.addAction("Lock" if self._spin_widget.isEnabled() else "Unlock")
             menu.triggered.connect(self._menu_triggered)

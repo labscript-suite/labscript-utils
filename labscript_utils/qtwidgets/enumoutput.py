@@ -24,14 +24,14 @@ class EnumOutput(QtWidgets.QWidget):
         
         label_text = (self._hardware_name + '\n' + self._connection_name) if display_name is None else display_name
         self._label = QtWidgets.QLabel(label_text)
-        self._label.setAlignment(QtCore.Qt.AlignCenter)
-        self._label.setSizePolicy(QtWidgets.QSizePolicy.Fixed,QtWidgets.QSizePolicy.Minimum)
+        self._label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self._label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed,QtWidgets.QSizePolicy.Policy.Minimum)
         self._combobox = QtWidgets.QComboBox()
-        self._combobox.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
+        self._combobox.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum,QtWidgets.QSizePolicy.Policy.Minimum)
 
         self._value_changed_function = None
         
-        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Minimum)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding,QtWidgets.QSizePolicy.Policy.Minimum)
         
         # Lock/Unlock action        
         self._lock_action = QtGui.QAction("Lock",self._combobox)
@@ -49,7 +49,7 @@ class EnumOutput(QtWidgets.QWidget):
             self._layout.setHorizontalSpacing(0)
             self._layout.setContentsMargins(3,3,3,3)
             
-            self._label.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Minimum)
+            self._label.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding,QtWidgets.QSizePolicy.Policy.Minimum)
             
             h_widget = QtWidgets.QWidget()            
             h_layout = QtWidgets.QHBoxLayout(h_widget)
@@ -58,7 +58,7 @@ class EnumOutput(QtWidgets.QWidget):
             
             self._layout.addWidget(self._label,0,0)
             self._layout.addWidget(h_widget,1,0)            
-            self._layout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.MinimumExpanding),2,0)
+            self._layout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.Policy.Minimum,QtWidgets.QSizePolicy.Policy.MinimumExpanding),2,0)
         
         # Install the event filter that will allow us to catch right click mouse release events so we can popup a menu even when the button is disabled
         self.installEventFilter(self)
@@ -105,12 +105,12 @@ class EnumOutput(QtWidgets.QWidget):
 
     @property
     def selected_index(self):
-        return self._combobox.currentData(QtCore.Qt.UserRole)
+        return self._combobox.currentData(QtCore.Qt.ItemDataRole.UserRole)
 
     @selected_index.setter
     def selected_index(self,index):
         if index != self.selected_index:
-            model_index = self._combobox.findData(index,QtCore.Qt.UserRole)
+            model_index = self._combobox.findData(index,QtCore.Qt.ItemDataRole.UserRole)
             if model_index != -1:
                 self._combobox.setCurrentIndex(model_index)
             else:
@@ -124,7 +124,7 @@ class EnumOutput(QtWidgets.QWidget):
     
     # The event filter that pops up a context menu on a right click, even when the button is disabled
     def eventFilter(self, obj, event):
-        if event.type() == QtCore.QEvent.MouseButtonRelease and event.button() == QtCore.Qt.RightButton:
+        if event.type() == QtCore.QEvent.Type.MouseButtonRelease and event.button() == QtCore.Qt.MouseButton.RightButton:
             menu = QtWidgets.QMenu(self)
             menu.addAction("Lock" if self._combobox.isEnabled() else "Unlock")
             menu.triggered.connect(self._menu_triggered)
@@ -132,7 +132,7 @@ class EnumOutput(QtWidgets.QWidget):
         
         # pass scrollwheel events of disabled buttons through to the parent
         # code adapted from: http://www.qtforum.org/article/28540/disabled-widgets-and-wheel-events.html
-        elif obj and not obj.isEnabled() and event.type() == QtCore.QEvent.Wheel and QT_ENV != PYQT5:
+        elif obj and not obj.isEnabled() and event.type() == QtCore.QEvent.Type.Wheel and QT_ENV != PYQT5:
             newEvent = QtGui.QWheelEvent(obj.mapToParent(event.pos()), event.globalPos(),
                                    event.delta(), event.buttons(),
                                    event.modifiers(), event.orientation())
@@ -178,10 +178,10 @@ if __name__ == '__main__':
     for key,val in test_options.items():
         item = QtGui.QStandardItem(key)
         if type(val) is not dict:
-            item.setData(val,QtCore.Qt.UserRole)
+            item.setData(val,QtCore.Qt.ItemDataRole.UserRole)
         else:
-            item.setData(val['index'],QtCore.Qt.UserRole)
-            item.setData(val['tooltip'],QtCore.Qt.ToolTipRole)
+            item.setData(val['index'],QtCore.Qt.ItemDataRole.UserRole)
+            item.setData(val['tooltip'],QtCore.Qt.ItemDataRole.ToolTipRole)
         test_model.appendRow(item)
     combobox = EnumOutput('Enumerate',display_name='Test Name',
                             horizontal_alignment=True)        
