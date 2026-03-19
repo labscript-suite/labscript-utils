@@ -21,9 +21,9 @@ class FingerTabBarWidget(QtWidgets.QTabBar):
             self.initStyleOption(option, index)
             tabRect = self.tabRect(index)
             tabRect.moveLeft(10)
-            painter.drawControl(QtWidgets.QStyle.CE_TabBarTabShape, option)
-            painter.drawText(tabRect, QtCore.Qt.AlignVCenter |
-                             QtCore.Qt.TextDontClip,
+            painter.drawControl(QtWidgets.QStyle.ControlElement.CE_TabBarTabShape, option)
+            painter.drawText(tabRect, QtCore.Qt.AlignmentFlag.AlignVCenter |
+                             QtCore.Qt.TextFlag.TextDontClip,
                              self.tabText(index))
         painter.end()
 
@@ -50,7 +50,7 @@ if __name__ == '__main__':
     for i,d in enumerate(digits):
         widget =  QtWidgets.QLabel("Area #%s <br> %s Finger"% (i,d))
         tabs.addTab(widget, d)
-    tabs.setTabPosition(QtWidgets.QTabWidget.East)
+    tabs.setTabPosition(QtWidgets.QTabWidget.TabPosition.East)
     tabs.show()
     sys.exit(app.exec_())
     

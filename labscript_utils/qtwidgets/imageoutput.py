@@ -57,7 +57,7 @@ class BrowseButton(QtWidgets.QPushButton):
         self.image_output.value = data
         
     def eventFilter(self, obj, event):
-        if event.type() == QtCore.QEvent.MouseButtonRelease and event.button() == QtCore.Qt.RightButton:
+        if event.type() == QtCore.QEvent.Type.MouseButtonRelease and event.button() == QtCore.Qt.MouseButton.RightButton:
             menu = QtWidgets.QMenu(self)
             menu.addAction("Lock" if not self.image_output.lock_state else "Unlock")
             menu.triggered.connect(self.image_output._menu_triggered)
@@ -80,7 +80,7 @@ class ImageView(QtWidgets.QGraphicsView):
         
     
     # def eventFilter(self, obj, event):
-        # if event.type() == QEvent.ContextMenu:
+        # if event.type() == QEvent.Type.ContextMenu:
             # print 'a'
             # menu = QMenu(self)
             # menu.addAction("Lock" if self.parent().lock_state else "Unlock")
@@ -97,7 +97,7 @@ class ImageOutput(QtWidgets.QWidget):
 
     def __init__(self, name, width, height, *args, **kwargs):
         QtWidgets.QWidget.__init__(self, *args, **kwargs)        
-        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.Minimum)
         
         
         # create the layout
@@ -119,7 +119,7 @@ class ImageOutput(QtWidgets.QWidget):
         header_layout.addWidget(self._browse_button)
        
         # Add a spacer item to keep everything bunched
-        header_layout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Minimum))
+        header_layout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.Policy.MinimumExpanding,QtWidgets.QSizePolicy.Policy.Minimum))
         
         # add the header widget to the layout
         self._layout.addWidget(header_widget)
@@ -128,9 +128,9 @@ class ImageOutput(QtWidgets.QWidget):
         
         # Create the graphics scene and view
         self._scene = QtWidgets.QGraphicsScene(0, 0, width, height)
-        self._scene.setBackgroundBrush(QtCore.Qt.black)
+        self._scene.setBackgroundBrush(QtCore.Qt.GlobalColor.black)
         self._view = ImageView(self._scene)
-        self._view.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)        
+        self._view.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignTop)        
         self._view.setStyleSheet("border: 0px")
         # self._view.setStyleSheet("background-color:#000000; border: 0px;")
         self._view.setMinimumSize(self.image_size)
@@ -168,7 +168,7 @@ class ImageOutput(QtWidgets.QWidget):
     
     # The event filter that pops up a context menu on a right click, even when the button is disabled
     def eventFilter(self, obj, event):
-        if event.type() == QtCore.QEvent.MouseButtonRelease and event.button() == QtCore.Qt.RightButton:
+        if event.type() == QtCore.QEvent.Type.MouseButtonRelease and event.button() == QtCore.Qt.MouseButton.RightButton:
             menu = QtWidgets.QMenu(self)
             menu.addAction("Lock" if not self.lock_state else "Unlock")
             menu.triggered.connect(self._menu_triggered)
@@ -177,7 +177,7 @@ class ImageOutput(QtWidgets.QWidget):
         
         # pass scrollwheel events of disabled buttons through to the parent
         # code adapted from: http://www.qtforum.org/article/28540/disabled-widgets-and-wheel-events.html
-        elif obj and not obj.isEnabled() and event.type() == QEvent.Wheel:
+        elif obj and not obj.isEnabled() and event.type() == QEvent.Type.Wheel:
             newEvent = QtGui.QWheelEvent(obj.mapToParent(event.pos()), event.globalPos(),
                                    event.delta(), event.buttons(),
                                    event.modifiers(), event.orientation())
@@ -217,10 +217,10 @@ class ImageOutput(QtWidgets.QWidget):
             value = value.decode()
         decoded_image = base64.b64decode(value)
         pixmap = QtGui.QPixmap()
-        pixmap.loadFromData(decoded_image, flags=QtCore.Qt.AvoidDither | QtCore.Qt.ThresholdAlphaDither | QtCore.Qt.ThresholdDither)
+        pixmap.loadFromData(decoded_image, flags=QtCore.Qt.ImageConversionFlag.AvoidDither | QtCore.Qt.ImageConversionFlag.ThresholdAlphaDither | QtCore.Qt.ImageConversionFlag.ThresholdDither)
         # print decoded_image
         if pixmap.size() != self.image_size:
-            QtWidgets.QMessageBox.warning(self, "Failed to load image", 'The image size was incorrect. It must be %dx%d pixels.'%(self.image_size.width(), self.image_size.height()), QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Ok)
+            QtWidgets.QMessageBox.warning(self, "Failed to load image", 'The image size was incorrect. It must be %dx%d pixels.'%(self.image_size.width(), self.image_size.height()), QtWidgets.QMessageBox.StandardButton.Ok, QtWidgets.QMessageBox.StandardButton.Ok)
             return
         
         self._value = value

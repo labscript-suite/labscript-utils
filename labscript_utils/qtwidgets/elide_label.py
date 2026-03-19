@@ -12,35 +12,35 @@ class ElideScrollArea(QtWidgets.QScrollArea):
     to the side with the scrollbars hidden."""
     def __init__(self, *args, **kwargs):
         QtWidgets.QScrollArea.__init__(self, *args, **kwargs)
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setFrameStyle(QtWidgets.QFrame.NoFrame)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setFrameStyle(QtWidgets.QFrame.Shape.NoFrame)
         self.setStyleSheet("background-color:transparent;")
-        self.setElideMode(QtCore.Qt.ElideNone)
+        self.setElideMode(QtCore.Qt.TextElideMode.ElideNone)
         self.setWidgetResizable(True)
 
     def event(self, event):
-        if event.type() == QtCore.QEvent.LayoutRequest:
+        if event.type() == QtCore.QEvent.Type.LayoutRequest:
             self.updateGeometry()
         return QtWidgets.QScrollArea.event(self, event)
 
     def setElideMode(self, elideMode):
         if not isinstance(elideMode, QtCore.Qt.TextElideMode):
             raise TypeError("Argument must be of type Qt.TextElideMode")
-        if elideMode == QtCore.Qt.ElideMiddle:
+        if elideMode == QtCore.Qt.TextElideMode.ElideMiddle:
             raise NotImplementedError("The hack being used to elidetext does not work for ElideMiddle")
 
         self._elideMode = elideMode
         
     def minimumSizeHint(self):
-        if self.widget is None or self._elideMode == QtCore.Qt.ElideNone:
+        if self.widget is None or self._elideMode == QtCore.Qt.TextElideMode.ElideNone:
             return QtWidgets.QScrollArea.minimumSizeHint(self)
         else:
             actual_minimum_sizehint = self.widget().minimumSizeHint()
             return QtCore.QSize(0, actual_minimum_sizehint.height())
 
     def sizeHint(self):
-        if self.widget is None or self._elideMode == QtCore.Qt.ElideNone:
+        if self.widget is None or self._elideMode == QtCore.Qt.TextElideMode.ElideNone:
             return QtWidgets.QScrollArea.sizeHint(self)
         else:
             actual_sizehint = self.widget().sizeHint()
@@ -69,14 +69,14 @@ class ElidedLabelContainer(QtWidgets.QWidget):
         self.ellipsis_label = QtWidgets.QLabel(ELLIPSIS)
         self.scroll_area = ElideScrollArea()
         self.scroll_area.setWidget(self.label)
-        self.setElideMode(QtCore.Qt.ElideNone)
+        self.setElideMode(QtCore.Qt.TextElideMode.ElideNone)
         self.setSizePolicy(label.sizePolicy())
         self.scroll_area.horizontalScrollBar().rangeChanged.connect(self.update_elide_widget)
         # self.scroll_area.horizontalScrollBar().valueChanged.connect(self.update_elide_widget)
         self.update_elide_widget()
 
     def event(self, event):
-        if event.type() == QtCore.QEvent.ToolTip:
+        if event.type() == QtCore.QEvent.Type.ToolTip:
             self.setToolTip(self.label.text())
         return QtWidgets.QWidget.event(self, event)
 
@@ -86,7 +86,7 @@ class ElidedLabelContainer(QtWidgets.QWidget):
     def setElideMode(self, elideMode):
         if not isinstance(elideMode, QtCore.Qt.TextElideMode):
             raise TypeError("Argument must be of type Qt.TextElideMode")
-        if elideMode == QtCore.Qt.ElideMiddle:
+        if elideMode == QtCore.Qt.TextElideMode.ElideMiddle:
             raise NotImplementedError("The hack being used to elidetext does not work for ElideMiddle")
 
         self._elideMode = elideMode
@@ -95,10 +95,10 @@ class ElidedLabelContainer(QtWidgets.QWidget):
         if self.layout.count():
             self.layout.removeWidget(self.ellipsis_label)
             self.layout.removeWidget(self.scroll_area)
-        if self._elideMode == QtCore.Qt.ElideLeft:
+        if self._elideMode == QtCore.Qt.TextElideMode.ElideLeft:
             self.layout.addWidget(self.ellipsis_label)
             self.layout.addWidget(self.scroll_area)
-        elif self._elideMode == QtCore.Qt.ElideRight:
+        elif self._elideMode == QtCore.Qt.TextElideMode.ElideRight:
             self.layout.addWidget(self.scroll_area)
             self.layout.addWidget(self.ellipsis_label)
 
@@ -116,11 +116,11 @@ class ElidedLabelContainer(QtWidgets.QWidget):
         else:
             self.ellipsis_label.setText('')
 
-        if self._elideMode == QtCore.Qt.ElideNone:
+        if self._elideMode == QtCore.Qt.TextElideMode.ElideNone:
             return
-        elif self._elideMode == QtCore.Qt.ElideLeft:
+        elif self._elideMode == QtCore.Qt.TextElideMode.ElideLeft:
             self.scroll_area.ensureVisible(label_width, 0, 0, 0)
-        elif self._elideMode == QtCore.Qt.ElideRight:
+        elif self._elideMode == QtCore.Qt.TextElideMode.ElideRight:
             self.scroll_area.ensureVisible(0, 0, 0, 0)
 
     def minimumSizeHint(self):
@@ -171,7 +171,7 @@ if __name__ == '__main__':
     hlayout.addWidget(tabwidget)
 
     elide_left = QtWidgets.QLabel("ElideLeft: " + test_text)
-    elide_left.setAlignment(QtCore.Qt.AlignCenter)
+    elide_left.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
     elide_right = QtWidgets.QLabel("ElideRight: " + test_text)
     smaller_label = QtWidgets.QLabel("Smaller label")
     smaller_label2 = QtWidgets.QLabel("Smaller label")
@@ -191,8 +191,8 @@ if __name__ == '__main__':
     window.show()
     window.resize(20, 20)
 
-    elide_label(elide_left, layout, QtCore.Qt.ElideLeft)
-    elide_label(elide_right, layout, QtCore.Qt.ElideRight)
+    elide_label(elide_left, layout, QtCore.Qt.TextElideMode.ElideLeft)
+    elide_label(elide_right, layout, QtCore.Qt.TextElideMode.ElideRight)
 
     def foo():
         elide_left.setText("The <b>quick</b><br>brown fox <b>jumped <br>over the lazy dog</b>")

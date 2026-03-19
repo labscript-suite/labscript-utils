@@ -82,13 +82,13 @@ class Settings(object):
             self.dialog.setMinimumSize(800,600)
             self.dialog.setWindowTitle("Preferences")
             # Remove the help flag next to the [X] close button
-            self.dialog.setWindowFlags(self.dialog.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint)
+            self.dialog.setWindowFlags(self.dialog.windowFlags() & ~QtCore.Qt.WindowType.WindowContextHelpButtonHint)
             
             # Create the layout
             layout = QtWidgets.QVBoxLayout(self.dialog)
             #Create the Notebook
             self.notebook = FingerTabWidget(self.dialog)            
-            self.notebook.setTabPosition(QtWidgets.QTabWidget.West)
+            self.notebook.setTabPosition(QtWidgets.QTabWidget.TabPosition.West)
             self.notebook.show() 
             layout.addWidget(self.notebook)
             
@@ -96,10 +96,10 @@ class Settings(object):
             widget = QtWidgets.QWidget()
             hlayout = QtWidgets.QHBoxLayout(widget)
             button_box = QtWidgets.QDialogButtonBox()
-            button_box.setStandardButtons(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel)
+            button_box.setStandardButtons(QtWidgets.QDialogButtonBox.StandardButton.Ok | QtWidgets.QDialogButtonBox.StandardButton.Cancel)
             button_box.accepted.connect(self.dialog.accept)
             button_box.rejected.connect(self.dialog.reject)
-            hlayout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Minimum))
+            hlayout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.Policy.MinimumExpanding,QtWidgets.QSizePolicy.Policy.Minimum))
             hlayout.addWidget(button_box)
             layout.addWidget(widget)
             

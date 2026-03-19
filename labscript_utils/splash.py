@@ -59,23 +59,23 @@ class Splash(QtWidgets.QFrame):
         if self.icon.isNull():
             raise ValueError("Invalid image file: {}.\n".format(imagepath))
         self.icon = self.icon.scaled(
-            self.imwidth, self.imheight, Qt.KeepAspectRatio, Qt.SmoothTransformation
+            self.imwidth, self.imheight, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
         )
         self.text = 'Loading'
-        self.setWindowFlags(Qt.SplashScreen)
+        self.setWindowFlags(Qt.WindowType.SplashScreen)
         self.setWindowOpacity(self.alpha)
         self.label = QtWidgets.QLabel(self.text)
         self.setStyleSheet(f"color: {self.FG}; background-color: {self.BG}; font-size: 10pt")
         # Frame not necessary on macos, and looks ugly.
         if sys.platform != 'darwin':
-            self.setFrameShape(QtWidgets.QFrame.StyledPanel)
+            self.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
         self.label.setWordWrap(True)
-        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.resize(self.w, self.h)
 
         image_label = QtWidgets.QLabel()
         image_label.setPixmap(self.icon)
-        image_label.setAlignment(Qt.AlignCenter)
+        image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(image_label)
@@ -92,7 +92,7 @@ class Splash(QtWidgets.QFrame):
         self.label.setText(text)
         self._paint_pending = True
         while self._paint_pending:
-            QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents)
+            QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.ProcessEventsFlag.AllEvents)
             QtCore.QCoreApplication.sendPostedEvents()
 
 
