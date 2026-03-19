@@ -35,12 +35,12 @@ class AnalogInput(QtWidgets.QWidget):
         label_text = (self._hardware_name + '\n' + self._connection_name) if display_name is None else display_name
         self._label = QtWidgets.QLabel(label_text)
         self._label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self._label.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        self._label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Minimum)
         self._line_edit = QtWidgets.QLineEdit()
-        self._line_edit.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
-        self._line_edit.setSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        self._line_edit.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.Minimum)
+        self._line_edit.setSizePolicy(QtWidgets.QSizePolicy.Policy.Fixed, QtWidgets.QSizePolicy.Policy.Fixed)
         self._line_edit.setMaximumWidth(55)
-        self._line_edit.setAlignment(QtCore.Qt.AlignRight)
+        self._line_edit.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self._line_edit.setReadOnly(True)
 
         self._plot_btn = QtWidgets.QPushButton()
@@ -49,7 +49,7 @@ class AnalogInput(QtWidgets.QWidget):
 
         self._value_changed_function = None
 
-        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.Minimum)
 
         # Create widgets and layouts
         if horizontal_alignment:
@@ -63,9 +63,9 @@ class AnalogInput(QtWidgets.QWidget):
             self._layout.setHorizontalSpacing(0)
             self._layout.setContentsMargins(5, 5, 5, 5)
 
-            self._label.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum)
+            self._label.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.Minimum)
             self._layout.addWidget(self._label)
-            self._layout.addItem(QtWidgets.QSpacerItem(0, 0, QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum), 0, 1)
+            self._layout.addItem(QtWidgets.QSpacerItem(0, 0, QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.Minimum), 0, 1)
 
             h_widget = QtWidgets.QWidget()
             h_layout = QtWidgets.QHBoxLayout(h_widget)
@@ -75,7 +75,7 @@ class AnalogInput(QtWidgets.QWidget):
             self._layout.addWidget(self._label, 0, 0)
             self._layout.addWidget(h_widget, 1, 0)
             self._layout.addWidget(self._plot_btn, 2, 0)
-            self._layout.addItem(QtWidgets.QSpacerItem(0, 0, QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Minimum), 1, 1)
+            self._layout.addItem(QtWidgets.QSpacerItem(0, 0, QtWidgets.QSizePolicy.Policy.MinimumExpanding, QtWidgets.QSizePolicy.Policy.Minimum), 1, 1)
 
         self.set_value(None)
 

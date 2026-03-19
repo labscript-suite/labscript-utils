@@ -42,7 +42,7 @@ class DigitalOutput(QtWidgets.QPushButton):
     
     # The event filter that pops up a context menu on a right click, even when the button is disabled
     def eventFilter(self, obj, event):
-        if event.type() == QtCore.QEvent.MouseButtonRelease and event.button() == QtCore.Qt.RightButton:
+        if event.type() == QtCore.QEvent.Type.MouseButtonRelease and event.button() == QtCore.Qt.MouseButton.RightButton:
             menu = QtWidgets.QMenu(self)
             menu.addAction("Lock" if self.isEnabled() else "Unlock")
             menu.triggered.connect(self._menu_triggered)
@@ -50,7 +50,7 @@ class DigitalOutput(QtWidgets.QPushButton):
         
         # pass scrollwheel events of disabled buttons through to the parent
         # code adapted from: http://www.qtforum.org/article/28540/disabled-widgets-and-wheel-events.html
-        elif obj and not obj.isEnabled() and event.type() == QtCore.QEvent.Wheel and QT_ENV != PYQT5:
+        elif obj and not obj.isEnabled() and event.type() == QtCore.QEvent.Type.Wheel and QT_ENV != PYQT5:
             newEvent = QtGui.QWheelEvent(obj.mapToParent(event.pos()), event.globalPos(),
                                    event.delta(), event.buttons(),
                                    event.modifiers(), event.orientation())

@@ -81,9 +81,9 @@ class DDSOutput(QtWidgets.QWidget):
         v_layout.addWidget(self._widgets['phase'])
         
         self._layout.addWidget(self._label,0,0)
-        #self._layout.addItem(QSpacerItem(0,0,QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Minimum),0,1)
+        #self._layout.addItem(QSpacerItem(0,0,QtWidgets.QSizePolicy.Policy.MinimumExpanding,QtWidgets.QSizePolicy.Policy.Minimum),0,1)
         self._layout.addWidget(v_widget,1,0)            
-        #self._layout.addItem(QSpacerItem(0,0,QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Minimum),1,1)
+        #self._layout.addItem(QSpacerItem(0,0,QtWidgets.QSizePolicy.Policy.MinimumExpanding,QtWidgets.QSizePolicy.Policy.Minimum),1,1)
         self._layout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.Policy.Minimum,QtWidgets.QSizePolicy.Policy.MinimumExpanding),2,0)
         
         
