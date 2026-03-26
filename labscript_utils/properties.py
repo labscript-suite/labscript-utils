@@ -1,4 +1,3 @@
-import sys
 import json
 from base64 import b64encode, b64decode
 from collections.abc import Iterable, Mapping
@@ -121,18 +120,7 @@ def _get_device_properties(h5_file, device_name):
 def _get_con_table_properties(h5_file, device_name):
     import h5py
     dataset = h5_file['connection table']
-
-    # Compare with the name in the connection table
-    # whether it is np.bytes_ or vlenstr:
-    namecol_dtype = dataset.dtype['name']
-    if namecol_dtype.type is np.bytes_:
-        device_name = device_name.encode('utf8')
-    elif namecol_dtype is h5py.special_dtype(vlen=str):
-        pass
-    else:
-        raise TypeError(namecol_dtype)
-
-    row = dataset[dataset['name'] == device_name][0]
+    row = dataset[dataset['name'] == device_name.encode('utf8')][0]
     json_string = row['properties']
     return deserialise(json_string)
 
@@ -140,18 +128,7 @@ def _get_con_table_properties(h5_file, device_name):
 def _get_unit_conversion_parameters(h5_file, device_name):
     import h5py
     dataset = h5_file['connection table']
-
-    # Compare with the name in the connection table
-    # whether it is np.bytes_ or vlenstr:
-    namecol_dtype = dataset.dtype['name']
-    if namecol_dtype.type is np.bytes_:
-        device_name = device_name.encode('utf8')
-    elif namecol_dtype is h5py.special_dtype(vlen=str):
-        pass
-    else:
-        raise TypeError(namecol_dtype)
-
-    row = dataset[dataset['name'] == device_name][0]
+    row = dataset[dataset['name'] == device_name.encode('utf8')][0]
     json_string = row['unit conversion params']
     return deserialise(json_string)
 

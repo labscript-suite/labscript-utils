@@ -30,8 +30,8 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
         self.widgets = {}
         self.indents = {}
         self.model = model
-        QtWidgets.QHeaderView.__init__(self, QtCore.Qt.Horizontal, parent)
-        self.setDefaultAlignment(QtCore.Qt.AlignLeft)
+        QtWidgets.QHeaderView.__init__(self, QtCore.Qt.Orientation.Horizontal, parent)
+        self.setDefaultAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
         self.sectionMoved.connect(self.update_widget_positions)
         self.sectionResized.connect(self.update_widget_positions)
         self.geometriesChanged.connect(self.update_widget_positions)
@@ -67,7 +67,7 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
         return result
 
     def viewportEvent(self, event):
-        if event.type() == QtCore.QEvent.Paint:
+        if event.type() == QtCore.QEvent.Type.Paint:
             self.update_widget_positions()
         return QtWidgets.QHeaderView.viewportEvent(self, event)
 
@@ -82,7 +82,7 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
                 del self.widgets[logical_index]
                 widget.removeEventFilter(self)
                 del self.indents[widget]
-                label_text = self.model.headerData(logical_index, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
+                label_text = self.model.headerData(logical_index, QtCore.Qt.Orientation.Horizontal, QtCore.Qt.ItemDataRole.DisplayRole)
                 # Compatibility with both API types:
                 if hasattr(QtCore, 'QVariant') and isinstance(label_text, QtCore.QVariant):
                     if label_text.isNull():
@@ -93,7 +93,7 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
                     return
                 else:
                     raw_label_text = label_text.replace(self.thinspace, '')
-                    self.model.setHeaderData(logical_index, QtCore.Qt.Horizontal, raw_label_text, QtCore.Qt.DisplayRole)
+                    self.model.setHeaderData(logical_index, QtCore.Qt.Orientation.Horizontal, raw_label_text, QtCore.Qt.ItemDataRole.DisplayRole)
         else:
             self.widgets[logical_index] = widget
             widget.setParent(self)
@@ -176,7 +176,7 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
                     indent = self.indents[widget]
                 except KeyError:
                     return
-                label_text = self.model.headerData(logical_index, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
+                label_text = self.model.headerData(logical_index, QtCore.Qt.Orientation.Horizontal, QtCore.Qt.ItemDataRole.DisplayRole)
                 # Compatibility with both API types:
                 if hasattr(QtCore, 'QVariant') and isinstance(label_text, QtCore.QVariant):
                     if not label_text.isNull():
@@ -188,12 +188,12 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
                 raw_label_text = label_text.replace(self.thinspace, '')
                 if label_text != indent + raw_label_text:
                     self.model.setHeaderData(
-                        logical_index, QtCore.Qt.Horizontal, indent + raw_label_text, QtCore.Qt.DisplayRole)
+                        logical_index, QtCore.Qt.Orientation.Horizontal, indent + raw_label_text, QtCore.Qt.ItemDataRole.DisplayRole)
 
     def eventFilter(self, target, event):
         """Ensure we don't leave the curor set as a resize
         handle when the mouse moves onto a child widget:"""
-        if event.type() == QtCore.QEvent.Enter:
+        if event.type() == QtCore.QEvent.Type.Enter:
             self.unsetCursor()
         return False
 
@@ -271,6 +271,6 @@ if __name__ == '__main__':
             QtCore.QTimer.singleShot(8000, lambda: self.header.setWidget(0, self.button))
 
     qapplication = QtWidgets.QApplication(sys.argv)
-    qapplication.setAttribute(QtCore.Qt.AA_DontShowIconsInMenus, False)
+    qapplication.setAttribute(QtCore.Qt.ApplicationAttribute.AA_DontShowIconsInMenus, False)
     app = TestApp()
     qapplication.exec()

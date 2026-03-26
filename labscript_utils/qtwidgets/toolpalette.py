@@ -18,7 +18,7 @@ from qtutils.qt import QtCore, QtGui, QtWidgets
 EXPAND_ICON = ':/qtutils/fugue/toggle-small-expand'
 CONTRACT_ICON = ':/qtutils/fugue/toggle-small'
 
-_ENABLE_LAYOUT_EVENT_TYPE = QtCore.QEvent.User
+_ENABLE_LAYOUT_EVENT_TYPE = QtCore.QEvent.Type.User
 
 class ToolPaletteGroup(QtWidgets.QVBoxLayout):
     
@@ -38,11 +38,11 @@ class ToolPaletteGroup(QtWidgets.QVBoxLayout):
         tool_palette = ToolPalette(self,name,*args,**kwargs)
         push_button = QtWidgets.QPushButton(name)        
         push_button.setIcon(QtGui.QIcon(CONTRACT_ICON))
-        push_button.setFocusPolicy(QtCore.Qt.NoFocus)
+        push_button.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         push_button.setToolTip('Click to hide')
 
         frame = QtWidgets.QFrame()
-        frame.setFrameStyle(QtWidgets.QFrame.StyledPanel)
+        frame.setFrameStyle(QtWidgets.QFrame.Shape.StyledPanel)
         frame_layout = QtWidgets.QVBoxLayout(frame)
         frame_layout.setContentsMargins(0,0,0,0)
         frame_layout.setSpacing(0)
@@ -246,17 +246,17 @@ class ToolPaletteGroup(QtWidgets.QVBoxLayout):
 class ToolPalette(QtWidgets.QScrollArea):
     def __init__(self,parent,name,*args,**kwargs):
         QtWidgets.QScrollArea.__init__(self,*args,**kwargs)
-        self.setSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding,QtWidgets.QSizePolicy.Minimum)
-        self.setFrameStyle(QtWidgets.QFrame.NoFrame)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Policy.MinimumExpanding,QtWidgets.QSizePolicy.Policy.Minimum)
+        self.setFrameStyle(QtWidgets.QFrame.Shape.NoFrame)
         # create the grid layout
         #self.setWidget(QWidget(self))
-        #self.widget().setSizePolicy(QSizePolicy.Preferred,QSizePolicy.Preferred)
+        #self.widget().setSizePolicy(QSizePolicy.Policy.Preferred,QSizePolicy.Policy.Preferred)
         self._layout = QtWidgets.QGridLayout(self) 
         self._layout.setContentsMargins(3,0,3,3)
         self._layout.setHorizontalSpacing(3)
         self._layout.setVerticalSpacing(3)
         #self._layout.setMaximumSize(QSize(524287,524287))
-        #self._layout.setSizeConstraint(QLayout.SetMinAndMaxSize)
+        #self._layout.setSizeConstraint(QLayout.SizeConstraint.SetMinAndMaxSize)
         self._widget_list = []
         self._parent_group = parent
         self._name = name
@@ -458,17 +458,17 @@ if __name__ == '__main__':
     #layout.addItem(tpg)
     #toolpalette.show()
     
-    layout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.MinimumExpanding))
+    layout.addItem(QtWidgets.QSpacerItem(0,0,QtWidgets.QSizePolicy.Policy.Minimum,QtWidgets.QSizePolicy.Policy.MinimumExpanding))
     for i in range(20):
         #button = QPushButton('Button %d'%i)
         button = DDSOutput('DDS %d'%i)
-        #button.setSizePolicy(QSizePolicy.Minimum,QSizePolicy.Minimum)
+        #button.setSizePolicy(QSizePolicy.Policy.Minimum,QSizePolicy.Policy.Minimum)
         toolpalette.addWidget(button)
         
     for i in range(20):
         button = QtWidgets.QPushButton('very very long Button %d'%i)
         
-        button.setSizePolicy(QtWidgets.QSizePolicy.Minimum,QtWidgets.QSizePolicy.Minimum)
+        button.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum,QtWidgets.QSizePolicy.Policy.Minimum)
         toolpalette2.addWidget(button)
     
     #tpg.create_linked_width_group("Digital outs", ['Digital Outputs','Digital Outputs 2'])
