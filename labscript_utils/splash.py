@@ -39,6 +39,39 @@ if QT_ENV == 'PyQt5':
     QtWidgets.QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 
 
+def configure_qapplication(qapplication):
+    """Apply labscript-wide QApplication configuration."""
+    qapplication.setAttribute(Qt.AA_DontShowIconsInMenus, False)
+    if sys.platform == 'darwin':
+        icon_path = qapplication.property('_labscript_icon_path')
+        if icon_path:
+            icon = QtGui.QIcon(icon_path)
+            if not icon.isNull():
+                qapplication.setWindowIcon(icon)
+        if qapplication.property('_labscript_qapplication_configured'):
+            return qapplication
+        # Native macOS widget styling makes many Qt controls look inconsistent
+        # with the rest of the suite. Use Qt's own style, but preserve the
+        # current palette so dark/light appearance still follows the active
+        # theme.
+        palette = QtGui.QPalette(qapplication.palette())
+        style = QtWidgets.QStyleFactory.create('Fusion')
+        if style is not None:
+            qapplication.setStyle(style)
+            qapplication.setPalette(palette)
+    elif qapplication.property('_labscript_qapplication_configured'):
+        return qapplication
+    qapplication.setProperty('_labscript_qapplication_configured', True)
+    return qapplication
+
+
+def get_qapplication(argv=None):
+    qapplication = QtWidgets.QApplication.instance()
+    if qapplication is None:
+        qapplication = QtWidgets.QApplication(sys.argv if argv is None else argv)
+    return configure_qapplication(qapplication)
+
+
 class Splash(QtWidgets.QFrame):
     w = 250
     h = 230
@@ -50,9 +83,9 @@ class Splash(QtWidgets.QFrame):
     FG = '#000000'
 
     def __init__(self, imagepath):
-        self.qapplication = QtWidgets.QApplication.instance()
-        if self.qapplication is None:
-            self.qapplication = QtWidgets.QApplication(sys.argv)
+        self.qapplication = get_qapplication()
+        self.qapplication.setProperty('_labscript_icon_path', imagepath)
+        configure_qapplication(self.qapplication)
         super().__init__()
         self.icon = QtGui.QPixmap()
         self.icon.load(imagepath)
