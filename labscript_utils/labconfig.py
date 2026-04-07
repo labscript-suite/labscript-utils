@@ -13,6 +13,7 @@
 import os
 import configparser
 from ast import literal_eval
+from getpass import getuser
 from pprint import pformat
 from pathlib import Path
 import warnings
@@ -21,6 +22,76 @@ from labscript_utils import dedent
 from labscript_profile import default_labconfig_path, LABSCRIPT_SUITE_PROFILE
 
 default_config_path = default_labconfig_path()
+
+
+def format_path_for_display(path):
+    """Return an absolute path with the user's home abbreviated for display."""
+    absolute_path = os.path.abspath(os.fspath(path))
+    try:
+        home_path = str(Path("~" + getuser()).expanduser())
+    except Exception:
+        home_path = str(Path.home())
+
+    normalized_path = os.path.normcase(os.path.normpath(absolute_path))
+    normalized_home = os.path.normcase(os.path.normpath(home_path))
+    if normalized_path == normalized_home:
+        return '%USERPROFILE%' if os.name == 'nt' else '~'
+
+    home_prefix = normalized_home + os.path.sep
+    if normalized_path.startswith(home_prefix):
+        relative_path = os.path.relpath(absolute_path, home_path)
+        prefix = '%USERPROFILE%' if os.name == 'nt' else '~'
+        separator = '\\' if os.name == 'nt' else '/'
+        return prefix + separator + relative_path.replace(os.path.sep, separator)
+
+    return absolute_path
+
+
+def get_default_appconfig_file(
+    exp_config, app_name, config_filename, ensure_directory=False
+):
+    try:
+        default_path = os.path.join(exp_config.get('DEFAULT', 'app_saved_configs'), app_name)
+    except (LabConfig.NoOptionError, LabConfig.NoSectionError):
+        exp_config.set(
+            'DEFAULT',
+            'app_saved_configs',
+            os.path.join(
+                '%(labscript_suite)s', 'userlib', 'app_saved_configs',
+                '%(apparatus_name)s'
+            ),
+        )
+        default_path = os.path.join(
+            exp_config.get('DEFAULT', 'app_saved_configs'), app_name
+        )
+    if ensure_directory and not os.path.exists(default_path):
+        os.makedirs(default_path)
+    return os.path.join(default_path, config_filename)
+
+
+class LabscriptApplication(object):
+    app_name = None
+    default_config_filename = None
+
+    def init_config_window_title(self):
+        self.base_window_title = self.ui.windowTitle().split(' - ', 1)[0]
+
+    def get_default_config_file(self, ensure_directory=False):
+        if self.app_name is None or self.default_config_filename is None:
+            raise NotImplementedError(
+                'LabscriptApplication requires app_name and default_config_filename'
+            )
+        return get_default_appconfig_file(
+            self.exp_config,
+            self.app_name,
+            self.default_config_filename,
+            ensure_directory=ensure_directory,
+        )
+
+    def set_config_window_title(self, filename):
+        self.ui.setWindowTitle(
+            '{} - {}'.format(self.base_window_title, format_path_for_display(filename))
+        )
 
 
 class EnvInterpolation(configparser.BasicInterpolation):
