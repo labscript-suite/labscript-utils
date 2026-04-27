@@ -788,6 +788,16 @@ class BasePlugin(object):
         """
         return {}
 
+    def get_services(self):
+        """Return named services exposed by this plugin.
+
+        Return a mapping of service names to concrete objects. Applications can
+        aggregate these mappings into a shared service registry before calling
+        :meth:`plugin_setup_complete`, making plugin-to-plugin dependencies
+        order-independent.
+        """
+        return {}
+
     def close(self):
         """Clean up resources owned by the plugin during application shutdown.
 
@@ -1033,6 +1043,7 @@ class PluginManager(object):
         self.logger = logger or logging.getLogger(__name__)
         self.modules = {}
         self.plugins = {}
+        self.services = {}
         self.contexts = {}
         self._logged_plugin_warnings = set()
 
@@ -1259,6 +1270,53 @@ class PluginManager(object):
                         "Error adding menu contribution from plugin '%s'. "
                         "Skipping." % module_name
                     )
+
+    def collect_services(self, base_services=None):
+        """Merge app-owned and plugin-owned services into one registry."""
+        if base_services is None:
+            services = {}
+        elif isinstance(base_services, Mapping):
+            services = dict(base_services)
+        else:
+            self.logger.error(
+                "Base services must be a mapping. Ignoring invalid registry."
+            )
+            services = {}
+
+        for module_name, plugin in self.plugins.items():
+            if not hasattr(plugin, "get_services"):
+                continue
+
+            try:
+                plugin_services = plugin.get_services()
+            except Exception:
+                self.logger.exception(
+                    "Error getting services from plugin '%s'. Skipping."
+                    % module_name
+                )
+                continue
+
+            if plugin_services is None:
+                continue
+            if not isinstance(plugin_services, Mapping):
+                self.logger.error(
+                    "Plugin '%s' services must be a mapping. Skipping."
+                    % module_name
+                )
+                continue
+
+            for service_name, service in plugin_services.items():
+                if service_name in services:
+                    self.logger.error(
+                        "Plugin '%s' service '%s' conflicts with an existing "
+                        "service. Keeping the original registration."
+                        % (module_name, service_name)
+                    )
+                    continue
+                services[service_name] = service
+
+        self.services = services
+        return services
 
     def setup_complete(self, data):
         """Notify plugins that the application has finished startup."""
