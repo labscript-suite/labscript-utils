@@ -268,7 +268,7 @@ if __name__ == '__main__':
         callback,
         files=test_files[0],
         folders=test_folder,
-        hashable_types=['.py', '.ini', '.txt'],
+        hashable_types=['.py', '.toml', '.txt'],
         interval=2,
     )
 

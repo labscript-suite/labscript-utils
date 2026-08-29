@@ -1,3 +1,10 @@
+## Unreleased
+
+- TOML-backed labconfig and app-config writing now depends on `tomli-w`. The package
+  dependency is declared in `labscript-utils`, but existing editable or conda
+  environments may need that dependency installed explicitly when upgrading.
+
+
 ## [2.15.0] - 2019-12-04
 
 This release includes one bugfix, one enhancement, one update for compatibility with a

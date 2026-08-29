@@ -19,3 +19,9 @@ Shared modules used by the [*labscript suite*](https://github.com/labscript-suit
 ## Installation
 
 labscript-utils is distributed as a Python package on [PyPI](https://pypi.org/user/labscript-suite) and [Anaconda Cloud](https://anaconda.org/labscript-suite), and should be installed with other components of the _labscript suite_. Please see the [installation guide](https://docs.labscriptsuite.org/en/latest/installation) for details.
+
+TOML-backed configuration support depends on `tomli-w` at runtime. This dependency is
+declared in `labscript-utils` package metadata, so fresh installs should receive it
+automatically. Existing editable or conda environments created before this dependency
+was added may need `conda install tomli-w` or an updated `labscript-utils`
+installation.

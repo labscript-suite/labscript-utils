@@ -106,8 +106,8 @@ def get_config():
         config['allow_insecure'] = labconfig.getboolean('security', 'allow_insecure')
     except (labconfig.NoOptionError, labconfig.NoSectionError):
         config['allow_insecure'] = False
-        if config['shared_secret'] is None and not config['allow_insecure']:
-            raise ValueError(_ERR_NO_SHARED_SECRET.replace('/', os.sep))
+    if config['shared_secret'] is None and not config['allow_insecure']:
+        raise ValueError(_ERR_NO_SHARED_SECRET.replace('/', os.sep))
     try:
         config['logging_maxBytes'] = labconfig.getint('logging', 'maxBytes')
     except (labconfig.NoOptionError, labconfig.NoSectionError):
@@ -257,7 +257,7 @@ class Context(SecureContext):
         # be a SecureSocket. If caller has explicitly requested a different socket type
         # (e.g since pyzmq 25, ThreadAuthenticator sets up an internal socket by calling
         # `Context.socket(..., socket_class=zmq.Socket)), then don't.`
-        if socket_class is None or issubclass(socket_class, SecureContext):
+        if socket_class is None or issubclass(socket_class, SecureSocket):
             config = get_config()
             kwargs['allow_insecure'] = config['allow_insecure']
         return SecureContext.socket(self, socket_type=socket_type, **kwargs)
@@ -383,4 +383,3 @@ def ensure_connected_to_zlog():
     else:
         client.ping()
     _connected_to_zlog = True
-

@@ -39,8 +39,7 @@ class debug(object):
 if debug.DEBUG:
     import sys
     print('sys.version:', sys.version)
-    print('PyQt4:', 'PyQt4' in sys.modules)
-    print('PyQt5:', 'PyQt5' in sys.modules)
+    print('PyQt6:', 'PyQt6' in sys.modules)
     print('PySide:', 'PySide' in sys.modules)
     print('qtutils:', 'qtutils' in sys.modules)
     print('qtutils.qt:', 'qtutils.qt' in sys.modules)

@@ -178,9 +178,13 @@ class ImageOutput(QtWidgets.QWidget):
         # pass scrollwheel events of disabled buttons through to the parent
         # code adapted from: http://www.qtforum.org/article/28540/disabled-widgets-and-wheel-events.html
         elif obj and not obj.isEnabled() and event.type() == QEvent.Type.Wheel:
-            newEvent = QtGui.QWheelEvent(obj.mapToParent(event.pos()), event.globalPos(),
-                                   event.delta(), event.buttons(),
-                                   event.modifiers(), event.orientation())
+            newEvent = QtGui.QWheelEvent(
+                QtCore.QPointF(obj.mapToParent(event.position().toPoint())),
+                event.globalPosition(),
+                event.pixelDelta(), event.angleDelta(),
+                event.buttons(), event.modifiers(),
+                event.phase(), event.inverted(),
+            )
             QtWidgets.QApplication.instance().postEvent(obj.parent(), newEvent)
             return True
         

@@ -21,6 +21,12 @@ import warnings
 # The maximum number of windows the excepthook will spawn:
 MAX_WINDOWS = 10
 
+# Set the LABSCRIPT_NO_ERROR_DIALOG environment variable, or set this to True at
+# runtime, to stop exceptions spawning graphical error windows. Exceptions are
+# still logged and printed to stderr, which is what you usually want when
+# running under a debugger:
+NO_ERROR_DIALOG = bool(os.environ.get('LABSCRIPT_NO_ERROR_DIALOG'))
+
 subprocess_script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tk_exception.py')
 
 
@@ -28,6 +34,7 @@ class l:
     logger = None
 
 child_processes = []
+_original_showwarning = warnings.showwarning
 
 
 def install_thread_excepthook():
@@ -66,16 +73,17 @@ def tkhandler(exceptclass, exception, exec_info, reraise=True):
     if exceptclass in [KeyboardInterrupt, SystemExit]:
         sys.__excepthook__(exceptclass, exception, exec_info)
     else:
-        for previous_process in child_processes[:]:
-            if previous_process.poll() is not None:
-                child_processes.remove(previous_process)
-        if len(child_processes) >= MAX_WINDOWS:
-            shortmessage = "Too many errors"
-            longmessage = ("Too many errors: Further errors will " +
-                           "not be shown graphically until some error windows are closed")
-        if len(child_processes) < MAX_WINDOWS + 1:
-            process = subprocess.Popen([sys.executable, subprocess_script_path, script, shortmessage, longmessage])
-            child_processes.append(process)
+        if not NO_ERROR_DIALOG:
+            for previous_process in child_processes[:]:
+                if previous_process.poll() is not None:
+                    child_processes.remove(previous_process)
+            if len(child_processes) >= MAX_WINDOWS:
+                shortmessage = "Too many errors"
+                longmessage = ("Too many errors: Further errors will " +
+                               "not be shown graphically until some error windows are closed")
+            if len(child_processes) < MAX_WINDOWS + 1:
+                process = subprocess.Popen([sys.executable, subprocess_script_path, script, shortmessage, longmessage])
+                child_processes.append(process)
         if reraise:
             sys.__excepthook__(exceptclass, exception, exec_info)
 
@@ -83,12 +91,11 @@ def tkhandler(exceptclass, exception, exec_info, reraise=True):
 def logwarning(message, category, filename, lineno, file=None, line=None):
     logmessage = warnings.formatwarning(message, category, filename, lineno, line)
     l.logger.warn(logmessage)
-    warnings._showwarning(message, category, filename, lineno, file, line)
+    _original_showwarning(message, category, filename, lineno, file, line)
 
 
 def set_logger(logger):
     l.logger = logger
-    warnings._showwarning = warnings.showwarning
     warnings.showwarning = logwarning
 
 # Check for tkinter availability. Tkinter is frustratingly not available

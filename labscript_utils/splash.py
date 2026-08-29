@@ -15,7 +15,7 @@ import sys
 from labscript_utils import dedent
 
 try:
-    from qtutils.qt import QtWidgets, QtCore, QtGui, QT_ENV
+    from qtutils.qt import QtWidgets, QtCore, QtGui
 except ImportError as e:
     if 'DLL load failed' in str(e):
         msg = """Failed to load Qt DLL. This can be caused by application shortcuts
@@ -28,15 +28,46 @@ except ImportError as e:
     
 Qt = QtCore.Qt
 
-# These are default in Qt6 and print a warning if set
-if QT_ENV == 'PyQt5':
-    # Set auto high-DPI scaling - this ensures pixel metrics are scaled
-    # appropriately so that we don't get a weird mix of large fonts and small
-    # everything else on High DPI displays:
-    QtWidgets.QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-    # Use high res pixmaps if available, instead of rendering at low resolution and
-    # upscaling:
-    QtWidgets.QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+
+def configure_qapplication(qapplication):
+    """Apply labscript-wide QApplication configuration."""
+    qapplication.setAttribute(Qt.AA_DontShowIconsInMenus, False)
+    if sys.platform == 'darwin':
+        icon_path = qapplication.property('_labscript_icon_path')
+        if icon_path:
+            icon = QtGui.QIcon(icon_path)
+            if not icon.isNull():
+                qapplication.setWindowIcon(icon)
+        if qapplication.property('_labscript_qapplication_configured'):
+            return qapplication
+        # Native macOS widget styling makes many Qt controls look inconsistent
+        # with the rest of the suite. Use Qt's own style, but preserve the
+        # current palette so dark/light appearance still follows the active
+        # theme.
+        palette = QtGui.QPalette(qapplication.palette())
+        style = QtWidgets.QStyleFactory.create('Fusion')
+        if style is not None:
+            qapplication.setStyle(style)
+            qapplication.setPalette(palette)
+    elif qapplication.property('_labscript_qapplication_configured'):
+        return qapplication
+    qapplication.setProperty('_labscript_qapplication_configured', True)
+    return qapplication
+
+def get_qapplication(argv=None, application_name=None, icon_path=None):
+    qapplication = QtWidgets.QApplication.instance()
+
+    if qapplication is None:
+        argv = sys.argv if argv is None else argv
+        if application_name is not None:
+            # Create a new argv so QApplication can alter it without mutating sys.argv.
+            argv = [application_name] + argv[1:]
+
+        qapplication = QtWidgets.QApplication(argv)
+
+    if icon_path is not None:
+        qapplication.setProperty('_labscript_icon_path', icon_path)
+    return configure_qapplication(qapplication)
 
 
 class Splash(QtWidgets.QFrame):
@@ -49,15 +80,15 @@ class Splash(QtWidgets.QFrame):
     BG = '#ffffff'
     FG = '#000000'
 
-    def __init__(self, imagepath):
-        self.qapplication = QtWidgets.QApplication.instance()
-        if self.qapplication is None:
-            self.qapplication = QtWidgets.QApplication(sys.argv)
+    def __init__(self, icon_path, application_name=None):
+        self.qapplication = get_qapplication(
+            application_name=application_name, icon_path=icon_path
+        )
         super().__init__()
         self.icon = QtGui.QPixmap()
-        self.icon.load(imagepath)
+        self.icon.load(icon_path)
         if self.icon.isNull():
-            raise ValueError("Invalid image file: {}.\n".format(imagepath))
+            raise ValueError("Invalid image file: {}.\n".format(icon_path))
         self.icon = self.icon.scaled(
             self.imwidth, self.imheight, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
         )

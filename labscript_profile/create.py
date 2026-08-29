@@ -1,14 +1,29 @@
 import sys
 import os
 import shutil
-import configparser
 from pathlib import Path
 from subprocess import check_output
-from labscript_profile import LABSCRIPT_SUITE_PROFILE, default_labconfig_path
+import h5py
+from labscript_profile import (
+    LABSCRIPT_SUITE_PROFILE,
+    default_labconfig_path,
+    legacy_labconfig_path,
+)
 import argparse
+from labscript_profile.toml_config import dump_toml_file, load_toml_file
 
 _here = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_PROFILE_CONTENTS = os.path.join(_here, 'default_profile')
+
+
+def _replace_backslashes(value):
+    if isinstance(value, dict):
+        return {key: _replace_backslashes(child) for key, child in value.items()}
+    if isinstance(value, list):
+        return [_replace_backslashes(child) for child in value]
+    if isinstance(value, str):
+        return value.replace('\\', os.path.sep)
+    return value
 
 
 def make_shared_secret(directory):
@@ -31,37 +46,34 @@ def make_labconfig_file(apparatus_name = None):
         Overrides the default apparatus name with the provided one if not None
     """
 
-    source_path = os.path.join(LABSCRIPT_SUITE_PROFILE, 'labconfig', 'example.ini')
+    source_path = os.path.join(LABSCRIPT_SUITE_PROFILE, 'labconfig', 'example.toml')
     target_path = default_labconfig_path()
-    if os.path.exists(target_path):
+    # LEGACY INI COMPATIBILITY. DEPRECATED CODE, WILL BE REMOVED.
+    legacy_path = legacy_labconfig_path()
+    if os.path.exists(target_path) or (legacy_path is not None and os.path.exists(legacy_path)):
         raise FileExistsError(target_path)
-    with open(source_path) as infile, open(target_path, 'w') as outfile:
-        data = infile.read()
-        data = data.replace('\\', os.path.sep)
-        outfile.write(data)
-
-    # Now change some things about it:
-    config = configparser.ConfigParser(interpolation=None)
-    config.read(target_path)
+    config = load_toml_file(source_path)
+    if os.path.sep != '\\':
+        config = _replace_backslashes(config)
     if sys.platform == 'linux':
-        config.set('programs', 'text_editor', 'gedit')
+        config['programs']['text_editor'] = 'gedit'
     elif sys.platform == 'darwin':
-        config.set('programs', 'text_editor', 'open')
-        config.set('programs', 'text_editor_arguments', '-a TextEdit {file}')
+        config['programs']['text_editor'] = 'open'
+        config['programs']['text_editor_arguments'] = '-a TextEdit {file}'
     if sys.platform != 'win32':
-        config.set('programs', 'hdf5_viewer', 'hdfview')
-        config.set('DEFAULT', 'shared_drive', '$HOME/labscript_shared')
+        config['programs']['hdf5_viewer'] = 'hdfview'
+        config['default']['shared_drive'] = '$HOME/labscript_shared'
     shared_secret = make_shared_secret(target_path.parent)
     shared_secret_entry = Path(
         '%(labscript_suite)s', shared_secret.relative_to(LABSCRIPT_SUITE_PROFILE)
     )
-    config.set('security', 'shared_secret', str(shared_secret_entry))
+    config['security']['shared_secret'] = str(shared_secret_entry)
     if apparatus_name is not None:
         print(f'\tSetting apparatus name to \'{apparatus_name}\'')
-        config.set('DEFAULT', 'apparatus_name', apparatus_name)
+        config['default']['apparatus_name'] = apparatus_name
 
-    with open(target_path, 'w') as f:
-        config.write(f)
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    dump_toml_file(target_path, config)
 
 def compile_connection_table():
     """Compile the connection table defined in the labconfig file
@@ -75,8 +87,9 @@ def compile_connection_table():
         # if runmanager doesn't import, skip compilation
         return
 
-    config = configparser.ConfigParser(defaults = {'labscript_suite': str(LABSCRIPT_SUITE_PROFILE)})
-    config.read(default_labconfig_path())
+    from labscript_utils.labconfig import LabConfig
+
+    config = LabConfig()
 
     # The path to the user's connection_table.py script
     script_path = os.path.expandvars(config['paths']['connection_table_py'])
@@ -84,8 +97,9 @@ def compile_connection_table():
     output_h5_path = os.path.expandvars(config['paths']['connection_table_h5'])
     # create output directory, if needed
     Path(output_h5_path).parent.mkdir(parents=True, exist_ok=True)
-    # compile the h5 file
-    runmanager.new_globals_file(output_h5_path)
+    # Create a fresh HDF5 target for the compile output.
+    with h5py.File(output_h5_path, 'w'):
+        pass
 
     def dummy_callback(success):
         pass

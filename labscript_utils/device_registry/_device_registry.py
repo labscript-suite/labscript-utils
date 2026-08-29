@@ -6,6 +6,7 @@ import traceback
 import inspect
 from labscript_utils import dedent
 from labscript_utils.labconfig import LabConfig
+from labscript_profile.toml_config import as_config_list
 
 
 """This file contains the machinery for registering and looking up what BLACS tab and
@@ -74,11 +75,11 @@ def _get_device_dirs():
     """Return the directory of labscript_devices, and the folders containing
     submodules of any packages listed in the user_devices labconfig setting"""
     try:
-        user_devices = LabConfig().get('DEFAULT', 'user_devices')
+        user_devices = LabConfig().get('default', 'user_devices')
     except (LabConfig.NoOptionError, LabConfig.NoSectionError):
         user_devices = 'user_devices'
-    # Split on commas, remove whitespace:
-    user_devices = [s.strip() for s in user_devices.split(',')]
+    # Accept a comma-separated string or a TOML array:
+    user_devices = as_config_list(user_devices)
     return _get_import_paths(['labscript_devices'] + user_devices)
 
 

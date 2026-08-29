@@ -52,5 +52,5 @@ if __name__ == '__main__':
         tabs.addTab(widget, d)
     tabs.setTabPosition(QtWidgets.QTabWidget.TabPosition.East)
     tabs.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
     
