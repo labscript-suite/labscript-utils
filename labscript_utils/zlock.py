@@ -40,7 +40,7 @@ def main():
         '-m',
         'zprocess.zlock',
         '--port',
-        config['zlock_port'],
+        str(config['zlock_port']),
         '-l',
         LOG_PATH,
     ]

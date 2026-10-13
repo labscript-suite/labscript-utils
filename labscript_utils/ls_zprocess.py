@@ -100,14 +100,15 @@ def get_config():
         config['shared_secret'] = None
         config['shared_secret_file'] = None
     else:
-        config['shared_secret'] = open(shared_secret_file).read().strip()
+        with open(shared_secret_file) as f:
+            config['shared_secret'] = f.read().strip()
         config['shared_secret_file'] = shared_secret_file
     try:
         config['allow_insecure'] = labconfig.getboolean('security', 'allow_insecure')
     except (labconfig.NoOptionError, labconfig.NoSectionError):
         config['allow_insecure'] = False
-        if config['shared_secret'] is None and not config['allow_insecure']:
-            raise ValueError(_ERR_NO_SHARED_SECRET.replace('/', os.sep))
+    if config['shared_secret'] is None and not config['allow_insecure']:
+        raise ValueError(_ERR_NO_SHARED_SECRET.replace('/', os.sep))
     try:
         config['logging_maxBytes'] = labconfig.getint('logging', 'maxBytes')
     except (labconfig.NoOptionError, labconfig.NoSectionError):
@@ -257,7 +258,7 @@ class Context(SecureContext):
         # be a SecureSocket. If caller has explicitly requested a different socket type
         # (e.g since pyzmq 25, ThreadAuthenticator sets up an internal socket by calling
         # `Context.socket(..., socket_class=zmq.Socket)), then don't.`
-        if socket_class is None or issubclass(socket_class, SecureContext):
+        if socket_class is None or issubclass(socket_class, SecureSocket):
             config = get_config()
             kwargs['allow_insecure'] = config['allow_insecure']
         return SecureContext.socket(self, socket_type=socket_type, **kwargs)

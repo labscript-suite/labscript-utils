@@ -91,9 +91,15 @@ class Splash(QtWidgets.QFrame):
         self.text = text
         self.label.setText(text)
         self._paint_pending = True
-        while self._paint_pending:
+        window = self.windowHandle()
+        # Wait for the new text to paint, unless the window is unexposed (covered,
+        # on macOS). Process events at least once so a not-yet-mapped window can
+        # become exposed.
+        while True:
             QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.ProcessEventsFlag.AllEvents)
             QtCore.QCoreApplication.sendPostedEvents()
+            if not self._paint_pending or window is None or not window.isExposed():
+                break
 
 
 if __name__ == '__main__':

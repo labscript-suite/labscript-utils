@@ -61,6 +61,10 @@ def _default(o):
     # Workaround for https://bugs.python.org/issue24313
     if isinstance(o, np.integer):
         return int(o)
+    if isinstance(o, np.floating):
+        return float(o)
+    if isinstance(o, np.bool_):
+        return bool(o)
     raise TypeError
 
 
