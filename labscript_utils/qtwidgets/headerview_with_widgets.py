@@ -223,7 +223,9 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
             else:
                 widgets_with_offset[logical_index - n_removed] = widget
         self.widgets = widgets_with_offset
-        self.update_indents()
+        # Deferred: calling setStyleSheet() from within columnsRemoved desyncs
+        # QHeaderView's section count from the model.
+        QtCore.QTimer.singleShot(0, self.update_indents)
         self.update_widget_positions()
 
 
