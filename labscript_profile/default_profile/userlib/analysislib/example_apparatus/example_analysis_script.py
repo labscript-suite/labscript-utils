@@ -1,42 +1,32 @@
 import lyse
 from pathlib import Path
 import matplotlib.pyplot as plt
-import numpy as np
 import h5py
 
-# Is this script being run from within an interactive lyse session?
-if lyse.spinning_top:
-    # If so, use the filepath of the current shot
-    h5_path = lyse.path
-else:
-    # If not, get the filepath of the last shot of the lyse DataFrame
+# Within lyse, lyse.path is the filepath of the shot being analysed. Outside lyse it is
+# None, and we use the filepath of the last shot of the lyse DataFrame instead.
+h5_path = lyse.path
+if h5_path is None:
     df = lyse.data()
     h5_path = df.filepath.iloc[-1]
 
 # Instantiate a lyse.Run object for this shot
 run = lyse.Run(h5_path)
 
-# Get a dictionary of the global variables used in this shot
-run_globals = run.get_globals()
-
-# Open experiment file to pull variables from
+# Read the output table of the dummy intermediate device from the shot file. It has one
+# row per clock tick and one column per output, named after the output.
 with h5py.File(h5_path, 'r') as h:
-    
-    devices = h['devices']
-    
-    outputs = devices['intermediate_device']['OUTPUTS']
-    pulse = devices['pseudoclock']['PULSE_PROGRAM'] # unused
-    
-    analog_data = outputs[:]['analog_out']
-    digital_data = outputs[:]['digital_out']
+    outputs = h['devices']['intermediate_device']['OUTPUTS'][:]
+analog_data = outputs['analog_out']
+digital_data = outputs['digital_out']
 
-plt.figure()    
-plt.plot(np.array(analog_data), 'b.', label='analog_out')
-plt.plot(np.array(digital_data), 'r.', label='digital_out')
-plt.xlabel('time (ms)')
+# Plot both outputs
+plt.plot(analog_data, 'b.', label='analog_out')
+plt.plot(digital_data, 'r.', label='digital_out')
+plt.xlabel('clock tick')
 plt.ylabel('intermediate device output')
 
-# # Label the plot with a unique string representing the shot
+# Label the plot with a unique string representing the shot
 plt.title(Path(run.h5_path).name)
 
 # Plot adornments
@@ -46,9 +36,8 @@ plt.grid()
 # Show the plot
 plt.show()
 
-# Compute a result based on the image processing and save it to the 'results' group of
-# the shot file
-result = {}
-result['analog_data'] = analog_data
-result['digital_data'] = digital_data
-run.save_result('foobar', result)
+# Save the outputs as arrays, and the maximum analog output as a scalar result, in the
+# 'results' group of the shot file
+run.save_result_array('analog_out', analog_data)
+run.save_result_array('digital_out', digital_data)
+run.save_result('analog_out_max', analog_data.max())
