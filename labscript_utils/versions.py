@@ -18,10 +18,7 @@ import ast
 import setuptools_scm
 import packaging.version
 
-try:
-    import importlib.metadata as importlib_metadata
-except ImportError:
-    import importlib_metadata
+import importlib.metadata
 
 
 class NotFound(object):
@@ -98,7 +95,7 @@ def _get_metadata_version(project_name, import_path):
     
     for finder in sys.meta_path:
         if hasattr(finder, 'find_distributions'):
-            context = importlib_metadata.DistributionFinder.Context(
+            context = importlib.metadata.DistributionFinder.Context(
                 name=project_name, path=[import_path]
             )
             dists = finder.find_distributions(context)
@@ -190,7 +187,7 @@ def get_version(import_name, project_name=None, import_path=None):
         return setuptools_scm.get_version(import_path)
     except LookupError:
         pass
-    # Check if importlib_metadata knows about this module:
+    # Check if importlib.metadata knows about this module:
     version = _get_metadata_version(project_name, import_path)
     if version is not None:
         return version
