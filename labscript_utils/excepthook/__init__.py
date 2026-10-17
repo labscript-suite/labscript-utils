@@ -74,7 +74,10 @@ def tkhandler(exceptclass, exception, exec_info, reraise=True):
             shortmessage = "Too many errors"
             longmessage = ("Too many errors: Further errors will " +
                            "not be shown graphically until some error windows are closed")
-        if len(child_processes) < MAX_WINDOWS + 1:
+        if tkinter is None:
+            # No window can be shown, so print the traceback instead:
+            reraise = True
+        elif len(child_processes) < MAX_WINDOWS + 1:
             process = subprocess.Popen([sys.executable, subprocess_script_path, script, shortmessage, longmessage])
             child_processes.append(process)
         if reraise:
@@ -91,11 +94,16 @@ def set_logger(logger):
     l.logger = logger
     warnings.showwarning = logwarning
 
-# Check for tkinter availability. Tkinter is frustratingly not available
-# by default for python 3.x on Debian systems, despite being considered
-# part of the Python standard library. I'll make it a dependency for
-# packaging, but this is an extra check at runtime so that if something
-# goes wrong with that we get an error at import rather than later:
-import tkinter
+# tkinter is part of the standard library but is a separate package on Debian and
+# Ubuntu, so it may be missing. Without it, exceptions are printed to stderr instead
+# of being shown in a window.
+try:
+    import tkinter
+except ImportError:
+    tkinter = None
+    warnings.warn(
+        "tkinter is not installed, so exceptions will be printed to stderr instead of "
+        "being shown in a window. Install the python3-tk package for the error windows."
+    )
 sys.excepthook = tkhandler
 install_thread_excepthook()

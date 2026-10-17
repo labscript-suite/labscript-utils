@@ -12,7 +12,7 @@
 #####################################################################
 from .UnitConversionBase import *
 from .NovaTechDDS9m import NovaTechDDS9mAmpConversion
-from numpy import *
+from numpy import pi, cos, arccos
 
 class SineAom(NovaTechDDS9mAmpConversion):
     """
