@@ -2,6 +2,7 @@ import sys
 import os
 import shutil
 import configparser
+import keyword
 from pprint import pformat
 from pathlib import Path
 from subprocess import check_output
@@ -21,6 +22,18 @@ def make_shared_secret(directory):
         if 'zpsecret' in line and '.key' in line:
             return Path(line.strip())
     raise RuntimeError("Could not parse output of zprocess.makesecret")
+
+
+def validate_apparatus_name(apparatus_name):
+    """Raise ValueError unless apparatus_name is a valid Python identifier that is not a
+    keyword. The apparatus name is the name of a package in labscriptlib."""
+    if not apparatus_name.isidentifier() or keyword.iskeyword(apparatus_name):
+        raise ValueError(
+            f"Apparatus name {apparatus_name!r} is not a valid Python identifier. The "
+            "apparatus name is the name of a package in labscriptlib, so it must consist "
+            "of letters, digits and underscores, must not start with a digit, and must "
+            "not be a Python keyword."
+        )
 
 
 def make_labconfig_file(apparatus_name = None):
@@ -133,7 +146,11 @@ def create_profile_cli():
 
     parser.add_argument('-n', '--apparatus_name',
                         type=str,
-                        help='Sets the apparatus_name in the labconfig file. Defaults to example_apparatus',
+                        help='Sets the apparatus_name in the labconfig file and the name '
+                             'of the apparatus package in labscriptlib. Must be a valid '
+                             'Python identifier: letters, digits and underscores, not '
+                             'starting with a digit, and not a Python keyword. Defaults '
+                             'to example_apparatus',
                         )
     parser.add_argument('-c', '--compile',
                         action='store_true',
@@ -141,6 +158,12 @@ def create_profile_cli():
                         default=False)
     
     args = parser.parse_args()
+
+    if args.apparatus_name is not None:
+        try:
+            validate_apparatus_name(args.apparatus_name)
+        except ValueError as e:
+            parser.error(str(e))
 
     create_profile(args.apparatus_name, args.compile)
 
@@ -156,6 +179,9 @@ def create_profile(apparatus_name = None, compile_table = False):
         Whether to compile to example connection table defined by the default config file
         Default is False.
     """
+
+    if apparatus_name is not None:
+        validate_apparatus_name(apparatus_name)
 
     src = Path(DEFAULT_PROFILE_CONTENTS)
     dest = Path(LABSCRIPT_SUITE_PROFILE)
