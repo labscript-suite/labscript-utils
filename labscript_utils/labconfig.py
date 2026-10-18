@@ -41,9 +41,7 @@ class LabConfig(configparser.ConfigParser):
     ):
         if required_params is None:
             required_params = {}
-        if defaults is None:
-            defaults = {}
-        # str() below is for py36 compat, where ConfigParser can't deal with Path objs
+        defaults = dict(defaults) if defaults is not None else {}
         defaults['labscript_suite'] = str(LABSCRIPT_SUITE_PROFILE)
         if isinstance(config_path, list):
             self.config_path = config_path[0]
@@ -62,7 +60,7 @@ class LabConfig(configparser.ConfigParser):
         )
         # read all files in the config path if it is a list (self.config_path only
         # contains one string):
-        self.read(config_path)
+        files_read = self.read(config_path)
 
         # Rename experiment_name to apparatus_name and raise a DeprectionWarning
         experiment_name = self.get("DEFAULT", "experiment_name", fallback=None)
@@ -83,10 +81,14 @@ class LabConfig(configparser.ConfigParser):
             for section, options in required_params.items():
                 for option in options:
                     self.get(section, option)
-        except configparser.NoOptionError:
-            msg = f"""The experiment configuration file located at {config_path} does
-                not have the required keys. Make sure the config file contains the
-                following structure:\n{self.file_format}"""
+        except (configparser.NoOptionError, configparser.NoSectionError):
+            if files_read:
+                msg = f"""The experiment configuration file located at {config_path} does
+                    not have the required keys. Make sure the config file contains the
+                    following structure:\n{self.file_format}"""
+            else:
+                msg = f"""No experiment configuration file was found at {config_path}.
+                    Create one containing the following structure:\n{self.file_format}"""
             raise Exception(dedent(msg))
 
 

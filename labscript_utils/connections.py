@@ -103,15 +103,15 @@ class ConnectionTable(object):
                 # is it the same?   
                 if connection != other_connection:
                     diff = connection.diff(other_connection)
-                    msg = '  ' + name + ':\n'
+                    msg = '  ' + name + ':'
                     for key, (ours, theirs) in diff.items():
                         if isinstance(ours, dict) and isinstance(theirs, dict):
-                            msg += '    {}:\n'.format(key)
+                            msg += '\n    {}:'.format(key)
                             subdiff = dict_diff(ours, theirs)
                             for key, (ours, theirs) in subdiff.items():
-                                msg += '      {}: {} != {}'.format(key, ours, theirs)
+                                msg += '\n      {}: {} != {}'.format(key, ours, theirs)
                         else:
-                            msg += '    {}: {} != {}'.format(key, ours, theirs)
+                            msg += '\n    {}: {} != {}'.format(key, ours, theirs)
                     incompat.append(msg)
         
         # construct a human-readable explanation
@@ -238,7 +238,7 @@ class Connection(object):
         
     def _deserialise(self, name, value):
         """deserialise one item of the row depending on what it is"""
-        name == _ensure_str(name)
+        name = _ensure_str(name)
         if name in ['parent port', 'unit conversion class']:
             # If no unit conversion class, or parent port, set to the object
             # None, otherwise leave as the parent port string or unit
@@ -353,13 +353,3 @@ class Connection(object):
                 if result is not None:
                     return result
         return None    
-
-
-# if __name__ == '__main__':
-#     a = ConnectionTable('/home/bilbo/labscript_suite/labconfig/bilbo-Precision-5520_BLACS.h5')
-#     c = ConnectionTable('/home/bilbo/labscript_shared/Experiments/cjb7_dev/connectiontable.h5')
-#     c.print_details()
-#     d = ConnectionTable('/home/bilbo/labscript_shared/Experiments/cjb7_dev/connectiontable.h5')
-#     list(d.toplevel_children.values())[0]._rowdict['properties']['test'] = 'fake_property'
-#     del c.table['bragg_beam_0']
-#     c.assert_superset(d)

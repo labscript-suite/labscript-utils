@@ -104,7 +104,7 @@ class AnalogOutput(QtWidgets.QWidget):
             menu.aboutToHide.connect(lambda menu=menu: deletemenu(menu))
             
             # Show the menu
-            menu.popup(self.mapToGlobal(pos))
+            menu.popup(self._spin_widget.lineEdit().mapToGlobal(pos))
             
         self._spin_widget.lineEdit().setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
         self._spin_widget.lineEdit().customContextMenuRequested.connect(context_menu)
@@ -227,6 +227,7 @@ class AnalogOutput(QtWidgets.QWidget):
             menu = QtWidgets.QMenu(self)
             menu.addAction("Lock" if self._spin_widget.isEnabled() else "Unlock")
             menu.triggered.connect(self._menu_triggered)
+            menu.aboutToHide.connect(menu.deleteLater)
             menu.popup(self.mapToGlobal(event.pos()))
         
         return QtWidgets.QWidget.eventFilter(self, obj, event)

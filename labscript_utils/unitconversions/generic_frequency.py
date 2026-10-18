@@ -22,11 +22,10 @@ class FreqConversion(UnitConversion):
     base_unit = 'Hz' # must be defined here and match default hardware unit in BLACS tab
 
     def __init__(self, calibration_parameters = None):
+        if calibration_parameters is None:
+            calibration_parameters = {}
         self.parameters = calibration_parameters
-        if hasattr(self, 'derived_units'):
-            self.derived_units += ['kHz', 'MHz', 'GHz']
-        else:
-            self.derived_units = ['kHz', 'MHz', 'GHz']
+        self.derived_units = list(getattr(self, 'derived_units', [])) + ['kHz', 'MHz', 'GHz']
         UnitConversion.__init__(self,self.parameters)
     
     def kHz_to_base(self,kHz):

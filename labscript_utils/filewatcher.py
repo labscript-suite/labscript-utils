@@ -10,7 +10,7 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-from inspect import getfullargspec
+from inspect import signature
 from queue import Queue, Empty
 import threading
 import os
@@ -46,7 +46,7 @@ class FileWatcher(object):
                 Restoration cannot be detected for types not in hashable_types.
             interval (float, optional): Polling interval in seconds (default 1).
         """
-        if len(getfullargspec(callback)[0]) > 2:
+        if len(signature(callback).parameters) > 2:
             # For backwards compatability, allow callback to have only two args
             self.callback = callback
         else:
@@ -208,6 +208,8 @@ class FileWatcher(object):
     def add_files(self, files, clean_modified_info=None):
         if clean_modified_info is None:
             clean_modified_info = {}
+        if isinstance(files, str):
+            files = [files]
         with self.lock:
             self.files = self.files.union(set(files))
             # Remove keys from the clean_modified_info that are not in the files
@@ -226,6 +228,8 @@ class FileWatcher(object):
     def add_folders(self, folders, clean_modified_info=None):
         if clean_modified_info is None:
             clean_modified_info = {}
+        if isinstance(folders, str):
+            folders = [folders]
         with self.lock:
             self.folders = self.folders.union(set(folders))
             initial_files = self.files.copy()

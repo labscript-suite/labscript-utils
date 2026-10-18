@@ -1,7 +1,7 @@
 import site
 import sys
 import os
-from configparser import ConfigParser, NoSectionError, NoOptionError
+from configparser import ConfigParser, Error as ConfigParserError
 from pathlib import Path
 from subprocess import check_output
 import socket
@@ -53,11 +53,14 @@ def add_userlib_and_pythonlib():
         config = ConfigParser(
             defaults={'labscript_suite': str(LABSCRIPT_SUITE_PROFILE)}
         )
-        config.read(labconfig)
+        try:
+            config.read(labconfig)
+        except ConfigParserError:
+            return
         for option in ['userlib', 'pythonlib']:
             try:
                 paths = config.get('DEFAULT', option).split(',')
-            except (NoSectionError, NoOptionError):
+            except ConfigParserError:
                 paths = []
             for path in paths:
-                site.addsitedir(path)
+                site.addsitedir(os.path.expandvars(path))

@@ -126,10 +126,10 @@ class ToolPaletteGroup(QtWidgets.QVBoxLayout):
         return self.reorder_palette_by_index(self.get_index_from_name(name),new_index)
     
     def reorder_palette_by_index(self,old_index,new_index):
-        if old_index < 0 or old_index >= count(self._widget_groups):
+        if old_index < 0 or old_index >= len(self._widget_groups):
             raise RuntimeError('The specified old_index is out of bounds')
             
-        if new_index < 0 or new_index >= count(self._widget_groups):
+        if new_index < 0 or new_index >= len(self._widget_groups):
             raise RuntimeError('The specified new_index is out of bounds')    
             
         # TODO: now perform the reorder
@@ -171,7 +171,7 @@ class ToolPaletteGroup(QtWidgets.QVBoxLayout):
     
     @widths_linked.setter
     def widths_linked(self,value):
-        if self._width_groups and self._all_widths_linked:
+        if self._width_groups and value:
             raise RuntimeError('You cannot link the widths of all tool palettes if you have already created a linked width group')
     
         self._all_widths_linked = value
@@ -185,10 +185,10 @@ class ToolPaletteGroup(QtWidgets.QVBoxLayout):
             raise RuntimeError('The tool palette group already has a width group named %s'%width_group_name)
         
         # check if anything in names is already in another width group
-        for width_group_name,width_group_data in self._width_groups.items():
+        for other_group_name,width_group_data in self._width_groups.items():
             for name in names:
                 if name in width_group_data[1]:
-                    raise RuntimeError('The tool pallete named %s is already in the linked width group %s'%(name,width_group_name))
+                    raise RuntimeError('The tool pallete named %s is already in the linked width group %s'%(name,other_group_name))
         
         # create width group
         self._width_groups[width_group_name] = (self._create_find_max_function(width_group_name),names)
@@ -201,9 +201,9 @@ class ToolPaletteGroup(QtWidgets.QVBoxLayout):
         if width_group_name not in self._width_groups:
             raise RuntimeError('The tool palette group does not have a width group named %s'%width_group_name)
     
-        for width_group_name,width_group_data in self._width_groups.items():
+        for other_group_name,width_group_data in self._width_groups.items():
             if name in width_group_data[1]:
-                raise RuntimeError('The tool pallete named %s is already in the linked width group %s'%(name,width_group_name))
+                raise RuntimeError('The tool pallete named %s is already in the linked width group %s'%(name,other_group_name))
         
         self._width_groups[width_group_name][1].append(name)
         # recreate the find_max_item_width function
