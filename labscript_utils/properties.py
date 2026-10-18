@@ -84,18 +84,13 @@ def set_attributes(group, attributes):
     """Add attributes to a HDF5 group, serialising them to JSON if they do not map to
     native HDF5 datatypes"""
     for key, val in attributes.items():
-        try:
-            # Workaround for h5py not supporting None but not raising a TypeError:
-            if val is None:
-                raise TypeError('has no native HDF5 equivalent')
-            group.attrs[key] = val
-        except TypeError as e:
-            # If type not supported by HDF5, store as JSON
-            if 'has no native HDF5 equivalent' in str(e):
-                json_string = serialise(val)
-                group.attrs[key] = json_string
-            else:
-                raise
+        if val is not None:
+            try:
+                group.attrs[key] = val
+                continue
+            except (TypeError, ValueError):
+                pass
+        group.attrs[key] = serialise(val)
 
 
 def get_attributes(group):
