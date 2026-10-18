@@ -63,7 +63,7 @@ def dedent(s):
     for line in lines[1:]:
         if line:
             indentation = min(indentation, len(line) - len(line.lstrip(' ')))
-    if not lines[1:]:
+    if indentation == float('inf'):
         indentation = 0
     # Dedent the lines:
     dedented_lines = []
