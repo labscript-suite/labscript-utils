@@ -152,9 +152,9 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
         self.position_update_required = False
         if not self.count():
             return
-        max_height = max(self.sectionSizeFromContents(i).height()
-                         for i in range(self.count())
-                         if not self.isSectionHidden(i))
+        max_height = max((self.sectionSizeFromContents(i).height()
+                          for i in range(self.count())
+                          if not self.isSectionHidden(i)), default=0)
         for visual_index in range(self.count()):
             logical_index = self.logicalIndex(visual_index)
             if logical_index in self.widgets:
