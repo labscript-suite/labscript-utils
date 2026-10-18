@@ -38,7 +38,7 @@ import h5py
 
 _File = h5py.File
 class File(_File):
-    def __init__(self, name, mode=None, driver=None, libver=None, **kwds):
+    def __init__(self, name, mode='r', driver=None, libver=None, **kwds):
         if not isinstance(name, h5py._objects.ObjectID):
             kwargs = {}
             if mode == 'r':
@@ -46,24 +46,33 @@ class File(_File):
             # Do not terminate upon SIGTERM while the file is open:
             self.kill_lock = kill_lock
             self.kill_lock.acquire()
-            # Ask other zlock users not to open the file while we have it open:
-            self.zlock = Lock(path_to_agnostic(name), **kwargs)
-            self.zlock.acquire()
+            try:
+                # Ask other zlock users not to open the file while we have it open:
+                zlock = Lock(path_to_agnostic(name), **kwargs)
+                zlock.acquire()
+                self.zlock = zlock
+            except:
+                self._release_locks()
+                raise
         try:
             _File.__init__(self, name, mode, driver, libver, **kwds)
         except:
-            if hasattr(self, 'zlock'):
-                self.zlock.release()
-            if hasattr(self, 'kill_lock'):
-                self.kill_lock.release()
+            self._release_locks()
             raise
+
+    def _release_locks(self):
+        """Release the zlock and the kill lock if this object holds them. Each lock is
+        released once, however many times this method is called."""
+        zlock = self.__dict__.pop('zlock', None)
+        if zlock is not None:
+            zlock.release()
+        kill_lock = self.__dict__.pop('kill_lock', None)
+        if kill_lock is not None:
+            kill_lock.release()
 
     def close(self):
         _File.close(self)
-        if hasattr(self, 'zlock'):
-            self.zlock.release()
-        if hasattr(self, 'kill_lock'):
-            self.kill_lock.release()
+        self._release_locks()
 
     # Overriding __exit__ is crucial. Since h5py.File.__exit__() holds h5py's
     # library-wide lock "phil", it calls close() whilst holding that lock. Our close()
