@@ -175,15 +175,6 @@ class ImageOutput(QtWidgets.QWidget):
             menu.popup(self.mapToGlobal(event.pos()))
             return True
         
-        # pass scrollwheel events of disabled buttons through to the parent
-        # code adapted from: http://www.qtforum.org/article/28540/disabled-widgets-and-wheel-events.html
-        elif obj and not obj.isEnabled() and event.type() == QEvent.Type.Wheel:
-            newEvent = QtGui.QWheelEvent(obj.mapToParent(event.pos()), event.globalPos(),
-                                   event.delta(), event.buttons(),
-                                   event.modifiers(), event.orientation())
-            QtWidgets.QApplication.instance().postEvent(obj.parent(), newEvent)
-            return True
-        
         return QtWidgets.QWidget.eventFilter(self, obj, event)
      
     # This method is called whenever an entry in the context menu is clicked

@@ -12,7 +12,7 @@
 #####################################################################
 import sys
 
-from qtutils.qt import QtCore, QtGui, QtWidgets, QT_ENV, PYQT5
+from qtutils.qt import QtCore, QtGui, QtWidgets
 
 
 class EnumOutput(QtWidgets.QWidget):
@@ -129,15 +129,6 @@ class EnumOutput(QtWidgets.QWidget):
             menu.addAction("Lock" if self._combobox.isEnabled() else "Unlock")
             menu.triggered.connect(self._menu_triggered)
             menu.popup(self.mapToGlobal(event.pos()))
-        
-        # pass scrollwheel events of disabled buttons through to the parent
-        # code adapted from: http://www.qtforum.org/article/28540/disabled-widgets-and-wheel-events.html
-        elif obj and not obj.isEnabled() and event.type() == QtCore.QEvent.Type.Wheel and QT_ENV != PYQT5:
-            newEvent = QtGui.QWheelEvent(obj.mapToParent(event.pos()), event.globalPos(),
-                                   event.delta(), event.buttons(),
-                                   event.modifiers(), event.orientation())
-            QtWidgets.QApplication.instance().postEvent(obj.parent(), newEvent)
-            return True
         
         return QtWidgets.QPushButton.eventFilter(self, obj, event)
      
