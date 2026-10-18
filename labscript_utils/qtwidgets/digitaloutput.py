@@ -46,6 +46,7 @@ class DigitalOutput(QtWidgets.QPushButton):
             menu = QtWidgets.QMenu(self)
             menu.addAction("Lock" if self.isEnabled() else "Unlock")
             menu.triggered.connect(self._menu_triggered)
+            menu.aboutToHide.connect(menu.deleteLater)
             menu.popup(self.mapToGlobal(event.pos()))
         
         return QtWidgets.QPushButton.eventFilter(self, obj, event)
@@ -90,7 +91,7 @@ class InvertedDigitalOutput(DigitalOutput):
 
     @state.setter
     def state(self,state):
-        DigitalOutput.state.fset(self, not state)
+        DigitalOutput.state.fset(self, not bool(int(state)))
 
 
 # A simple test!

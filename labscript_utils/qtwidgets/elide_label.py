@@ -33,14 +33,14 @@ class ElideScrollArea(QtWidgets.QScrollArea):
         self._elideMode = elideMode
         
     def minimumSizeHint(self):
-        if self.widget is None or self._elideMode == QtCore.Qt.TextElideMode.ElideNone:
+        if self.widget() is None or self._elideMode == QtCore.Qt.TextElideMode.ElideNone:
             return QtWidgets.QScrollArea.minimumSizeHint(self)
         else:
             actual_minimum_sizehint = self.widget().minimumSizeHint()
             return QtCore.QSize(0, actual_minimum_sizehint.height())
 
     def sizeHint(self):
-        if self.widget is None or self._elideMode == QtCore.Qt.TextElideMode.ElideNone:
+        if self.widget() is None or self._elideMode == QtCore.Qt.TextElideMode.ElideNone:
             return QtWidgets.QScrollArea.sizeHint(self)
         else:
             actual_sizehint = self.widget().sizeHint()

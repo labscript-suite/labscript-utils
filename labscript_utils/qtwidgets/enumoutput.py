@@ -128,6 +128,7 @@ class EnumOutput(QtWidgets.QWidget):
             menu = QtWidgets.QMenu(self)
             menu.addAction("Lock" if self._combobox.isEnabled() else "Unlock")
             menu.triggered.connect(self._menu_triggered)
+            menu.aboutToHide.connect(menu.deleteLater)
             menu.popup(self.mapToGlobal(event.pos()))
         
         return QtWidgets.QPushButton.eventFilter(self, obj, event)
