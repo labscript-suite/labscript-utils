@@ -22,7 +22,9 @@ class SineAom(NovaTechDDS9mAmpConversion):
 
     def __init__(self, calibration_parameters=None):
         # These parameters are loaded from a globals.h5 type file automatically
-        self.parameters = calibration_parameters        
+        if calibration_parameters is None:
+            calibration_parameters = {}
+        self.parameters = calibration_parameters
         self.derived_units = ["Power", "fraction"]
         # P(x) = A * cos(2*pi*f * x + phase) + c
         # Saturates at saturation Volts

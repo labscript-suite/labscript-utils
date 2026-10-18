@@ -23,6 +23,8 @@ class example1(UnitConversion):
     # dictionary
     
     def __init__(self,calibration_parameters = None):            
+        if calibration_parameters is None:
+            calibration_parameters = {}
         self.parameters = calibration_parameters
         
         self.derived_units = ['A', 'Gauss']
@@ -61,6 +63,8 @@ class example2(UnitConversion):
     # dictionary
     
     def __init__(self,calibration_parameters = None):            
+        if calibration_parameters is None:
+            calibration_parameters = {}
         self.parameters = calibration_parameters
         
         self.derived_units = ['detuned_MHz']
@@ -90,6 +94,8 @@ class example3(UnitConversion):
     # dictionary
     
     def __init__(self,calibration_parameters = None):            
+        if calibration_parameters is None:
+            calibration_parameters = {}
         self.parameters = calibration_parameters
         
         self.derived_units = ['W']

@@ -12,13 +12,15 @@
 #####################################################################
 from .UnitConversionBase import *
 from scipy.special import lambertw
-from numpy import exp, abs
+from numpy import exp, abs, minimum, maximum
 class OptotuneLens(UnitConversion):
     base_unit = 'V'
     derived_units = ['distance','I']
     
     def __init__(self, calibration_parameters=None):
         # These parameters are loaded from a globals.h5 type file automatically
+        if calibration_parameters is None:
+            calibration_parameters = {}
         self.parameters = calibration_parameters
         
         # I[A] = slope * V[V] + shift
@@ -50,7 +52,7 @@ class OptotuneLens(UnitConversion):
         return (volts > 0) * abs(volts)
         
     def distance_from_base(self,volts):
-        amps = max(min(self.parameters['current_cal'] * volts,self.parameters['I_Max']),0)
+        amps = maximum(minimum(self.parameters['current_cal'] * volts, self.parameters['I_Max']), 0)
         
         percentage = self.parameters['a']*exp(self.parameters['b']*amps) + self.parameters['c']*amps - self.parameters['a']
         

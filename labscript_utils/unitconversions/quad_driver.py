@@ -11,6 +11,7 @@
 #                                                                   #
 #####################################################################
 from .UnitConversionBase import *
+from numpy import maximum
 
 class quad_driver(UnitConversion):
     base_unit = 'V'
@@ -37,7 +38,7 @@ class quad_driver(UnitConversion):
             volts = (amps - self.parameters['A_offset'])/self.parameters['A_per_V']
         return volts
     def A_from_base(self,volts):
-        amps = max(volts * self.parameters['A_per_V'] + self.parameters['A_offset'], self.parameters['A_min'])
+        amps = maximum(volts * self.parameters['A_per_V'] + self.parameters['A_offset'], self.parameters['A_min'])
         return amps
     def Gcm_to_base(self,gauss_per_cm):
         volts = self.A_to_base(gauss_per_cm/self.parameters['Gcm_per_A'])
