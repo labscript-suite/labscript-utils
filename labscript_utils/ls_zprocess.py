@@ -12,6 +12,7 @@
 #####################################################################
 import sys
 import os
+import subprocess
 from socket import gethostbyname
 from packaging.version import Version
 import zmq
@@ -318,6 +319,15 @@ def RemoteProcessClient(host, port=None):
     return ProcessTree.instance().remote_process_client(host, port)
 
 
+def _start_server(module):
+    """Run `python -m <module> --daemon`, which starts a server in the background and
+    exits, and wait for it to exit."""
+    kwargs = {}
+    if os.name == 'nt':
+        kwargs['creationflags'] = subprocess.CREATE_NO_WINDOW
+    subprocess.run([sys.executable, '-m', module, '--daemon'], check=True, **kwargs)
+
+
 ZLOCK_DEFAULT_TIMEOUT = 45
 _zlock_server_supports_readwrite = False
 
@@ -335,9 +345,7 @@ def connect_to_zlock_server():
             # after this program exits. This is important for other programs which might
             # be using it. I don't really consider this bad practice since the server is
             # typically supposed to be running all the time:
-            zprocess.start_daemon(
-                [sys.executable, '-m', 'labscript_utils.zlock', '--daemon']
-            )
+            _start_server('labscript_utils.zlock')
             # Try again. Longer timeout this time, give it time to start up:
             client.ping(timeout=15)
     else:
@@ -376,9 +384,7 @@ def ensure_connected_to_zlog():
             # after this program exits. This is important for other programs which might
             # be using it. I don't really consider this bad practice since the server is
             # typically supposed to be running all the time:
-            zprocess.start_daemon(
-                [sys.executable, '-m', 'labscript_utils.zlog', '--daemon']
-            )
+            _start_server('labscript_utils.zlog')
             # Try again. Longer timeout this time, give it time to start up:
             client.ping(timeout=15)
     else:
