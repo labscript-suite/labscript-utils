@@ -14,7 +14,6 @@
 import labscript_utils.h5_lock, h5py
 import labscript_utils.properties
 import logging
-import labscript_utils.excepthook
 import numpy as np
 import copy
 import ast
