@@ -12,6 +12,8 @@
 #####################################################################
 import sys
 import os
+import logging
+import socket
 import subprocess
 from socket import gethostbyname
 from packaging.version import Version
@@ -391,3 +393,98 @@ def ensure_connected_to_zlog():
         client.ping()
     _connected_to_zlog = True
 
+
+if sys.platform == 'win32':
+    import ctypes
+    from ctypes import wintypes
+
+    # From mstcpip.h
+    SIO_TCP_INITIAL_RTO = 0x98000011
+    TCP_INITIAL_RTO_UNSPECIFIED_RTT = 0xFFFF
+    TCP_INITIAL_RTO_NO_SYN_RETRANSMISSIONS = 0xFE
+
+    class TCP_INITIAL_RTO_PARAMETERS(ctypes.Structure):
+        _fields_ = [('Rtt', wintypes.USHORT), ('MaxSynRetransmissions', ctypes.c_ubyte)]
+
+    _ws2_32 = ctypes.WinDLL('ws2_32', use_last_error=True)
+    _WSAIoctl = _ws2_32.WSAIoctl
+    _WSAIoctl.argtypes = [
+        ctypes.c_size_t,  # SOCKET
+        wintypes.DWORD,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+        ctypes.POINTER(wintypes.DWORD),
+        ctypes.c_void_p,
+        ctypes.c_void_p,
+    ]
+    _WSAIoctl.restype = ctypes.c_int
+
+    def _disable_syn_retransmissions(sock):
+        """Make a connection attempt on the socket fail as soon as it is refused. By
+        default Windows retransmits the SYN after a refusal, so that a connection to a
+        port with no listener fails only after about a second."""
+        params = TCP_INITIAL_RTO_PARAMETERS(
+            TCP_INITIAL_RTO_UNSPECIFIED_RTT, TCP_INITIAL_RTO_NO_SYN_RETRANSMISSIONS
+        )
+        returned = wintypes.DWORD()
+        result = _WSAIoctl(
+            sock.fileno(),
+            SIO_TCP_INITIAL_RTO,
+            ctypes.byref(params),
+            ctypes.sizeof(params),
+            None,
+            0,
+            ctypes.byref(returned),
+            None,
+            None,
+        )
+        if result != 0:
+            raise ctypes.WinError(ctypes.get_last_error())
+
+
+def port_in_use(port, timeout=1):
+    """Return whether a process on this computer is listening on the TCP port. We
+    attempt a connection to the port on 127.0.0.1 and close it without sending anything.
+
+    On Windows the connection attempt has no timeout, because a socket timeout adds
+    about 15 ms. With SYN retransmissions disabled, Windows completes or refuses a
+    connection to 127.0.0.1 at once, including when the listener's backlog is full, in
+    which case this returns False. On other platforms, a connection attempt that times
+    out after `timeout` seconds means that the listener's backlog is full, and this
+    returns True."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        if sys.platform == 'win32':
+            _disable_syn_retransmissions(sock)
+        else:
+            sock.settimeout(timeout)
+        try:
+            sock.connect(('127.0.0.1', port))
+        except ConnectionRefusedError:
+            return False
+        except TimeoutError:
+            return True
+        return True
+
+
+def exit_if_port_in_use(app_name, port, splash=None):
+    """If a process on this computer is listening on the TCP port, log an error to the
+    logger named `app_name`, hide the splash screen if one is given, show the error in
+    a message box and exit. An application calls this at start-up with its labconfig
+    port, before it does anything that would conflict with a running copy of itself."""
+    if not port_in_use(port):
+        return
+    message = (
+        f"{app_name} cannot start because port {port}, which is the {app_name} port in "
+        f"the labconfig, is in use. Another copy of {app_name} is probably running."
+    )
+    logging.getLogger(app_name).error(message)
+    if splash is not None:
+        splash.hide()
+    from qtutils.qt.QtWidgets import QApplication, QMessageBox
+
+    if QApplication.instance() is None:
+        QApplication(sys.argv)
+    QMessageBox.critical(None, app_name, message)
+    sys.exit(1)
