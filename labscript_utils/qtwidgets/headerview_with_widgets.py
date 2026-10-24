@@ -72,9 +72,12 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
         return QtWidgets.QHeaderView.viewportEvent(self, event)
 
     def setWidget(self, logical_index, widget=None):
-        header_item = self.model.horizontalHeaderItem(logical_index)
-        if header_item is None:
-            self.model.setHorizontalHeaderItem(logical_index, QtGui.QStandardItem())
+        # The label of a section with no header item is its number:
+        label_text = self.model.headerData(
+            logical_index, QtCore.Qt.Orientation.Horizontal, QtCore.Qt.ItemDataRole.DisplayRole)
+        if not isinstance(label_text, str):
+            self.model.setHeaderData(
+                logical_index, QtCore.Qt.Orientation.Horizontal, '', QtCore.Qt.ItemDataRole.DisplayRole)
         if widget is None:
             if logical_index in self.widgets:
                 widget = self.widgets[logical_index]
@@ -117,8 +120,10 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
                 if not self.isSectionHidden(logical_index):
                     max_widget_height = max(max_widget_height, widget.size().height())
                 desired_indent = widget.size().width()
-                item = self.model.horizontalHeaderItem(logical_index)
-                font = item.font()
+                font = self.model.headerData(
+                    logical_index, QtCore.Qt.Orientation.Horizontal, QtCore.Qt.ItemDataRole.FontRole)
+                if font is None:
+                    font = QtGui.QFont()
                 fontmetrics = QtGui.QFontMetrics(font, self)
                 indent = ''
                 while fontmetrics.horizontalAdvance(indent) < desired_indent:
