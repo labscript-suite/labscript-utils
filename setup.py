@@ -29,7 +29,7 @@ class develop_command(develop):
         path = os.path.join(self.install_dir, 'labscript-suite.pth')
         super().run()
         if not self.uninstall:
-            logging.info(f'Copying labscript-suite.pth to {path}')
+            logging.info('Copying labscript-suite.pth to %s', path)
             if not self.dry_run:
                 self.copy_file('labscript-suite.pth', path)
 
