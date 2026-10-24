@@ -17,6 +17,8 @@ import logging
 import numpy as np
 import copy
 import ast
+import contextlib
+import os
 from labscript_utils.dict_diff import dict_diff
 import sys
 from zprocess import raise_exception_in_thread
@@ -28,8 +30,14 @@ def _ensure_str(s):
 
 class ConnectionTable(object):
     def __init__(self, h5file, logging_prefix=None, exceptions_in_thread=False):
-        """Object to represent a connection table. Set logging prefix if you
+        """Object to represent a connection table. h5file is the path of an HDF5 file
+        or an open h5py.File, which is not closed. Set logging prefix if you
         desire logging. Log used will be <prefix>.ConnectionTable"""
+        if isinstance(h5file, (str, bytes, os.PathLike)):
+            opened = None
+        else:
+            opened = contextlib.nullcontext(h5file)
+            h5file = h5file.filename
         self.filepath = h5file
         self.logger = None
         if logging_prefix is not None:
@@ -42,7 +50,9 @@ class ConnectionTable(object):
         self.raw_table = np.empty(0)
 
         try:
-            with h5py.File(h5file,'r') as hdf5_file:
+            if opened is None:
+                opened = h5py.File(h5file, 'r')
+            with opened as hdf5_file:
                 try:
                     dataset = hdf5_file['connection table']
                 except Exception:
