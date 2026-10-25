@@ -19,16 +19,6 @@ from .__version__ import __version__
 
 from labscript_profile import LABSCRIPT_SUITE_PROFILE
 
-if not os.path.exists(LABSCRIPT_SUITE_PROFILE):
-    # Create new profile if none exists
-    from labscript_profile.create import create_profile
-    create_profile()
-    # This would normally run at interpreter startup but didn't since the profile didn't
-    # exist:
-    import labscript_profile
-    labscript_profile.add_userlib_and_pythonlib()
-
-
 # This folder
 labscript_utils_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -87,6 +77,16 @@ def dedent(s):
             else:
                 unwrapped_lines.append(' ' + line)
     return ''.join(unwrapped_lines)
+
+
+if not os.path.exists(LABSCRIPT_SUITE_PROFILE):
+    # Create new profile if none exists
+    from labscript_profile.create import create_profile
+    create_profile()
+    # This would normally run at interpreter startup but didn't since the profile didn't
+    # exist:
+    import labscript_profile
+    labscript_profile.add_userlib_and_pythonlib()
 
 
 # Enforce that the same file can't be imported under multiple names, to help
