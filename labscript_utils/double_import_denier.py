@@ -46,6 +46,7 @@ class DoubleImportDenier(object):
         self.stack = set()
         self._uncaught_error = None
         self._orig_excepthook = None
+        self._hook = self._excepthook
 
     def find_spec(self, fullname, path=None, target=None):
         # Prevent recursion. If importlib.util.find_spec was called by us and is looking
@@ -94,7 +95,7 @@ class DoubleImportDenier(object):
         _raise_error with sys.tracebacklimit set to 2, so that the import machinery
         frames are omitted from the traceback. Any other exception is passed to the
         original excepthook unchanged."""
-        if sys.excepthook is self._excepthook:
+        if sys.excepthook is self._hook:
             sys.excepthook = self._orig_excepthook
         error, self._uncaught_error = self._uncaught_error, None
         if exc_value is not error:
@@ -131,9 +132,9 @@ class DoubleImportDenier(object):
 
         error = RuntimeError(msg)
         self._uncaught_error = error
-        if sys.excepthook is not self._excepthook:
+        if sys.excepthook is not self._hook:
             self._orig_excepthook = sys.excepthook
-            sys.excepthook = self._excepthook
+            sys.excepthook = self._hook
         raise error from None
 
 

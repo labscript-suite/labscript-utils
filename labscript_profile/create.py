@@ -3,7 +3,6 @@ import os
 import shutil
 import configparser
 import keyword
-from pprint import pformat
 from pathlib import Path
 from subprocess import check_output
 from labscript_profile import LABSCRIPT_SUITE_PROFILE, default_labconfig_path
@@ -81,23 +80,23 @@ def make_runmanager_config_file():
     """Write the runmanager configuration file that the labconfig file names as
     `autoload_config_file`, with the example experiment as the labscript file, so that
     runmanager opens the example experiment on its first run."""
+    from labscript_utils.labconfig import save_appconfig
+
     config = configparser.ConfigParser(
         defaults={'labscript_suite': str(LABSCRIPT_SUITE_PROFILE)}
     )
     config.read(default_labconfig_path())
     config_path = Path(config['runmanager']['autoload_config_file'])
     labscript_file = Path(config['DEFAULT']['labscriptlib'], 'example_experiment.py')
-    # The format that labscript_utils.labconfig.save_appconfig() writes and
-    # load_appconfig() reads: values are Python literals.
-    runmanager_config = configparser.ConfigParser(interpolation=None)
-    runmanager_config.optionxform = str
-    runmanager_config['runmanager_state'] = {
-        'current_labscript_file': pformat(str(labscript_file)),
-        'is_using_default_shot_output_folder': pformat(True),
-    }
-    config_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(config_path, 'w') as f:
-        runmanager_config.write(f)
+    save_appconfig(
+        config_path,
+        {
+            'runmanager_state': {
+                'current_labscript_file': str(labscript_file),
+                'is_using_default_shot_output_folder': True,
+            }
+        },
+    )
 
 
 def compile_connection_table():
