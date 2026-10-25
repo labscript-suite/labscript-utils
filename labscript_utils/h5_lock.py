@@ -43,9 +43,10 @@ class File(_File):
             kwargs = {}
             if mode == 'r':
                 kwargs['read_only'] = True
-            # Do not terminate upon SIGTERM while the file is open:
-            self.kill_lock = kill_lock
-            self.kill_lock.acquire()
+            else:
+                # Do not terminate upon SIGTERM while the file is open for writing:
+                self.kill_lock = kill_lock
+                self.kill_lock.acquire()
             try:
                 # Ask other zlock users not to open the file while we have it open:
                 zlock = Lock(path_to_agnostic(name), **kwargs)
