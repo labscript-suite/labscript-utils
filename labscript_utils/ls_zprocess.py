@@ -12,6 +12,7 @@
 #####################################################################
 import sys
 import os
+import logging
 import subprocess
 from socket import gethostbyname
 from packaging.version import Version
@@ -118,6 +119,19 @@ def get_config():
         config['logging_backupCount'] = labconfig.getint('logging', 'backupCount')
     except (labconfig.NoOptionError, labconfig.NoSectionError):
         config['logging_backupCount'] = 1
+    # The level of the suite's loggers, or None if logging is off:
+    try:
+        level = labconfig.get('logging', 'level')
+    except (labconfig.NoOptionError, labconfig.NoSectionError):
+        level = 'DEBUG'
+    if level.lower() == 'off':
+        config['logging_level'] = None
+    else:
+        try:
+            config['logging_level'] = logging.getLevelNamesMapping()[level.upper()]
+        except KeyError:
+            msg = "Invalid logging level in labconfig: %s. Must be a level name or off"
+            raise ValueError(msg % level) from None
     _cached_config = config
     return config
 

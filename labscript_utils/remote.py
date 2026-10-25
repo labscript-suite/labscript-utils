@@ -36,9 +36,11 @@ def main():
         'zprocess.remote',
         '--port',
         str(config['zprocess_remote_port']),
-        '-l',
-        LOG_PATH,
     ]
+    if config['logging_level'] is None:
+        cmd += ['--silent']
+    else:
+        cmd += ['-l', LOG_PATH]
     if config['shared_secret_file'] is not None:
         cmd += ['--shared-secret-file', config['shared_secret_file']]
     elif config['allow_insecure']:

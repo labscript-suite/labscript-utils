@@ -25,3 +25,9 @@ Below is a copy of the default lab configuration if you were to install the **la
 
 .. include:: ../../labscript_profile/default_profile/labconfig/example.ini
 	:code:
+
+Logging
+-------
+
+The `level` key of the `[logging]` section sets the level of the log messages that the suite's applications and their subprocesses record. It is a level name, `DEBUG`, `INFO`, `WARNING`, `ERROR` or `CRITICAL`, or `off`. The default is `DEBUG`.
+With `level = off`, the applications record no log messages, to the log files or to the terminal, and do not start a zlog server, and the zlock and zprocess-remote servers that are started by `labscript_utils.zlock` and `labscript_utils.remote` log nothing.

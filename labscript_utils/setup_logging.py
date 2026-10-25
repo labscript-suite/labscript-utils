@@ -14,7 +14,7 @@ import sys, os
 from io import UnsupportedOperation
 import logging, logging.handlers
 import warnings
-from labscript_utils.ls_zprocess import Handler, ensure_connected_to_zlog
+from labscript_utils.ls_zprocess import Handler, ensure_connected_to_zlog, get_config
 
 
 from labscript_profile import LABSCRIPT_SUITE_PROFILE
@@ -33,12 +33,28 @@ def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.
     # MaxBytes and backupCount args ignored, these are now set in labconfig since they
     # are settings to the server rather than individual logging handlers. Args are left
     # in the function signature for backward compatibility.
-    ensure_connected_to_zlog()
+    level = get_config()['logging_level']
     logger = logging.getLogger(program_name)
     # Clear any previously added handlers from the logger:
     for handler in logger.handlers[:]:
         logger.removeHandler(handler)
 
+    try:
+        # sys.stdout is None when the process has no console, as under pythonw.exe.
+        stdout_fileno = sys.stdout.fileno() if sys.stdout is not None else -1
+    except UnsupportedOperation:
+        # fileno() is not supported in Jupyter notebooks.
+        stdout_fileno = None
+    if stdout_fileno is not None and stdout_fileno < 0:
+        # Prevent bug on windows where writing to stdout without a command
+        # window causes a crash:
+        sys.stdout = sys.stderr = open(os.devnull, 'w')
+
+    if level is None:
+        logger.setLevel(logging.CRITICAL + 1)
+        return logger
+
+    ensure_connected_to_zlog()
     # Make sure the logging directory exists:
     if not os.path.exists(LOG_PATH):
         os.mkdir(LOG_PATH)
@@ -54,32 +70,23 @@ def setup_logging(program_name, log_level=logging.DEBUG, terminal_level=logging.
     handler.setFormatter(formatter)
     handler.setLevel(log_level)
     logger.addHandler(handler)
-    try:
-        # sys.stdout is None when the process has no console, as under pythonw.exe.
-        # fileno() is not supported in Jupyter notebooks.
-        stdout_fileno = sys.stdout.fileno() if sys.stdout is not None else -1
-    except UnsupportedOperation:
+    if stdout_fileno is None:
         # In this case the code is likely being run from a Jupyter notebook, warn the
         # user that log messages won't be printed to stdout or stderr.
         warnings.warn(
             "Logging to stdout and stderr is disabled. See the log files for log messages."
         )
-    else:
-        if sys.stdout is not None and stdout_fileno >= 0:
-            stdout_handler = logging.StreamHandler(sys.stdout)
-            stdout_handler.setFormatter(formatter)
-            stdout_handler.setLevel(terminal_level)
-            logger.addHandler(stdout_handler)
-            if sys.stderr is not None and sys.stderr.fileno() >= 0:
-                # Send warnings and greater to stderr instead of stdout:
-                stdout_handler.addFilter(LessThanFilter(logging.WARNING))
-                sterr_handler = logging.StreamHandler(sys.stderr)
-                sterr_handler.setFormatter(formatter)
-                sterr_handler.setLevel(logging.WARNING)
-                logger.addHandler(sterr_handler)
-        else:
-            # Prevent bug on windows where writing to stdout without a command
-            # window causes a crash:
-            sys.stdout = sys.stderr = open(os.devnull, 'w')
-    logger.setLevel(logging.DEBUG)
+    elif stdout_fileno >= 0:
+        stdout_handler = logging.StreamHandler(sys.stdout)
+        stdout_handler.setFormatter(formatter)
+        stdout_handler.setLevel(terminal_level)
+        logger.addHandler(stdout_handler)
+        if sys.stderr is not None and sys.stderr.fileno() >= 0:
+            # Send warnings and greater to stderr instead of stdout:
+            stdout_handler.addFilter(LessThanFilter(logging.WARNING))
+            sterr_handler = logging.StreamHandler(sys.stderr)
+            sterr_handler.setFormatter(formatter)
+            sterr_handler.setLevel(logging.WARNING)
+            logger.addHandler(sterr_handler)
+    logger.setLevel(level)
     return logger
