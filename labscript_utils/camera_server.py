@@ -12,10 +12,10 @@
 #####################################################################
 import sys
 import time
-import zprocess
 import labscript_utils.shared_drive
 # importing this wraps zlock calls around HDF file openings and closings:
 import labscript_utils.h5_lock
+from labscript_utils.ls_zprocess import ZMQServer
 import h5py
 import numpy as np
 
@@ -35,6 +35,10 @@ import numpy as np
 # labscript_utils.shared_drive.path_to_local() once receiving it. If you
 # subclass CameraServer, you don't have to worry about this step, so long as
 # the shared drive path is correctly declared in your labconfig file.
+#
+# CameraServer uses the [security] settings of the labconfig, as the Camera device in
+# BLACS does. If the labconfig has a shared secret, the server and BLACS must use the
+# same shared secret.
 #
 # All communications are as utf-8 encoded strings.
 #
@@ -71,9 +75,9 @@ import numpy as np
 #       with the exception text.
 #
 
-class CameraServer(zprocess.ZMQServer):
+class CameraServer(ZMQServer):
     def __init__(self, port):
-           zprocess.ZMQServer.__init__(self, port, type='string')
+           ZMQServer.__init__(self, port, dtype='string')
            self._h5_filepath = None
 
     def handler(self, request_data):
