@@ -71,6 +71,60 @@ class HorizontalHeaderViewWithWidgets(QtWidgets.QHeaderView):
             self.update_widget_positions()
         return QtWidgets.QHeaderView.viewportEvent(self, event)
 
+    def paintEvent(self, event):
+        QtWidgets.QHeaderView.paintEvent(self, event)
+        end = self.length() - self.offset()
+        width = self.viewport().width()
+        if end >= width:
+            return
+        # Some styles, including Fusion, fill the area to the right of the last section
+        # with the window colour, and draw the last section without the separator that
+        # is at the right edge of the other sections. We draw the area as a section
+        # and draw the separator.
+        height = self.viewport().height()
+        painter = QtGui.QPainter(self.viewport())
+        option = QtWidgets.QStyleOptionHeader()
+        self.initStyleOption(option)
+        option.position = QtWidgets.QStyleOptionHeader.SectionPosition.End
+        option.rect = QtCore.QRect(end, 0, width - end, height)
+        self.style().drawControl(QtWidgets.QStyle.ControlElement.CE_HeaderSection, option, painter, self)
+        if self.length():
+            last_section_size = self.sectionSize(self.logicalIndexAt(end - 1))
+            option.rect = QtCore.QRect(end - last_section_size, 0, last_section_size, height)
+            separator_width = self.separator_width(option)
+            if separator_width:
+                option.position = QtWidgets.QStyleOptionHeader.SectionPosition.Middle
+                painter.setClipRect(end - separator_width, 0, separator_width, height)
+                self.style().drawControl(QtWidgets.QStyle.ControlElement.CE_HeaderSection, option, painter, self)
+        painter.end()
+
+    def separator_width(self, option):
+        """Width of the strip at the right edge of a section of the size of option.rect
+        that the style draws differently for a middle section than for the last
+        section"""
+        size = option.rect.size()
+        images = []
+        for position in [
+            QtWidgets.QStyleOptionHeader.SectionPosition.Middle,
+            QtWidgets.QStyleOptionHeader.SectionPosition.End,
+        ]:
+            image = QtGui.QImage(size, QtGui.QImage.Format.Format_ARGB32_Premultiplied)
+            image.fill(QtCore.Qt.GlobalColor.transparent)
+            image_option = QtWidgets.QStyleOptionHeader(option)
+            image_option.position = position
+            image_option.rect = image.rect()
+            painter = QtGui.QPainter(image)
+            self.style().drawControl(QtWidgets.QStyle.ControlElement.CE_HeaderSection, image_option, painter, self)
+            painter.end()
+            images.append(image)
+        width = 0
+        while width < size.width():
+            x = size.width() - 1 - width
+            if images[0].copy(x, 0, 1, size.height()) == images[1].copy(x, 0, 1, size.height()):
+                break
+            width += 1
+        return width
+
     def setWidget(self, logical_index, widget=None):
         header_item = self.model.horizontalHeaderItem(logical_index)
         if header_item is None:
