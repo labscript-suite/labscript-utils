@@ -168,9 +168,6 @@ class ProcessTree(zprocess.ProcessTree):
         # Set this as the default ProcessTree, which zprocess.Event and zprocess.Process
         # use if they are not given one:
         zprocess.set_default_process_tree(cls._instance)
-        # Assign the zlock client as the default zlock server so that code using
-        # deprecated zlock calls can use it:
-        zprocess.zlock._default_zlock_client = cls._instance.zlock_client
 
         return cls._instance
 
