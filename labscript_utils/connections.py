@@ -39,7 +39,7 @@ class ConnectionTable(object):
         self.logger = None
         if logging_prefix is not None:
             self.logger = logging.getLogger('{}.ConnectionTable'.format(logging_prefix))
-            self.logger.debug('Parsing connection table from %s'%self.filepath)
+            self.logger.debug('Parsing connection table from %s', self.filepath)
             
         self.toplevel_children = {}
         self.table = {}
@@ -55,8 +55,7 @@ class ConnectionTable(object):
                 try:
                     dataset = hdf5_file['connection table']
                 except Exception:
-                    msg = 'could not open connection table dataset in %s' % self.filepath
-                    if self.logger: self.logger.error(msg)
+                    if self.logger: self.logger.error('could not open connection table dataset in %s', self.filepath)
                     if exceptions_in_thread:
                         raise_exception_in_thread(sys.exc_info())
                     else:
@@ -77,16 +76,14 @@ class ConnectionTable(object):
                         if connection.parent_port is None:
                             self.toplevel_children[name] = connection
                 except Exception:
-                    msg = 'Could not parse connection table in %s' % self.filepath
-                    if self.logger: self.logger.error(msg)
+                    if self.logger: self.logger.error('Could not parse connection table in %s', self.filepath)
                     if exceptions_in_thread:
                         raise_exception_in_thread(sys.exc_info())
                     else:
                         raise
 
         except Exception:
-            msg = 'Could not open connection table file %s' % self.filepath
-            if self.logger: self.logger.exception(msg)
+            if self.logger: self.logger.exception('Could not open connection table file %s', self.filepath)
             if exceptions_in_thread:
                 raise_exception_in_thread(sys.exc_info())
             else:
@@ -141,7 +138,7 @@ class ConnectionTable(object):
         # Check if top level children in other table are a subset of self.        
         for name, connection in other.toplevel_children.items():
             if not name in self.toplevel_children:
-                if self.logger: self.logger.error('missing: %s '% str(name))
+                if self.logger: self.logger.error('missing: %s ', name)
                 if "children_missing" not in error:
                     error["children_missing"] = {}
                 error["children_missing"][name] = True
