@@ -20,6 +20,7 @@ from qtutils import inmain_decorator
 import threading
 import time
 from labscript_utils.qtwidgets.InputPlotWindow import PlotWindow
+from labscript_utils.ls_zprocess import ProcessTree
 
 
 class AnalogInput(QtWidgets.QWidget):
@@ -114,7 +115,7 @@ class AnalogInput(QtWidgets.QWidget):
 
     def open_plot_window(self):
         if self.win is None:
-            self.win = PlotWindow()
+            self.win = PlotWindow(ProcessTree.instance())
             self.to_child, self.from_child = self.win.start(self._connection_name, self._hardware_name, self._device_name)
 
             check_plot_window_thread = threading.Thread(target=self._check_plot_window)

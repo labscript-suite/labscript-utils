@@ -42,7 +42,7 @@ dependencies = [
     "pyqtgraph>=0.11.0rc0",
     "qtutils>=4.0",
     "scipy",
-    "zprocess>=2.18.0",
+    "zprocess>=3.0.0",
     "setuptools_scm>=4.1.0",
 ]
 dynamic = ["version"]

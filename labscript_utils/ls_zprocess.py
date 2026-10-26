@@ -165,12 +165,9 @@ class ProcessTree(zprocess.ProcessTree):
             zlog_host='localhost',
             zlog_port=config['zlog_port'],
         )
-        # Assign this to the default zprocess ProcessTree so that code using deprecated
-        # zprocess calls use this ProcessTree:
-        zprocess.process_tree._default_process_tree = cls._instance
-        # Assign the zlock client as the default zlock server so that code using
-        # deprecated zlock calls can use it:
-        zprocess.zlock._default_zlock_client = cls._instance.zlock_client
+        # Set this as the default ProcessTree, which zprocess.Event and zprocess.Process
+        # use if they are not given one:
+        zprocess.set_default_process_tree(cls._instance)
 
         return cls._instance
 
