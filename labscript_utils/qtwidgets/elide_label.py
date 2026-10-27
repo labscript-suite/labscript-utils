@@ -147,9 +147,6 @@ def elide_label(label, layout, elide_mode):
     if index == -1:
         raise ValueError("Label not found in given layout")
     container = ElidedLabelContainer(label)
-    label.setParent(container.scroll_area)
-    label.setVisible(False)
-    label.setVisible(True)
     layout.insertWidget(index, container)
     container.setElideMode(elide_mode)
 
