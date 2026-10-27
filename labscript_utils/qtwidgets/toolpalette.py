@@ -13,6 +13,7 @@
 import sys
 
 from qtutils.qt import QtCore, QtGui, QtWidgets
+from qtutils.icons import Icon
 
 
 EXPAND_ICON = ':/qtutils/fugue/toggle-small-expand'
@@ -37,7 +38,7 @@ class ToolPaletteGroup(QtWidgets.QVBoxLayout):
         # Create the tool palette and store a reference to it and an index indicating the order of Tool Palettes
         tool_palette = ToolPalette(self,name,*args,**kwargs)
         push_button = QtWidgets.QPushButton(name)        
-        push_button.setIcon(QtGui.QIcon(CONTRACT_ICON))
+        push_button.setIcon(Icon(CONTRACT_ICON))
         push_button.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         push_button.setToolTip('Click to hide')
 
@@ -81,7 +82,7 @@ class ToolPaletteGroup(QtWidgets.QVBoxLayout):
             raise RuntimeError('The tool palette does not have a palette named %s'%name)
         _, palette, push_button = self._widget_groups[name]
         palette.show()
-        push_button.setIcon(QtGui.QIcon(CONTRACT_ICON))
+        push_button.setIcon(Icon(CONTRACT_ICON))
         push_button.setToolTip('Click to hide')
             
     def show_palette_by_index(self,index):
@@ -93,7 +94,7 @@ class ToolPaletteGroup(QtWidgets.QVBoxLayout):
         
         _, palette, push_button = self._widget_groups[name]
         palette.hide()
-        push_button.setIcon(QtGui.QIcon(EXPAND_ICON))
+        push_button.setIcon(Icon(EXPAND_ICON))
         push_button.setToolTip('Click to show')
     
     def hide_palette_by_index(self,index):
