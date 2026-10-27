@@ -15,6 +15,7 @@ import sys
 import os
 
 from qtutils.qt import QtCore, QtGui, QtWidgets
+from qtutils.icons import Icon
 from qtutils.qt.QtCore import pyqtSignal as Signal
 
 class BrowseButton(QtWidgets.QPushButton):
@@ -115,7 +116,7 @@ class ImageOutput(QtWidgets.QWidget):
         
         # Add the browse button
         self._browse_button = BrowseButton(self, 'Select Image')
-        self._browse_button.setIcon(QtGui.QIcon(':/qtutils/fugue/image-import'))
+        self._browse_button.setIcon(Icon(':/qtutils/fugue/image-import'))
         header_layout.addWidget(self._browse_button)
        
         # Add a spacer item to keep everything bunched

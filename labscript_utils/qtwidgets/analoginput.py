@@ -15,6 +15,7 @@ import sys
 
 from qtutils.qt import QtCore, QtGui, QtWidgets
 import qtutils.icons
+from qtutils.icons import Icon
 from qtutils import inmain_decorator
 
 import threading
@@ -45,7 +46,7 @@ class AnalogInput(QtWidgets.QWidget):
         self._line_edit.setReadOnly(True)
 
         self._plot_btn = QtWidgets.QPushButton()
-        self._plot_btn.setIcon(QtGui.QIcon(':/qtutils/fugue/chart-up'))
+        self._plot_btn.setIcon(Icon(':/qtutils/fugue/chart-up'))
         self._plot_btn.clicked.connect(self.open_plot_window)
 
         self._value_changed_function = None
