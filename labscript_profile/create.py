@@ -3,8 +3,9 @@ import os
 import shutil
 import configparser
 import keyword
+import secrets
 from pathlib import Path
-from subprocess import check_output
+from zprocess.security import generate_shared_secret
 from labscript_profile import LABSCRIPT_SUITE_PROFILE, default_labconfig_path
 import argparse
 
@@ -12,15 +13,12 @@ _here = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_PROFILE_CONTENTS = os.path.join(_here, 'default_profile')
 
 
-def make_shared_secret(directory):
-    """Create a new zprocess shared secret file in the given directory and return its
-    filepath"""
-    cmd = [sys.executable, '-m', 'zprocess.makesecret']
-    output = check_output(cmd, cwd=directory).decode('utf8')
-    for line in output.splitlines():
-        if 'zpsecret' in line and '.key' in line:
-            return Path(line.strip())
-    raise RuntimeError("Could not parse output of zprocess.makesecret")
+def write_shared_secret(shared_secret, directory):
+    """Write a zprocess shared secret to a new file in the given directory and return
+    its filepath"""
+    path = Path(directory, f'zpsecret-{secrets.token_hex(4)}.key')
+    path.write_text(shared_secret)
+    return path
 
 
 def validate_apparatus_name(apparatus_name):
@@ -35,11 +33,13 @@ def validate_apparatus_name(apparatus_name):
         )
 
 
-def make_labconfig_file(apparatus_name = None):
+def make_labconfig_file(shared_secret, apparatus_name = None):
     """Create labconfig file from template
     
     Parameters
     ----------
+    shared_secret: str
+        zprocess shared secret, which is written to a file next to the labconfig file
     apparatus_name: str, optional
         Overrides the default apparatus name with the provided one if not None
     """
@@ -64,9 +64,9 @@ def make_labconfig_file(apparatus_name = None):
     if sys.platform != 'win32':
         config.set('programs', 'hdf5_viewer', 'hdfview')
         config.set('DEFAULT', 'shared_drive', '$HOME/labscript_shared')
-    shared_secret = make_shared_secret(target_path.parent)
+    shared_secret_path = write_shared_secret(shared_secret, target_path.parent)
     shared_secret_entry = Path(
-        '%(labscript_suite)s', shared_secret.relative_to(LABSCRIPT_SUITE_PROFILE)
+        '%(labscript_suite)s', shared_secret_path.relative_to(LABSCRIPT_SUITE_PROFILE)
     )
     config.set('security', 'shared_secret', str(shared_secret_entry))
     if apparatus_name is not None:
@@ -182,6 +182,10 @@ def create_profile(apparatus_name = None, compile_table = False):
     if apparatus_name is not None:
         validate_apparatus_name(apparatus_name)
 
+    # This raises zprocess.security.CurveNotSupported if libzmq was built without
+    # CurveZMQ, so it comes before anything is written:
+    shared_secret = generate_shared_secret()
+
     src = Path(DEFAULT_PROFILE_CONTENTS)
     dest = Path(LABSCRIPT_SUITE_PROFILE)
     print(f'Creating labscript profile at {LABSCRIPT_SUITE_PROFILE}')
@@ -202,7 +206,7 @@ def create_profile(apparatus_name = None, compile_table = False):
             shutil.copy2(src_file, dest_file)
 
     print('Writing labconfig file')
-    make_labconfig_file(apparatus_name)
+    make_labconfig_file(shared_secret, apparatus_name)
 
     # rename apparatus directories
     if apparatus_name is not None:
