@@ -54,13 +54,9 @@ class Splash(QtWidgets.QFrame):
         if self.qapplication is None:
             self.qapplication = QtWidgets.QApplication(sys.argv)
         super().__init__()
-        self.icon = QtGui.QPixmap()
-        self.icon.load(imagepath)
+        self.icon = QtGui.QIcon(imagepath).pixmap(QtCore.QSize(self.imwidth, self.imheight))
         if self.icon.isNull():
             raise ValueError("Invalid image file: {}.\n".format(imagepath))
-        self.icon = self.icon.scaled(
-            self.imwidth, self.imheight, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation
-        )
         self.text = 'Loading'
         self.setWindowFlags(Qt.WindowType.SplashScreen)
         self.setWindowOpacity(self.alpha)
