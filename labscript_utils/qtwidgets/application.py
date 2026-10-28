@@ -12,8 +12,9 @@
 #####################################################################
 """The fonts and the style of the labscript suite applications"""
 
-from qtutils.qt import QtCore, QtGui
+from qtutils.qt import QtCore, QtGui, QtWidgets
 from qtutils.fonts import load_fonts
+from qtutils.icons import ICON_SIZE
 
 FONT_FAMILY = 'Ubuntu'
 MONOSPACE_FONT_FAMILY = 'Ubuntu Mono'
@@ -23,6 +24,23 @@ MONOSPACE_FONT_PIXEL_SIZE = 15
 # Fraction by which the alternate row colour of item views is mixed from the base colour
 # towards the text colour:
 ALTERNATE_BASE_MIX = 0.07
+
+
+class FusionStyle(QtWidgets.QProxyStyle):
+    """The Fusion style, with icons in list views and toolbars drawn at ICON_SIZE"""
+
+    ICON_SIZE_METRICS = [
+        QtWidgets.QStyle.PixelMetric.PM_ListViewIconSize,
+        QtWidgets.QStyle.PixelMetric.PM_ToolBarIconSize,
+    ]
+
+    def __init__(self):
+        super().__init__(QtWidgets.QStyleFactory.create('Fusion'))
+
+    def pixelMetric(self, metric, option=None, widget=None):
+        if metric in self.ICON_SIZE_METRICS:
+            return ICON_SIZE
+        return super().pixelMetric(metric, option, widget)
 
 
 def _mix(color, other, fraction):
@@ -67,13 +85,13 @@ def _set_class_palettes(qapplication):
 
 
 def setup_application(qapplication):
-    """Set the style of the application to Fusion and its font to the bundled Ubuntu
+    """Set the style of the application to FusionStyle and its font to the bundled Ubuntu
     font at FONT_PIXEL_SIZE, and set the palettes of some widget classes (see
     _class_palettes()). Call this after making the QApplication and after setting any
     application style sheet, and before making any widget: setting a style or a style
     sheet gives the widget classes the fonts of the platform theme again."""
     load_fonts()
-    qapplication.setStyle('Fusion')
+    qapplication.setStyle(FusionStyle())
     _set_class_palettes(qapplication)
     # When the application palette changes, Qt sets the palettes of the platform theme
     # for each widget class after emitting paletteChanged:
