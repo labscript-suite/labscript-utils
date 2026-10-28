@@ -12,6 +12,8 @@
 #####################################################################
 """The fonts and the style of the labscript suite applications"""
 
+import sys
+
 from qtutils.qt import QtCore, QtGui, QtWidgets
 from qtutils.fonts import load_fonts
 from qtutils.icons import ICON_SIZE
@@ -24,10 +26,34 @@ MONOSPACE_FONT_PIXEL_SIZE = 15
 # Fraction by which the alternate row colour of item views is mixed from the base colour
 # towards the text colour:
 ALTERNATE_BASE_MIX = 0.07
+# Relative luminance of the accent colour above which the check mark is black instead of
+# white:
+CHECK_MARK_LUMINANCE = 0.4
+COLOR_GROUPS = [
+    QtGui.QPalette.ColorGroup.Active,
+    QtGui.QPalette.ColorGroup.Inactive,
+    QtGui.QPalette.ColorGroup.Disabled,
+]
 
 
 class FusionStyle(QtWidgets.QProxyStyle):
-    """The Fusion style, with icons in list views and toolbars drawn at ICON_SIZE"""
+    """The Fusion style, with the indicators of checked check boxes and radio buttons
+    filled with the accent colour of the application palette, and icons in list views
+    and toolbars drawn at ICON_SIZE. The check mark is black on a light accent colour and
+    white on a dark one."""
+
+    CHECKED_FILL_ELEMENTS = [
+        QtWidgets.QStyle.PrimitiveElement.PE_IndicatorCheckBox,
+        QtWidgets.QStyle.PrimitiveElement.PE_IndicatorRadioButton,
+    ]
+    # The fill is the accent colour that the user chose for the desktop. On Linux, the
+    # accent colour role does not have this colour: Qt's GTK platform theme leaves it at
+    # Qt's default and sets the highlight colour from the desktop theme, so we use the
+    # application's highlight colour. Qt 5 has no accent colour role.
+    if sys.platform.startswith('linux') or not hasattr(QtGui.QPalette.ColorRole, 'Accent'):
+        ACCENT = QtGui.QPalette.ColorRole.Highlight
+    else:
+        ACCENT = QtGui.QPalette.ColorRole.Accent
 
     ICON_SIZE_METRICS = [
         QtWidgets.QStyle.PixelMetric.PM_ListViewIconSize,
@@ -41,6 +67,45 @@ class FusionStyle(QtWidgets.QProxyStyle):
         if metric in self.ICON_SIZE_METRICS:
             return ICON_SIZE
         return super().pixelMetric(metric, option, widget)
+
+    def drawPrimitive(self, element, option, painter, widget=None):
+        State = QtWidgets.QStyle.StateFlag
+        if (
+            element in self.CHECKED_FILL_ELEMENTS
+            and option.state & State.State_On
+            and option.state & State.State_Enabled
+        ):
+            # We take the accent colour from the application palette, since a widget may
+            # change the highlight colour in its own palette. The Windows platform theme
+            # gives the inactive colour group the window colour as the accent colour, so
+            # we use the colour of the active group:
+            if widget is None:
+                application_palette = QtWidgets.QApplication.palette()
+            else:
+                application_palette = QtWidgets.QApplication.palette(widget)
+            Active = QtGui.QPalette.ColorGroup.Active
+            accent = application_palette.color(Active, self.ACCENT)
+            palette = option.palette
+            light = _relative_luminance(accent) > CHECK_MARK_LUMINANCE
+            check_mark = QtGui.QColor('black' if light else 'white')
+            filled = QtGui.QPalette(palette)
+            filled.setColor(QtGui.QPalette.ColorRole.Base, accent)
+            filled.setColor(QtGui.QPalette.ColorRole.Text, check_mark)
+            option.palette = filled
+            super().drawPrimitive(element, option, painter, widget)
+            option.palette = palette
+        else:
+            super().drawPrimitive(element, option, painter, widget)
+
+
+def _relative_luminance(color):
+    """The relative luminance of the colour, as defined in WCAG 2"""
+
+    def linear(c):
+        return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
+
+    r, g, b = (linear(c) for c in (color.redF(), color.greenF(), color.blueF()))
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
 
 
 def _mix(color, other, fraction):
@@ -60,11 +125,7 @@ def _class_palettes(qapplication):
     palette = qapplication.palette()
     item_view_palette = QtGui.QPalette(palette)
     text = palette.color(QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.Text)
-    for group in [
-        QtGui.QPalette.ColorGroup.Active,
-        QtGui.QPalette.ColorGroup.Inactive,
-        QtGui.QPalette.ColorGroup.Disabled,
-    ]:
+    for group in COLOR_GROUPS:
         base = palette.color(group, QtGui.QPalette.ColorRole.Base)
         item_view_palette.setColor(
             group,
