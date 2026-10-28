@@ -217,6 +217,17 @@ Keys
     The start of the names of the shot files of a sequence, in the same form as `output_folder_format`, which can also contain `{script_basename}`.
     The default is `{sequence_timestamp}_{script_basename}`.
 
+`globals_namespace`
+    A Python file that runmanager runs each time it evaluates globals.
+    The names in the file's `__all__`, or if it has none, the names that do not start with an underscore, are available to the expressions of the globals.
+    If the file cannot be run, every global holds the error.
+    By default, there is no such file.
+
+`pylab_namespace`
+    Whether the names of `from pylab import *` are available to the expressions of the globals.
+    Runmanager will stop providing these names in a future version, and warns about each global that uses them.
+    The default is `True`.
+
 `[security]`
 ^^^^^^^^^^^^
 
