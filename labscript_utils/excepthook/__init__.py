@@ -17,6 +17,7 @@ import threading
 import traceback
 import subprocess
 import warnings
+import logging
 
 # The maximum number of windows the excepthook will spawn:
 MAX_WINDOWS = 10
@@ -91,13 +92,17 @@ def tkhandler(exceptclass, exception, exec_info, reraise=True):
 
 def logwarning(message, category, filename, lineno, file=None, line=None):
     logmessage = warnings.formatwarning(message, category, filename, lineno, line)
-    l.logger.warn(logmessage)
-    _original_showwarning(message, category, filename, lineno, file, line)
+    l.logger.warning(logmessage)
 
 
 def set_logger(logger):
+    """Log exceptions with `logger`, and log warnings with `logger` if it is enabled
+    for level WARNING."""
     l.logger = logger
-    warnings.showwarning = logwarning
+    if logger.isEnabledFor(logging.WARNING):
+        warnings.showwarning = logwarning
+    else:
+        warnings.showwarning = _original_showwarning
 
 def install():
     """Set `sys.excepthook` to a handler that logs exceptions and shows each one in a
