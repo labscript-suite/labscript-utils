@@ -32,12 +32,15 @@ def _mix(color, other, fraction):
     )
 
 
-def _item_view_palette(qapplication):
-    """The application palette with an alternate row colour that is the base colour
-    mixed towards the text colour by ALTERNATE_BASE_MIX. In dark mode, the Windows
-    platform theme gives every widget a shade of the accent colour as the alternate row
-    colour."""
-    palette = QtGui.QPalette(qapplication.palette())
+def _class_palettes(qapplication):
+    """Palettes of widget classes for which we replace the palette of the platform
+    theme. In dark mode, the Windows platform theme gives QCheckBox and QRadioButton a
+    palette with the accent colour as the base colour, which Fusion fills the indicator
+    with, and gives every widget a shade of the accent colour as the alternate row
+    colour. Item views get the application palette with an alternate row colour that is
+    the base colour mixed towards the text colour by ALTERNATE_BASE_MIX."""
+    palette = qapplication.palette()
+    item_view_palette = QtGui.QPalette(palette)
     text = palette.color(QtGui.QPalette.ColorGroup.Active, QtGui.QPalette.ColorRole.Text)
     for group in [
         QtGui.QPalette.ColorGroup.Active,
@@ -45,33 +48,37 @@ def _item_view_palette(qapplication):
         QtGui.QPalette.ColorGroup.Disabled,
     ]:
         base = palette.color(group, QtGui.QPalette.ColorRole.Base)
-        palette.setColor(
+        item_view_palette.setColor(
             group,
             QtGui.QPalette.ColorRole.AlternateBase,
             _mix(base, text, ALTERNATE_BASE_MIX),
         )
-    return palette
+    return {
+        'QCheckBox': palette,
+        'QRadioButton': palette,
+        'QAbstractItemView': item_view_palette,
+    }
 
 
-def _set_item_view_palette(qapplication):
-    palette = _item_view_palette(qapplication)
-    if qapplication.palette('QAbstractItemView') != palette:
-        qapplication.setPalette(palette, 'QAbstractItemView')
+def _set_class_palettes(qapplication):
+    for class_name, palette in _class_palettes(qapplication).items():
+        if qapplication.palette(class_name) != palette:
+            qapplication.setPalette(palette, class_name)
 
 
 def setup_application(qapplication):
     """Set the style of the application to Fusion and its font to the bundled Ubuntu
-    font at FONT_PIXEL_SIZE, and give item views the palette of _item_view_palette().
-    Call this after making the QApplication and after setting any application style
-    sheet, and before making any widget: setting a style or a style sheet gives the
-    widget classes the fonts of the platform theme again."""
+    font at FONT_PIXEL_SIZE, and set the palettes of some widget classes (see
+    _class_palettes()). Call this after making the QApplication and after setting any
+    application style sheet, and before making any widget: setting a style or a style
+    sheet gives the widget classes the fonts of the platform theme again."""
     load_fonts()
     qapplication.setStyle('Fusion')
-    _set_item_view_palette(qapplication)
+    _set_class_palettes(qapplication)
     # When the application palette changes, Qt sets the palettes of the platform theme
     # for each widget class after emitting paletteChanged:
     qapplication.paletteChanged.connect(
-        lambda: QtCore.QTimer.singleShot(0, lambda: _set_item_view_palette(qapplication))
+        lambda: QtCore.QTimer.singleShot(0, lambda: _set_class_palettes(qapplication))
     )
     font = QtGui.QFont(FONT_FAMILY)
     font.setPixelSize(FONT_PIXEL_SIZE)
