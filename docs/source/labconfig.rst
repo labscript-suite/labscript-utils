@@ -195,6 +195,16 @@ Keys
     The interval, in seconds, at which the connection table plugin checks the files that it watches.
     The default is 1.
 
+`[gui]`
+^^^^^^^
+
+`color_scheme`
+    The colour scheme of BLACS, lyse, runmanager and runviewer: `system`, `light` or `dark`.
+    With `system`, the applications use the colour scheme of the operating system.
+    The key applies with PySide6 and PyQt6, with Qt 6.8 or later, and is ignored with PyQt5.
+    On Linux, `light` and `dark` take effect only with a Qt platform theme that supports them, such as the GTK platform theme.
+    The default is `system`.
+
 `[lyse]`
 ^^^^^^^^
 
