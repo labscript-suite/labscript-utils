@@ -56,13 +56,9 @@ def make_labconfig_file(shared_secret, apparatus_name = None):
     # Now change some things about it:
     config = configparser.ConfigParser(interpolation=None)
     config.read(target_path)
-    if sys.platform == 'linux':
-        config.set('programs', 'text_editor', 'gedit')
-    elif sys.platform == 'darwin':
-        config.set('programs', 'text_editor', 'open')
-        config.set('programs', 'text_editor_arguments', '-a TextEdit {file}')
     if sys.platform != 'win32':
-        config.set('programs', 'hdf5_viewer', 'hdfview')
+        config.set('programs', 'text_editor', '')
+        config.set('programs', 'hdf5_viewer', '')
         config.set('DEFAULT', 'shared_drive', '$HOME/labscript_shared')
     shared_secret_path = write_shared_secret(shared_secret, target_path.parent)
     shared_secret_entry = Path(
