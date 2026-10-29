@@ -3,25 +3,27 @@ The *labconfig.ini* file
 
 The `labconfig.ini` file is a global configuration file for your **labscript-suite** installation.
 It contains configurable settings that govern how the individual components of the suite operate.
-The name of this file must be the host computer's system name.
-So if my system's name was `heisenberg`, the labconfig file name would be `heisenberg.ini`.
-This file should be located in the `labscript-suite` directory in the user space, in the `labconfig` subdirectory.
+The file is `labscript-suite/labconfig/<hostname>.ini` in the home directory of the current user, where `<hostname>` is the host name of the computer.
+On macOS, the host name is the output of `scutil --get LocalHostName`; on Windows and Linux, it is the value of Python's `socket.gethostname()`.
+For example, on a computer with the host name `heisenberg`, the file is `~/labscript-suite/labconfig/heisenberg.ini`.
 
-When :doc:`installing the **labscript-suite** for the first time <labscript-suite:installation/index>`,
-running the `labscript-profile-create` command will automatically generate the `labscript-suite` user space directory in the correct place
-and generate a `labconfig.ini` file for use on your system.
-By editing the `ini` file named after your system, you can update the configuration settings of your **labscript-suite** installation.
+When :doc:`installing the labscript suite for the first time <labscript-suite:installation/index>`,
+the `labscript-profile-create` command creates the `labscript-suite` profile directory and a labconfig file for the computer.
+Importing `labscript_utils`, as the applications of the suite do, also creates them if the `labscript-suite` directory does not exist.
+To change the configuration of the installation, edit the labconfig file.
 
-The Default *labconfig.ini*
----------------------------
+The labconfig file of a new profile
+-----------------------------------
 
-Below is a copy of the default lab configuration if you were to install the **labscript-suite** today.
+`labscript-profile-create` makes the labconfig file of a new profile from the file below, `labscript_profile/default_profile/labconfig/example.ini`.
+In the new file, it replaces each backslash with the path separator of the platform, sets `[security]` `shared_secret` to a new key file, and sets `apparatus_name` to the name given with the `--apparatus_name` option, if there is one.
+On Linux and macOS, it also sets `shared_drive` to `$HOME/labscript_shared` and sets `text_editor` and `hdf5_viewer` to empty values.
 
 .. note::
 
-	When updates are made to the suite that add or change keys available in the labconfig, your local file will **NOT** be automatically updated to include them.
-	Instead, if keys are missing from your local profile, default behavior will be assumed.
-	To implement the added functionality, you will need to manually add/change the keys in your local labconfig.
+	When a release of the suite adds keys to this file, existing labconfig files are not changed.
+	The applications use the default of each key that is missing from a labconfig file, as given in the list of keys below.
+	To change the value of a key that is missing, add the key to your labconfig file.
 
 .. include:: ../../labscript_profile/default_profile/labconfig/example.ini
 	:code:
@@ -35,6 +37,8 @@ Environment variables in values are expanded, as `$NAME` on all platforms or as 
 A literal `%` is written `%%`, so a Windows environment variable is written `%%NAME%%`.
 The keys of the `[DEFAULT]` section are also available in every other section, so that, for example, `[paths]` `experiment_shot_storage` is the same as `[DEFAULT]` `experiment_shot_storage`.
 
+The default of a key, as given below, is the value that the applications use when the key is missing from the labconfig file.
+It can differ from the value in the labconfig file of a new profile: for example, a new profile has `[runmanager]` `pylab_namespace` set to `False`, and the default is `True`.
 A key that is listed below as required has no default, and the applications that read it do not start if it is missing.
 
 Keys
@@ -46,7 +50,7 @@ Keys
 `apparatus_name`
     The name of the apparatus.
     It must be a valid Python identifier, because it is the name of a package under `labscriptlib`.
-    The other paths in the default labconfig contain it.
+    The other paths in the labconfig file of a new profile contain it.
     Required by BLACS, lyse, runmanager and runviewer.
 
 `shared_drive`

@@ -163,16 +163,27 @@ def create_profile_cli():
     create_profile(args.apparatus_name, args.compile)
 
 def create_profile(apparatus_name = None, compile_table = False):
-    """Function that creates a labscript config profile from the default config
+    """Create the labscript suite profile directory, `~/labscript-suite`.
+
+    Copies the contents of `labscript_profile/default_profile` into the profile
+    directory, writes the labconfig file of this computer from `example.ini` with a new
+    shared secret in a key file next to it, and writes the runmanager configuration
+    file that the labconfig file names as `autoload_config_file`.
+
+    Raises `FileExistsError`, before copying anything, if the profile directory
+    already contains `labconfig`, `userlib` or `app_saved_configs`.
 
     Parameters
     ----------
-    appratus_name: str, optional
-        apparatus_name to define in the config.
-        If None, defaults to example_apparatus (set in default config file)
+    apparatus_name: str, optional
+        The apparatus name to set in the labconfig file. The `example_apparatus`
+        directories of the profile are renamed to it. If None, the apparatus name is
+        `example_apparatus`. Raises `ValueError` if it is not a valid Python
+        identifier.
     compile_table: bool, optional
-        Whether to compile to example connection table defined by the default config file
-        Default is False.
+        Whether to compile the example connection table to the `connection_table_h5`
+        path of the labconfig file. The table is compiled only if runmanager is
+        installed. Default is False.
     """
 
     if apparatus_name is not None:
