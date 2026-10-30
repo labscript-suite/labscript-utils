@@ -11,6 +11,7 @@
 #                                                                   #
 #####################################################################
 import os
+import sys
 import configparser
 from ast import literal_eval
 from pprint import pformat
@@ -21,6 +22,8 @@ from labscript_utils import dedent
 from labscript_profile import default_labconfig_path, LABSCRIPT_SUITE_PROFILE
 
 default_config_path = default_labconfig_path()
+
+QT_BINDINGS = ['PySide6', 'PyQt6', 'PyQt5']
 
 
 class EnvInterpolation(configparser.BasicInterpolation):
@@ -90,6 +93,24 @@ class LabConfig(configparser.ConfigParser):
                 msg = f"""No experiment configuration file was found at {config_path}.
                     Create one containing the following structure:\n{self.file_format}"""
             raise Exception(dedent(msg))
+
+
+def set_qt_binding():
+    """Set the environment variable QT_ENV, which selects the Qt binding of qtutils, to
+    the value of the labconfig key [gui] qt_binding, which is PySide6, PyQt6 or PyQt5.
+    The default is PySide6. Call this before importing qtutils.qt. If QT_ENV is already
+    set, or a Qt binding has already been imported, do nothing."""
+    if 'QT_ENV' in os.environ:
+        return
+    if any(f'{binding}.QtCore' in sys.modules for binding in QT_BINDINGS):
+        return
+    qt_binding = LabConfig().get('gui', 'qt_binding', fallback='PySide6')
+    bindings = {binding.lower(): binding for binding in QT_BINDINGS}
+    try:
+        os.environ['QT_ENV'] = bindings[qt_binding.lower()]
+    except KeyError:
+        msg = f"Invalid qt_binding in labconfig: {qt_binding}. Must be one of "
+        raise ValueError(msg + ', '.join(QT_BINDINGS)) from None
 
 
 def save_appconfig(filename, data):

@@ -13,6 +13,9 @@
 
 import sys
 from labscript_utils import dedent
+from labscript_utils.labconfig import set_qt_binding
+
+set_qt_binding()
 
 try:
     from qtutils.qt import QtWidgets, QtCore, QtGui, QT_ENV

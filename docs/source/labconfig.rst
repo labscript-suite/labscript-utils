@@ -210,6 +210,12 @@ Keys
     On Linux, `light` and `dark` take effect only with a Qt platform theme that supports them, such as the GTK platform theme.
     The default is `system`.
 
+`qt_binding`
+    The Qt binding of BLACS, lyse, runmanager and runviewer: `PySide6`, `PyQt6` or `PyQt5`.
+    The labscript suite installs PySide6. To use PyQt6 or PyQt5, install it in the Python environment of the labscript suite yourself.
+    If the environment variable `QT_ENV` is set, it takes precedence over this key.
+    The default is `PySide6`.
+
 `[lyse]`
 ^^^^^^^^
 
