@@ -10,7 +10,7 @@
 # for the full license.                                             #
 #                                                                   #
 #####################################################################
-"""The fonts and the style of the labscript suite applications"""
+"""The fonts, the style and the signal timer of the labscript suite applications"""
 
 import sys
 import warnings
@@ -26,6 +26,9 @@ MONOSPACE_FONT_FAMILY = 'Ubuntu Mono'
 # Font sizes in device-independent pixels, which are the same on every platform:
 FONT_PIXEL_SIZE = 12
 MONOSPACE_FONT_PIXEL_SIZE = 15
+# Interval in milliseconds of the timer that runs Python code in the main thread, so that
+# Python signal handlers run while the main thread is in a Qt event loop:
+SIGNAL_TIMER_INTERVAL_MS = 500
 # Fraction by which the alternate row colour of item views is mixed from the base colour
 # towards the text colour:
 ALTERNATE_BASE_MIX = 0.07
@@ -294,7 +297,16 @@ def setup_application(qapplication):
     font at FONT_PIXEL_SIZE, and set the palettes of some widget classes (see
     _class_palettes()). Call this after making the QApplication and after setting any
     application style sheet, and before making any widget: setting a style or a style
-    sheet gives the widget classes the fonts of the platform theme again."""
+    sheet gives the widget classes the fonts of the platform theme again.
+
+    Also start a timer that runs Python code in the main thread every
+    SIGNAL_TIMER_INTERVAL_MS, so that Python signal handlers, such as the SIGTERM handler
+    of the zprocess kill lock and the SIGINT handler of an application, run while the
+    main thread is in a Qt event loop. Python runs a signal handler only when the main
+    thread next executes Python code."""
+    timer = QtCore.QTimer(qapplication)
+    timer.timeout.connect(lambda: None)
+    timer.start(SIGNAL_TIMER_INTERVAL_MS)
     load_fonts()
     _set_color_scheme(qapplication)
     qapplication.setStyle(FusionStyle())
