@@ -39,6 +39,7 @@ dependencies = [
     "h5py>=2.9",
     "numpy>=1.15",
     "packaging>=20.4",
+    "PySide6!=6.12.0",
     "pyqtgraph>=0.11.0rc0",
     "qtutils>=4.4.1",
     "scipy",
@@ -60,7 +61,6 @@ Tracker = "https://github.com/labscript-suite/labscript-utils/issues/"
 
 [project.optional-dependencies]
 docs = [
-    "PyQt5",
     "Sphinx==8.2.3",
     "sphinx-rtd-theme==3.0.1",
     "myst_parser==4.0.1",
