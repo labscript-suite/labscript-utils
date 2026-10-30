@@ -3,7 +3,8 @@ The *labconfig.ini* file
 
 The `labconfig.ini` file is a global configuration file for your **labscript-suite** installation.
 It contains configurable settings that govern how the individual components of the suite operate.
-The file is `labscript-suite/labconfig/<hostname>.ini` in the home directory of the current user, where `<hostname>` is the host name of the computer.
+The file is `labconfig/<hostname>.ini` in the profile directory, where `<hostname>` is the host name of the computer.
+The profile directory is `~/labscript-suite`, or the directory named by the environment variable `LABSCRIPT_SUITE_PROFILE` if it is set.
 On macOS, the host name is the output of `scutil --get LocalHostName`; on Windows and Linux, it is the value of Python's `socket.gethostname()`.
 For example, on a computer with the host name `heisenberg`, the file is `~/labscript-suite/labconfig/heisenberg.ini`.
 
