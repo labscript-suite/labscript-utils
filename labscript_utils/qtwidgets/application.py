@@ -13,10 +13,13 @@
 """The fonts and the style of the labscript suite applications"""
 
 import sys
+import warnings
 
 from qtutils.qt import QtCore, QtGui, QtWidgets
 from qtutils.fonts import load_fonts
 from qtutils.icons import ICON_SIZE
+
+from labscript_utils.labconfig import LabConfig
 
 FONT_FAMILY = 'Ubuntu'
 MONOSPACE_FONT_FAMILY = 'Ubuntu Mono'
@@ -34,6 +37,9 @@ COLOR_GROUPS = [
     QtGui.QPalette.ColorGroup.Inactive,
     QtGui.QPalette.ColorGroup.Disabled,
 ]
+# Values of the labconfig key [gui] color_scheme, and the names of the corresponding
+# members of Qt.ColorScheme:
+COLOR_SCHEMES = {'system': 'Unknown', 'light': 'Light', 'dark': 'Dark'}
 
 
 class FusionStyle(QtWidgets.QProxyStyle):
@@ -145,13 +151,32 @@ def _set_class_palettes(qapplication):
             qapplication.setPalette(palette, class_name)
 
 
+def _set_color_scheme(qapplication):
+    """Set the colour scheme of the application to the value of the labconfig key [gui]
+    color_scheme, which is system, light or dark. Setting the colour scheme requires Qt
+    6.8 or later, and with Qt 5 or an earlier Qt 6 the key is ignored."""
+    style_hints = qapplication.styleHints()
+    if not hasattr(style_hints, 'setColorScheme'):
+        return
+    color_scheme = LabConfig().get('gui', 'color_scheme', fallback='system')
+    try:
+        name = COLOR_SCHEMES[color_scheme.lower()]
+    except KeyError:
+        msg = "Invalid color_scheme in labconfig: %s. Must be system, light or dark"
+        warnings.warn(msg % color_scheme)
+        return
+    style_hints.setColorScheme(getattr(QtCore.Qt.ColorScheme, name))
+
+
 def setup_application(qapplication):
-    """Set the style of the application to FusionStyle and its font to the bundled Ubuntu
+    """Set the colour scheme of the application from the labconfig (see
+    _set_color_scheme()), its style to FusionStyle and its font to the bundled Ubuntu
     font at FONT_PIXEL_SIZE, and set the palettes of some widget classes (see
     _class_palettes()). Call this after making the QApplication and after setting any
     application style sheet, and before making any widget: setting a style or a style
     sheet gives the widget classes the fonts of the platform theme again."""
     load_fonts()
+    _set_color_scheme(qapplication)
     qapplication.setStyle(FusionStyle())
     _set_class_palettes(qapplication)
     # When the application palette changes, Qt sets the palettes of the platform theme
