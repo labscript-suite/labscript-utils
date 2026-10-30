@@ -45,7 +45,8 @@ class AnalogInput(QtWidgets.QWidget):
         self._line_edit.setAlignment(QtCore.Qt.AlignmentFlag.AlignRight)
         self._line_edit.setReadOnly(True)
 
-        self._plot_btn = QtWidgets.QPushButton()
+        self._plot_btn = QtWidgets.QToolButton()
+        self._plot_btn.setAutoRaise(True)
         self._plot_btn.setIcon(Icon(':/qtutils/fugue/chart-up'))
         self._plot_btn.setToolTip('Plot the acquired data')
         self._plot_btn.clicked.connect(self.open_plot_window)

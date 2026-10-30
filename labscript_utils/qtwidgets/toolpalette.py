@@ -37,10 +37,13 @@ class ToolPaletteGroup(QtWidgets.QVBoxLayout):
             
         # Create the tool palette and store a reference to it and an index indicating the order of Tool Palettes
         tool_palette = ToolPalette(self,name,*args,**kwargs)
-        push_button = QtWidgets.QPushButton(name)        
-        push_button.setIcon(Icon(CONTRACT_ICON))
-        push_button.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
-        push_button.setToolTip('Click to hide')
+        header_button = QtWidgets.QToolButton()
+        header_button.setText(name)
+        header_button.setToolButtonStyle(QtCore.Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        header_button.setAutoRaise(True)
+        header_button.setIcon(Icon(CONTRACT_ICON))
+        header_button.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
+        header_button.setToolTip('Click to hide')
 
         frame = QtWidgets.QFrame()
         frame.setFrameStyle(QtWidgets.QFrame.Shape.StyledPanel)
@@ -50,7 +53,7 @@ class ToolPaletteGroup(QtWidgets.QVBoxLayout):
 
         header_widget = QtWidgets.QWidget()
         header_layout = QtWidgets.QHBoxLayout()
-        header_layout.addWidget(push_button)
+        header_layout.addWidget(header_button)
         header_layout.addStretch(1)
         header_widget.setLayout(header_layout)
         header_layout.setContentsMargins(3,3,3,3)
@@ -58,8 +61,8 @@ class ToolPaletteGroup(QtWidgets.QVBoxLayout):
         def create_callback(name):
             return lambda: self._on_button_clicked(name)
             
-        push_button.clicked.connect(create_callback(name))
-        self._widget_groups[name] = (len(self._widget_groups), tool_palette, push_button)
+        header_button.clicked.connect(create_callback(name))
+        self._widget_groups[name] = (len(self._widget_groups), tool_palette, header_button)
         
         frame_layout.addWidget(header_widget)
         frame_layout.addWidget(tool_palette)
@@ -80,10 +83,10 @@ class ToolPaletteGroup(QtWidgets.QVBoxLayout):
     def show_palette(self,name):
         if name not in self._widget_groups:
             raise RuntimeError('The tool palette does not have a palette named %s'%name)
-        _, palette, push_button = self._widget_groups[name]
+        _, palette, header_button = self._widget_groups[name]
         palette.show()
-        push_button.setIcon(Icon(CONTRACT_ICON))
-        push_button.setToolTip('Click to hide')
+        header_button.setIcon(Icon(CONTRACT_ICON))
+        header_button.setToolTip('Click to hide')
             
     def show_palette_by_index(self,index):
         self.show_palette(self.get_name_from_index(index))
@@ -92,10 +95,10 @@ class ToolPaletteGroup(QtWidgets.QVBoxLayout):
         if name not in self._widget_groups:
             raise RuntimeError('The tool palette does not have a palette named %s'%name)
         
-        _, palette, push_button = self._widget_groups[name]
+        _, palette, header_button = self._widget_groups[name]
         palette.hide()
-        push_button.setIcon(Icon(EXPAND_ICON))
-        push_button.setToolTip('Click to show')
+        header_button.setIcon(Icon(EXPAND_ICON))
+        header_button.setToolTip('Click to show')
     
     def hide_palette_by_index(self,index):
         self.hide_palette(self.get_name_from_index(index))

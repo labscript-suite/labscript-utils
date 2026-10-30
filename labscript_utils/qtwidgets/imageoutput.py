@@ -18,9 +18,12 @@ from qtutils.qt import QtCore, QtGui, QtWidgets
 from qtutils.icons import Icon
 from qtutils.qt.QtCore import pyqtSignal as Signal
 
-class BrowseButton(QtWidgets.QPushButton):
-    def __init__(self, image_output, *args, **kwargs):
-        QtWidgets.QPushButton.__init__(self, *args, **kwargs)
+class BrowseButton(QtWidgets.QToolButton):
+    def __init__(self, image_output, text, *args, **kwargs):
+        QtWidgets.QToolButton.__init__(self, *args, **kwargs)
+        self.setText(text)
+        self.setToolButtonStyle(QtCore.Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.setAutoRaise(True)
         self.image_output = image_output
         self.installEventFilter(self)
         self.clicked.connect(self.browse)
@@ -65,7 +68,7 @@ class BrowseButton(QtWidgets.QPushButton):
             menu.popup(self.mapToGlobal(event.pos()))
             return True
             
-        return QtWidgets.QPushButton.eventFilter(self, obj, event)
+        return QtWidgets.QToolButton.eventFilter(self, obj, event)
     
     
 class ImageView(QtWidgets.QGraphicsView):
