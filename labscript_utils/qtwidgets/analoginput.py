@@ -47,6 +47,7 @@ class AnalogInput(QtWidgets.QWidget):
 
         self._plot_btn = QtWidgets.QPushButton()
         self._plot_btn.setIcon(Icon(':/qtutils/fugue/chart-up'))
+        self._plot_btn.setToolTip('Plot the acquired data')
         self._plot_btn.clicked.connect(self.open_plot_window)
 
         self._value_changed_function = None
