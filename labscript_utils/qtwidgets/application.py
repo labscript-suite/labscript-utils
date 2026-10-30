@@ -32,6 +32,34 @@ ALTERNATE_BASE_MIX = 0.07
 # Relative luminance of the accent colour above which the check mark is black instead of
 # white:
 CHECK_MARK_LUMINANCE = 0.4
+# Delay in milliseconds before a tooltip is shown. If a tooltip is visible, or was hidden
+# less than this time ago, the next tooltip is shown immediately:
+TOOLTIP_DELAY_MS = 300
+# Interval in milliseconds of the timer that Qt starts on a tooltip label to hide it:
+QT_TOOLTIP_HIDE_DELAY_MS = 300
+TOOLTIP_FONT_PIXEL_SIZE = 12
+TOOLTIP_TEXT = QtGui.QColor(255, 255, 255)
+TOOLTIP_BACKGROUND = QtGui.QColor(0, 0, 0, 217)
+TOOLTIP_BORDER = QtGui.QColor(255, 255, 255, 51)
+TOOLTIP_CORNER_RADIUS = 4
+# Horizontal and vertical distance in pixels between the border of a tooltip and its
+# text:
+TOOLTIP_PADDING_X = 6
+TOOLTIP_PADDING_Y = 4
+# Events that make the next tooltip wait for TOOLTIP_DELAY_MS even if it follows another
+# tooltip immediately:
+TOOLTIP_INHIBIT_EVENTS = [
+    QtCore.QEvent.Type.MouseButtonPress,
+    QtCore.QEvent.Type.MouseButtonDblClick,
+    QtCore.QEvent.Type.Wheel,
+    QtCore.QEvent.Type.KeyPress,
+]
+# Events after which Qt may start its timer to hide the tooltip:
+TOOLTIP_HIDE_EVENTS = [
+    QtCore.QEvent.Type.MouseMove,
+    QtCore.QEvent.Type.Leave,
+    QtCore.QEvent.Type.ToolTip,
+]
 COLOR_GROUPS = [
     QtGui.QPalette.ColorGroup.Active,
     QtGui.QPalette.ColorGroup.Inactive,
@@ -46,7 +74,14 @@ class FusionStyle(QtWidgets.QProxyStyle):
     """The Fusion style, with the indicators of checked check boxes and radio buttons
     filled with the accent colour of the application palette, and icons in list views
     and toolbars drawn at ICON_SIZE. The check mark is black on a light accent colour and
-    white on a dark one."""
+    white on a dark one.
+
+    Tooltips are drawn as white text on a translucent black rounded rectangle, and are
+    shown after TOOLTIP_DELAY_MS. Qt hides a tooltip 300 ms after the mouse leaves the
+    widget or item that it belongs to; we hide it immediately instead. While a tooltip is
+    visible, the style is an event filter of the application, and after each event that
+    may start Qt's timer to hide the tooltip, we look for that timer on the tooltip label
+    and close the label if the timer is running."""
 
     CHECKED_FILL_ELEMENTS = [
         QtWidgets.QStyle.PrimitiveElement.PE_IndicatorCheckBox,
@@ -68,15 +103,61 @@ class FusionStyle(QtWidgets.QProxyStyle):
 
     def __init__(self):
         super().__init__(QtWidgets.QStyleFactory.create('Fusion'))
+        self._filtering_application_events = False
+        self._tooltip_hide_check_pending = False
+        self._tooltip_inhibited = False
+        # Time since the last tooltip was hidden, invalid if it was hidden by an event in
+        # TOOLTIP_INHIBIT_EVENTS:
+        self._tooltip_hidden = QtCore.QElapsedTimer()
+
+    def styleHint(self, hint, option=None, widget=None, returnData=None):
+        if hint == QtWidgets.QStyle.StyleHint.SH_ToolTip_WakeUpDelay:
+            recently_hidden = (
+                self._tooltip_hidden.isValid()
+                and not self._tooltip_hidden.hasExpired(TOOLTIP_DELAY_MS)
+            )
+            if QtWidgets.QToolTip.isVisible() or recently_hidden:
+                return 0
+            return TOOLTIP_DELAY_MS
+        if hint == QtWidgets.QStyle.StyleHint.SH_ToolTip_FallAsleepDelay:
+            return 0
+        return super().styleHint(hint, option, widget, returnData)
+
+    def polish(self, target):
+        result = super().polish(target)
+        if isinstance(target, QtWidgets.QWidget) and target.inherits('QTipLabel'):
+            target.setAttribute(QtCore.Qt.WidgetAttribute.WA_TranslucentBackground)
+            palette = target.palette()
+            palette.setColor(QtGui.QPalette.ColorRole.ToolTipText, TOOLTIP_TEXT)
+            target.setPalette(palette)
+            font = target.font()
+            font.setPixelSize(TOOLTIP_FONT_PIXEL_SIZE)
+            target.setFont(font)
+            # Qt sets the margin of the label to the frame width plus one on every side:
+            extra = TOOLTIP_PADDING_X - TOOLTIP_PADDING_Y
+            target.setContentsMargins(extra, 0, extra, 0)
+            target.installEventFilter(self)
+        return result
 
     def pixelMetric(self, metric, option=None, widget=None):
         if metric in self.ICON_SIZE_METRICS:
             return ICON_SIZE
+        if metric == QtWidgets.QStyle.PixelMetric.PM_ToolTipLabelFrameWidth:
+            return TOOLTIP_PADDING_Y - 1
         return super().pixelMetric(metric, option, widget)
 
     def drawPrimitive(self, element, option, painter, widget=None):
         State = QtWidgets.QStyle.StateFlag
-        if (
+        if element == QtWidgets.QStyle.PrimitiveElement.PE_PanelTipLabel:
+            painter.save()
+            painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+            painter.setPen(QtGui.QPen(TOOLTIP_BORDER, 1))
+            painter.setBrush(TOOLTIP_BACKGROUND)
+            # The border is drawn centred on the edge of the rectangle:
+            rect = QtCore.QRectF(option.rect).adjusted(0.5, 0.5, -0.5, -0.5)
+            painter.drawRoundedRect(rect, TOOLTIP_CORNER_RADIUS, TOOLTIP_CORNER_RADIUS)
+            painter.restore()
+        elif (
             element in self.CHECKED_FILL_ELEMENTS
             and option.state & State.State_On
             and option.state & State.State_Enabled
@@ -102,6 +183,45 @@ class FusionStyle(QtWidgets.QProxyStyle):
             option.palette = palette
         else:
             super().drawPrimitive(element, option, painter, widget)
+
+    def eventFilter(self, watched, event):
+        event_type = event.type()
+        if event_type == QtCore.QEvent.Type.Show and watched.inherits('QTipLabel'):
+            if not self._filtering_application_events:
+                QtWidgets.QApplication.instance().installEventFilter(self)
+                self._filtering_application_events = True
+        elif event_type == QtCore.QEvent.Type.Hide and watched.inherits('QTipLabel'):
+            if self._filtering_application_events:
+                QtWidgets.QApplication.instance().removeEventFilter(self)
+                self._filtering_application_events = False
+                if self._tooltip_inhibited:
+                    self._tooltip_hidden.invalidate()
+                else:
+                    self._tooltip_hidden.start()
+                self._tooltip_inhibited = False
+        elif event_type in TOOLTIP_INHIBIT_EVENTS:
+            self._tooltip_inhibited = True
+        elif event_type in TOOLTIP_HIDE_EVENTS and not self._tooltip_hide_check_pending:
+            # Qt's own event filter and event handlers run after this one:
+            self._tooltip_hide_check_pending = True
+            QtCore.QTimer.singleShot(0, self._close_hiding_tooltip)
+        return False
+
+    def _close_hiding_tooltip(self):
+        self._tooltip_hide_check_pending = False
+        if not QtWidgets.QToolTip.isVisible():
+            # The tooltip label was deleted without being hidden first:
+            if self._filtering_application_events:
+                QtWidgets.QApplication.instance().removeEventFilter(self)
+                self._filtering_application_events = False
+            return
+        dispatcher = QtCore.QAbstractEventDispatcher.instance()
+        for widget in QtWidgets.QApplication.topLevelWidgets():
+            if widget.inherits('QTipLabel') and widget.isVisible():
+                timers = dispatcher.registeredTimers(widget)
+                if any(t.interval == QT_TOOLTIP_HIDE_DELAY_MS for t in timers):
+                    widget.close()
+                    widget.deleteLater()
 
 
 def _relative_luminance(color):
