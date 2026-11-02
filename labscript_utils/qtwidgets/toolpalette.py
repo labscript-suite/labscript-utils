@@ -273,6 +273,14 @@ class ToolPalette(QtWidgets.QScrollArea):
         # Variable for controlling whether or not self._layout_widgets() is
         # called in self.resizeEvent().
         self._layout_widgets_during_resizeEvent = True
+        # Number of queued events of type _ENABLE_LAYOUT_EVENT_TYPE.
+        self._queued_enable_layout_events = 0
+        # Whether resizeEvent() has skipped _layout_widgets() since the last
+        # time that it called it.
+        self._resize_event_skipped = False
+        # Whether event() has already repeated _layout_widgets() for the skipped
+        # resize events.
+        self._layout_repeated = False
         
     def addWidget(self,widget,force_relayout=True):
         # Append to end of tool pallete
@@ -398,13 +406,30 @@ class ToolPalette(QtWidgets.QScrollArea):
         # Handle the custom event for reenabling the call to
         # self._layout_widgets() during self.resizeEvent().
         if (event.type() == _ENABLE_LAYOUT_EVENT_TYPE):
-            self._layout_widgets_during_resizeEvent = True
+            self._queued_enable_layout_events -= 1
+            if self._queued_enable_layout_events == 0:
+                if self._resize_event_skipped and not self._layout_repeated:
+                    # The widget may have a different width from the one used
+                    # for the last layout. Repeat the layout once, with
+                    # resizeEvent() still not calling _layout_widgets().
+                    self._resize_event_skipped = False
+                    self._layout_repeated = True
+                    self._layout_widgets()
+                    self._post_enable_layout_event()
+                else:
+                    self._resize_event_skipped = False
+                    self._layout_repeated = False
+                    self._layout_widgets_during_resizeEvent = True
             # Return True so that this event isn't sent along to other event
             # handlers as well.
             return True
 
         # Handle all other events in the usual way.
         return super().event(event)
+
+    def _post_enable_layout_event(self):
+        self._queued_enable_layout_events += 1
+        QtCore.QCoreApplication.instance().postEvent(self, QtCore.QEvent(_ENABLE_LAYOUT_EVENT_TYPE))
 
     def resizeEvent(self, event):
         # overwrite the resize event!
@@ -423,7 +448,10 @@ class ToolPalette(QtWidgets.QScrollArea):
         # that, this method will mark that future calls to this method shouldn't
         # call _layout_widgets() but will also add an event to the event queue
         # to reenable calling _layout_widgets() again once all of the resize
-        # events caused by this call to it have been processed.
+        # events caused by this call to it have been processed. Qt can also
+        # deliver several resize events in a row when a tab is first shown, and
+        # the width of the last one is the final width. If any resize event was
+        # skipped, event() repeats _layout_widgets() once before reenabling it.
         
         try:
             #pass resize event on to qwidget
@@ -436,11 +464,13 @@ class ToolPalette(QtWidgets.QScrollArea):
                     # run.
                     self._layout_widgets_during_resizeEvent = False
                     self._layout_widgets()
+                else:
+                    self._resize_event_skipped = True
         finally:
             # Add event to end of the event queue to allow _layout_widgets() in
             # future calls. This event shouldn't be handled until the resize
             # events generated during _layout_widgets() have run.
-            QtCore.QCoreApplication.instance().postEvent(self, QtCore.QEvent(_ENABLE_LAYOUT_EVENT_TYPE))
+            self._post_enable_layout_event()
 
 
 # A simple test!
